@@ -6,12 +6,12 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+SECRET_KEY = 'dev-secret-key' #config('SECRET_KEY', default='django-insecure-change-me-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # Pour le développement, à restreindre en production
+ALLOWED_HOSTS =["*"]# ["localhost", "127.0.0.1", "192.168.43.235", "192.168.137.75"]  # Pour le développement, à restreindre en production
 
 # Application definition
 DJANGO_APPS = [
