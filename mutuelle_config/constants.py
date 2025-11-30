@@ -1,2 +1,0 @@
-# Constantes globales du projet
-

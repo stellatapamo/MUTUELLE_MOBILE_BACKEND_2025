@@ -1,2 +1,0 @@
-# Constantes pour l'authentification
-

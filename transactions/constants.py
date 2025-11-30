@@ -1,2 +1,0 @@
-# Constantes pour les transactions
-
