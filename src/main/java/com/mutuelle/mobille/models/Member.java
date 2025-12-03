@@ -1,7 +1,9 @@
 package com.mutuelle.mobille.models;
 
-import jakarta.persistence.Column;
-
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity

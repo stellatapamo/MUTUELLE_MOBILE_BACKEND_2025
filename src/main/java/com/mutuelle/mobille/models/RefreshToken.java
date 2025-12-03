@@ -2,20 +2,24 @@ package com.mutuelle.mobille.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.Instant;
 
 @Entity
 @Table(name = "refresh_tokens")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class RefreshToken {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 500)
+    @Column(unique = true, nullable = false)
     private String token;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,5 +29,6 @@ public class RefreshToken {
     @Column(nullable = false)
     private Instant expiryDate;
 
+    @Column(nullable = false)
     private boolean revoked = false;
 }

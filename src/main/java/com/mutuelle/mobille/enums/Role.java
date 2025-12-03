@@ -2,7 +2,7 @@ package com.mutuelle.mobille.enums;
 
 public enum Role {
     ADMIN("ADMIN"),
-    USER("MEMBER");
+    MEMBER("MEMBER");
 
     private final String value;
 
