@@ -21,9 +21,10 @@ public class AuthUser {
     @Column(name = "password", nullable = false)
     private String passwordHash;
 
-    @Column(name = "user_type", nullable = false)
-    private Role userType;
+    @Column(name = "role", nullable = false)
+    private Role role;
 
+    // Référence vers l'entité réelle (Member ou Admin)
     @Column(name = "user_ref_id", nullable = false)
     private Long userRefId;
 }

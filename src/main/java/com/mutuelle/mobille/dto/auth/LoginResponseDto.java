@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.dto;
+package com.mutuelle.mobille.dto.auth;
 
 import com.mutuelle.mobille.enums.Role;
 import lombok.AllArgsConstructor;

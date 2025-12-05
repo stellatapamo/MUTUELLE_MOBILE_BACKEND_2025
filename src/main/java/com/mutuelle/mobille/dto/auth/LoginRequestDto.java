@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.dto;
+package com.mutuelle.mobille.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

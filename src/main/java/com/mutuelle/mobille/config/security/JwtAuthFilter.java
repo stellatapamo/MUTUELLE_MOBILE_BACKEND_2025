@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.config;
+package com.mutuelle.mobille.config.security;
 
 import com.mutuelle.mobille.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
@@ -26,30 +26,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException { // ← OBLIGATOIRE
+                                    FilterChain filterChain) throws ServletException, IOException {
 
-        try {
-            String jwt = getTokenFromRequest(request);
+        String jwt = getTokenFromRequest(request);
 
-            if (jwt != null && jwtUtils.isTokenValid(jwt)) {
-                Long userId = jwtUtils.getUserIdFromToken(jwt);
+        if (jwt != null && jwtUtils.isTokenValid(jwt)) {
+            String email = jwtUtils.getEmailFromToken(jwt);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(userId.toString());
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
+            if (userDetails != null) {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities());
-
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } catch (Exception e) {
-            // Token invalide → on ne fait rien, la requête continuera non authentifiée
-            // (les endpoints @PreAuthorize rejetteront)
         }
 
-        filterChain.doFilter(request, response); // Toujours appeler
+        filterChain.doFilter(request, response);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {

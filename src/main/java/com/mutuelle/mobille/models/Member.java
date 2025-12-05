@@ -1,33 +1,53 @@
 package com.mutuelle.mobille.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "members")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Member {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String firsname;
-    private String phone;
+
+    private String firstname;
     private String lastname;
+    private String phone;
+
+    @Column(name = "registration_free_to_paid")
     private String registrationFreeToPaid;
 
-    @Column(name = "avatar", nullable = true)
     private String avatar;
 
     @Column(name = "is_active")
-    private Boolean isActive=true;
+    private boolean isActive = true;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt ;
+    // Relation OneToOne obligatoire et bidirectionnelle avec Account
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    private Account account;
 
-    @Column(name = "created_up", nullable = false )
-    private LocalDateTime createdUp ;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
