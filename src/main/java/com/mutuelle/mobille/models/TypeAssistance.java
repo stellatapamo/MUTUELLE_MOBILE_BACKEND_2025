@@ -1,40 +1,32 @@
 package com.mutuelle.mobille.models;
 
-import com.mutuelle.mobille.models.account.AccountMember;
 import jakarta.persistence.*;
 import lombok.*;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "members")
+@Table(name = "type_assistances")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Member {
+public class TypeAssistance {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String firstname;
-    private String lastname;
-    private String phone;
+    @Column(nullable = false, unique = true)
+    private String name;
 
-    @Column(name = "registration_free_to_paid")
-    private String registrationFreeToPaid;
+    @Column(name = "amount", precision = 12, scale = 2, nullable = false)
+    private BigDecimal amount = BigDecimal.ZERO;
 
-    @Column(name = "avatar", nullable = true)
-    private String avatar;
-
-    @Column(name = "is_active")
-    private boolean isActive = true;
-
-    // Relation OneToOne obligatoire et bidirectionnelle avec Account
-    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY, optional = false)
-    private AccountMember accountMember;
+    // Côté inverse de la relation OneToOne (non propriétaire)
+    @OneToOne(mappedBy = "typeAssistance", fetch = FetchType.LAZY)
+    private Assistance assistance;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

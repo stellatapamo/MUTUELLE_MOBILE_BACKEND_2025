@@ -1,7 +1,7 @@
 package com.mutuelle.mobille.utils;
 
 import org.springframework.security.core.context.SecurityContextHolder;
-import com.mutuelle.mobille.models.AuthUser;
+import com.mutuelle.mobille.models.auth.AuthUser;
 
 public class SecurityUtil {
     public static Long getCurrentUserRefId() {

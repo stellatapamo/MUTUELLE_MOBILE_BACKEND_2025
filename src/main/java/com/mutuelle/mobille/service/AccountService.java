@@ -1,11 +1,14 @@
 package com.mutuelle.mobille.service;
 
-import com.mutuelle.mobille.models.Account;
-import com.mutuelle.mobille.repository.AccountRepository;
+import com.mutuelle.mobille.models.Member;
+import com.mutuelle.mobille.models.account.AccountMember;
+import com.mutuelle.mobille.models.account.AccountMutuelle;
+import com.mutuelle.mobille.repository.AccountMemberRepository;
+import com.mutuelle.mobille.repository.AccountMutuelleRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -13,26 +16,176 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class AccountService {
 
-    private final AccountRepository accountRepository;
+    private final AccountMutuelleRepository globalRepo;      // Compte global
+    private final AccountMemberRepository memberRepo;        // Comptes membres
 
     @PostConstruct
     @Transactional
     public void initGlobalAccount() {
-        if (accountRepository.findByGlobalAccountTrue().isEmpty()) {
-            Account global = Account.builder()
-                    .globalAccount(true)
-                    .isActive(true)
-                    .unpaidRegistrationAmount(BigDecimal.ZERO)
+        if (globalRepo.count() == 0) {
+            AccountMutuelle global = AccountMutuelle.builder()
+                    .savingAmount(BigDecimal.ZERO)
                     .solidarityAmount(BigDecimal.ZERO)
                     .borrowAmount(BigDecimal.ZERO)
+                    .unpaidRegistrationAmount(BigDecimal.ZERO)
                     .unpaidRenfoulement(BigDecimal.ZERO)
+                    .isActive(true)
                     .build();
-            accountRepository.save(global);
+            globalRepo.save(global);
         }
     }
 
-    public Account getGlobalAccount() {
-        return accountRepository.findByGlobalAccountTrue()
-                .orElseThrow(() -> new RuntimeException("Compte global introuvable"));
+    // Récupérer le compte global (unique)
+    public AccountMutuelle getMutuelleGlobalAccount() {
+        return globalRepo.findAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Compte global mutuelle introuvable"));
     }
+
+    // Récupérer le compte d'un membre
+    public AccountMember getMemberAccount(Long memberId) {
+        return memberRepo.findByMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("Compte membre introuvable pour l'ID : " + memberId));
+    }
+
+    // Créer un compte membre (lors de l'inscription d'un nouveau membre)
+    @Transactional
+    public AccountMember createMemberAccount(Member member) {
+        AccountMember account = AccountMember.builder()
+                .member(member)
+                .isActive(true)
+                .savingAmount(BigDecimal.ZERO)
+                .solidarityAmount(BigDecimal.ZERO)
+                .borrowAmount(BigDecimal.ZERO)
+                .unpaidRegistrationAmount(BigDecimal.ZERO)
+                .unpaidRenfoulement(BigDecimal.ZERO)
+                .build();
+        return memberRepo.save(account);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // ─────────────── OPÉRATIONS FINANCIÈRES (avec mise à jour globale)
+    // ──────────────────────────────────────────────────────────────
+
+    /**
+     * Un membre fait une épargne
+     */
+    @Transactional
+    public void addSaving(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant d'épargne doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        // Mise à jour compte membre
+        memberAccount.setSavingAmount(memberAccount.getSavingAmount().add(amount));
+
+        // Mise à jour compte global (la mutuelle reçoit aussi cette épargne)
+        globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    /**
+     * Un membre paie les frais d'inscription
+     */
+    @Transactional
+    public void payRegistrationFee(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant des frais doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        BigDecimal currentUnpaid = memberAccount.getUnpaidRegistrationAmount();
+
+        if (currentUnpaid.compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalStateException("Aucuns frais d'inscription impayés");
+        }
+
+        if (amount.compareTo(currentUnpaid) > 0) {
+            throw new IllegalArgumentException("Le paiement dépasse le montant dû");
+        }
+
+        // Mise à jour compte membre
+        memberAccount.setUnpaidRegistrationAmount(currentUnpaid.subtract(amount));
+
+        // La mutuelle reçoit l'argent payé → augmente son épargne globale
+        globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    /**
+     * Ajouter une cotisation de solidarité (ex: décès, maladie, etc.)
+     */
+    @Transactional
+    public void addSolidarityContribution(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant de solidarité doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        memberAccount.setSolidarityAmount(memberAccount.getSolidarityAmount().add(amount));
+        globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(amount));
+
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    /**
+     * Un membre emprunte de l'argent à la mutuelle
+     */
+    @Transactional
+    public void borrowMoney(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant emprunté doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        // Vérifie que la mutuelle a assez d'épargne globale
+        if (globalAccount.getSavingAmount().compareTo(amount) < 0) {
+            throw new IllegalStateException("Fonds insuffisants dans la mutuelle");
+        }
+
+        memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().add(amount));
+        globalAccount.setSavingAmount(globalAccount.getSavingAmount().subtract(amount)); // prêt sorti
+
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    /**
+     * Remboursement d'un emprunt par un membre
+     */
+    @Transactional
+    public void repayBorrowedAmount(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant remboursé doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        if (memberAccount.getBorrowAmount().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Le remboursement dépasse l'emprunt en cours");
+        }
+
+        memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().subtract(amount));
+        globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    // Tu peux ajouter d'autres opérations : renfoulement
 }

@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.models;
+package com.mutuelle.mobille.models.auth;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

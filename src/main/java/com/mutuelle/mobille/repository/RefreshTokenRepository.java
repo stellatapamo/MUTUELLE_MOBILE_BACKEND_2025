@@ -1,7 +1,7 @@
 package com.mutuelle.mobille.repository;
 
-import com.mutuelle.mobille.models.AuthUser;
-import com.mutuelle.mobille.models.RefreshToken;
+import com.mutuelle.mobille.models.auth.AuthUser;
+import com.mutuelle.mobille.models.auth.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

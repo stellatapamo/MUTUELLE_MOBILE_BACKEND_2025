@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.models;
+package com.mutuelle.mobille.models.auth;
 
 import com.mutuelle.mobille.enums.Role;
 import jakarta.persistence.*;

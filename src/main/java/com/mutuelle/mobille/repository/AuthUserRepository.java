@@ -1,7 +1,7 @@
 package com.mutuelle.mobille.repository;
 
 import com.mutuelle.mobille.enums.Role;
-import com.mutuelle.mobille.models.AuthUser;
+import com.mutuelle.mobille.models.auth.AuthUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

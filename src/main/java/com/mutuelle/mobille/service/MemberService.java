@@ -2,10 +2,12 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
+import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.enums.Role;
-import com.mutuelle.mobille.models.Account;
-import com.mutuelle.mobille.models.AuthUser;
+import com.mutuelle.mobille.models.account.AccountMember;
+import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.models.Member;
+import com.mutuelle.mobille.models.MutuelleConfig;
 import com.mutuelle.mobille.repository.AuthUserRepository;
 import com.mutuelle.mobille.repository.MemberRepository;
 import com.mutuelle.mobille.utils.SecurityUtil;
@@ -20,6 +22,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class MemberService {
 
+    private final  MutuelleConfigService mutuelleConfigService;
     private final MemberRepository memberRepository;
     private final AuthUserRepository authUserRepository;  // On injecte directement le repo
     private final PasswordEncoder passwordEncoder;
@@ -29,41 +32,40 @@ public class MemberService {
     // ===========================================================================
     @Transactional
     public MemberResponseDTO registerMember(MemberRegisterDTO dto) {
-
-        if (memberRepository.existsByPhone(dto.phone())) {
+        MutuelleConfig config= mutuelleConfigService.getCurrentConfig();
+        if (memberRepository.existsByPhone(dto.getPhone())) {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé");
         }
-        if (authUserRepository.existsByEmail(dto.email())) {
+        if (authUserRepository.existsByEmail(dto.getEmail())) {
             throw new IllegalArgumentException("Cet email est déjà utilisé");
         }
 
         // 1. Création du compte financier
-        Account account = Account.builder()
-                .unpaidRegistrationAmount(new BigDecimal("5000.00"))
+        AccountMember accountMember = AccountMember.builder()
+                .unpaidRegistrationAmount(config.getRegistrationFeeAmount())
                 .solidarityAmount(BigDecimal.ZERO)
                 .borrowAmount(BigDecimal.ZERO)
                 .unpaidRenfoulement(BigDecimal.ZERO)
-                .globalAccount(false)
                 .isActive(true)
                 .build();
 
         // 2. Création du membre
         Member member = Member.builder()
-                .firstname(dto.firstname().trim())
-                .lastname(dto.lastname().trim())
-                .phone(dto.phone().trim())
+                .firstname(dto.getFirstname().trim())
+                .lastname(dto.getLastname().trim())
+                .phone(dto.getPhone().trim())
                 .isActive(true)
-                .account(account)
+                .accountMember(accountMember)
                 .build();
 
-        account.setMember(member); // bidirectionnel
+        accountMember.setMember(member); // bidirectionnel
         member = memberRepository.save(member); // cascade → compte sauvé aussi
 
         // 3. Création de l'AuthUser (EXACTEMENT comme ton superadmin)
         AuthUser authUser = new AuthUser();
-        authUser.setEmail(dto.email().toLowerCase().trim());
-        authUser.setPasswordHash(passwordEncoder.encode(dto.password()));
-        authUser.setRole(Role.MEMBER);           // ou userType selon ton enum
+        authUser.setEmail(dto.getEmail().toLowerCase().trim());
+        authUser.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        authUser.setRole(Role.MEMBER);
         authUser.setUserRefId(member.getId());
 
         authUserRepository.save(authUser);
@@ -108,7 +110,7 @@ public class MemberService {
     // MAPPER → DTO
     // ===========================================================================
     private MemberResponseDTO toResponseDTO(Member member) {
-        Account account = member.getAccount();
+        AccountMember accountMember = member.getAccountMember();
 
         return new MemberResponseDTO(
                 member.getId(),
@@ -118,10 +120,10 @@ public class MemberService {
                 null, // ou tu peux faire une jointure pour récupérer l'email si tu veux
                 member.getAvatar(),
                 member.isActive(),
-                account.getUnpaidRegistrationAmount(),
-                account.getSolidarityAmount(),
-                account.getBorrowAmount(),
-                account.getUnpaidRenfoulement(),
+                accountMember.getUnpaidRegistrationAmount(),
+                accountMember.getSolidarityAmount(),
+                accountMember.getBorrowAmount(),
+                accountMember.getUnpaidRenfoulement(),
                 member.getCreatedAt(),
                 member.getUpdatedAt()
         );

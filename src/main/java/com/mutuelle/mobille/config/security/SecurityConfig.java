@@ -56,10 +56,10 @@ public class SecurityConfig {
                         .requestMatchers("/super-admin/**").hasRole("SUPER_ADMIN")
 
                         // ADMIN + SUPER_ADMIN (hiérarchie)
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/member/**").hasRole("ADMIN")
 
                         // MEMBER + ADMIN + SUPER_ADMIN (hiérarchie)
-                        .requestMatchers("/member/**").hasRole("MEMBER")
+                        .requestMatchers("/api/member/**").hasRole("MEMBER")
 
                         .anyRequest().authenticated()
                 )

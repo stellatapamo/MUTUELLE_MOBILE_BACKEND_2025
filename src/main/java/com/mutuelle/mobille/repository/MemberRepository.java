@@ -30,14 +30,12 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findByLastnameContainingIgnoreCaseOrFirstnameContainingIgnoreCase(
             String search, String search2);
 
-    // LA MÉTHODE QUE TU VEUX : CHARGE LE MEMBRE + COMPTE EN UNE SEULE REQUÊTE
-    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.account WHERE m.id = :id")
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.accountMember WHERE m.id = :id")
     Optional<Member> findByIdWithAccount(@Param("id") Long id);
 
-    // Bonus : utile pour les recherches admin avec pagination
-    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.account WHERE m.isActive = true")
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.accountMember WHERE m.isActive = true")
     List<Member> findAllActiveWithAccount();
 
-    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.account WHERE m.phone = :phone")
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.accountMember WHERE m.phone = :phone")
     Optional<Member> findByPhoneWithAccount(@Param("phone") String phone);
 }

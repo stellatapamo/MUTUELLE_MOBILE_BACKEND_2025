@@ -1,28 +1,42 @@
 package com.mutuelle.mobille.dto.member;
 
 import jakarta.validation.constraints.*;
+import lombok.*;
 
-public record MemberRegisterDTO(
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class MemberRegisterDTO {
 
-        @NotBlank(message = "Le prénom est obligatoire")
-        @Size(min = 2, max = 50)
-        String firstname,
+        @NotNull(message = "Le prénom est obligatoire")      // bloque explicitement null
+        @NotBlank(message = "Le prénom ne peut pas être vide ou composé uniquement d'espaces")
+        @Size(min = 2, max = 50, message = "Le prénom doit contenir entre 2 et 50 caractères")
+        private String firstname;
 
-        @NotBlank(message = "Le nom est obligatoire")
-        @Size(min = 2, max = 50)
-        String lastname,
+        @NotNull(message = "Le nom est obligatoire")
+        @NotBlank(message = "Le nom ne peut pas être vide ou composé uniquement d'espaces")
+        @Size(min = 2, max = 50, message = "Le nom doit contenir entre 2 et 50 caractères")
+        private String lastname;
 
-        @NotBlank(message = "Le téléphone est obligatoire")
+        @NotNull(message = "Le téléphone est obligatoire")
+        @NotBlank(message = "Le téléphone ne peut pas être vide")
         @Pattern(regexp = "^(\\+?228)?[ -]?[0-9]{8}$",
-                message = "Numéro de téléphone togolais invalide")
-        String phone,
+                message = "Numéro de téléphone togolais invalide (ex: 90123456 ou +22890123456)")
+        private String phone;
 
-        @NotBlank(message = "L'email est obligatoire")
+        @NotNull(message = "L'email est obligatoire")
+        @NotBlank(message = "L'email ne peut pas être vide")
         @Email(message = "Format d'email invalide")
-        String email,
+        private String email;
 
-        @NotBlank(message = "Le mot de passe est obligatoire")
+        @NotNull(message = "Le mot de passe est obligatoire")
+        @NotBlank(message = "Le mot de passe ne peut pas être vide")
         @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
-        String password
+        private String password;
 
-) {}
+        public String getFirstname() {
+                System.out.println("getFirstname() appelé ! Valeur = " + firstname);
+                return firstname;
+        }
+}

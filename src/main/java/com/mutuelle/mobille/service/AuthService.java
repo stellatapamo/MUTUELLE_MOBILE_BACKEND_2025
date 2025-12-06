@@ -1,8 +1,8 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.auth.LoginResponseDto;
-import com.mutuelle.mobille.models.AuthUser;
-import com.mutuelle.mobille.models.RefreshToken;
+import com.mutuelle.mobille.models.auth.AuthUser;
+import com.mutuelle.mobille.models.auth.RefreshToken;
 import com.mutuelle.mobille.repository.*;
 import com.mutuelle.mobille.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.utils;
 
-import com.mutuelle.mobille.models.AuthUser;
+import com.mutuelle.mobille.models.auth.AuthUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;

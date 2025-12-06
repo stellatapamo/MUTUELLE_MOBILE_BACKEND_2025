@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.service;
 
-import com.mutuelle.mobille.models.AuthUser;
+import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.AuthUserRepository;
 import com.mutuelle.mobille.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -18,16 +18,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final JwtUtils jwtUtils;
 
     @Override
-    public UserDetails loadUserByUsername(String userIdStr) {
-        Long userId = Long.parseLong(userIdStr);
-        AuthUser authUser = authUserRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public UserDetails loadUserByUsername(String identifier) {
+        System.out.println("loadUserByUsername appelé avec : " + identifier);
 
-        // Rôle avec le préfixe Spring Security
+        AuthUser authUser;
+
+        authUser = authUserRepository.findByEmail(identifier)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé : " + identifier));
+
         String authority = "ROLE_" + authUser.getRole().name();
 
-        return User.withUsername(userId.toString())
-                .password("") // pas utilisé après login
+        return User.withUsername(authUser.getId().toString())
+                .password("")
                 .authorities(authority)
                 .build();
     }
