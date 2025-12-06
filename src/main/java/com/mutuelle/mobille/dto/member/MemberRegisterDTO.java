@@ -1,12 +1,16 @@
 package com.mutuelle.mobille.dto.member;
 
+
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class MemberRegisterDTO {
 
         @NotNull(message = "Le prénom est obligatoire")      // bloque explicitement null
@@ -35,8 +39,4 @@ public class MemberRegisterDTO {
         @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
         private String password;
 
-        public String getFirstname() {
-                System.out.println("getFirstname() appelé ! Valeur = " + firstname);
-                return firstname;
-        }
 }

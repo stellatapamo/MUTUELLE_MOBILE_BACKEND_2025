@@ -1,11 +1,15 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
+import com.mutuelle.mobille.dto.auth.LoginRequestDto;
+import com.mutuelle.mobille.dto.auth.LoginResponseDto;
+import com.mutuelle.mobille.dto.auth.RefreshRequestDto;
+import com.mutuelle.mobille.dto.auth.TokenResponseDto;
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
+import com.mutuelle.mobille.service.AuthService;
 import com.mutuelle.mobille.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +20,21 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
-@Tag(name = "Account")
-public  class MemberController {
+@Tag(name = "Members")
+public class MembersController {
 
     private final MemberService memberService;
+
+    @PostMapping("/register")
+    @Operation(summary = "Inscription d'un nouveau membre - crée automatiquement : Member + Account + AuthUser")
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> register(@Valid @RequestBody MemberRegisterDTO request) {
+        System.out.println("request.getEmail()request.getEmail()request.getEmail() : " + request.getEmail());
+        System.out.println("request.toString()  :  ");
+        System.out.println( request );
+        MemberResponseDTO response = memberService.registerMember(request);
+        return ResponseEntity.status(201)
+                .body(ApiResponseDto.created(response));
+    }
 
     @GetMapping("/me")
     @Operation(summary = "Récupérer son propre profil + solde du compte")
@@ -43,13 +58,4 @@ public  class MemberController {
         return ResponseEntity.ok(ApiResponseDto.ok(avatarUrl, "Avatar mis à jour"));
     }
 
-    @PostMapping("/register")
-    @Operation(summary = "Inscription d'un nouveau membre → crée automatiquement : Member + Account + AuthUser")
-    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> registerMember(
-            @Valid @RequestBody MemberRegisterDTO request) {
-
-        MemberResponseDTO response = memberService.registerMember(request);
-        return ResponseEntity.status(201)
-                .body(ApiResponseDto.created(response));
-    }
 }

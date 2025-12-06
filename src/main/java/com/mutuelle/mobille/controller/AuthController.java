@@ -2,6 +2,7 @@ package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.*;
 import com.mutuelle.mobille.dto.auth.*;
+import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,10 +23,10 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Connexion de l'utilisateur")
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+        System.out.println("request.getEmail()request.getEmail()request.getEmail() : " + request.getEmail());
         LoginResponseDto loginData = authService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(ApiResponseDto.ok(loginData, "Connexion réussie"));
     }
-
 
     @PostMapping("/refresh")
     @PreAuthorize("isAuthenticated()")

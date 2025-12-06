@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,14 +25,13 @@ public class ApiResponseDto<T> {
 
     private List<String> errors;
 
-    // Code HTTP personnalisé (401, 404, 422, etc.) → super utile côté front
-    @Builder.Default
-    private Integer code = null;
+    private Integer code;
 
     @Builder.Default
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp = LocalDateTime.now();
 
-
+    // Méthodes statiques helper (INCHANGÉES)
     public static <T> ApiResponseDto<T> ok(T data, String message) {
         return ApiResponseDto.<T>builder()
                 .success(true)
@@ -100,7 +100,7 @@ public class ApiResponseDto<T> {
                 .success(false)
                 .message("Données invalides")
                 .errors(errors)
-                .code(422) // Unprocessable Entity - standard pour @Valid
+                .code(422)
                 .build();
     }
 
