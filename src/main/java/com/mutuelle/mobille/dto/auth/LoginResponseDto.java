@@ -1,5 +1,8 @@
 package com.mutuelle.mobille.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.mutuelle.mobille.dto.admin.AdminProfileDTO;
+import com.mutuelle.mobille.dto.member.MemberProfileDTO;
 import com.mutuelle.mobille.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,10 +13,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL) // N'inclut que les champs non-null
 public class LoginResponseDto {
-    private Role userType;
+    private Role role;
     private Long userRefId;
     private String accessToken;
     private String refreshToken;
-    private Object profile; // Tu peux typer plus précisément plus tard (MemberDTO / AdminDTO)
+
+    // Profils typés (un seul sera non-null)
+    private MemberProfileDTO memberProfile;
+    private AdminProfileDTO adminProfile;
 }

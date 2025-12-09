@@ -31,7 +31,6 @@ public class ApiResponseDto<T> {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    // Méthodes statiques helper (INCHANGÉES)
     public static <T> ApiResponseDto<T> ok(T data, String message) {
         return ApiResponseDto.<T>builder()
                 .success(true)

@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mutuelle.mobille.models.account.AccountMember;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,7 +34,12 @@ public class Member {
     private boolean isActive = true;
 
     // Relation OneToOne obligatoire et bidirectionnelle avec Account
-    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY, optional = false)
+    @OneToOne(mappedBy = "member",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            optional = false)
+    @JsonManagedReference
     private AccountMember accountMember;
 
     @Column(name = "created_at", nullable = false, updatable = false)
