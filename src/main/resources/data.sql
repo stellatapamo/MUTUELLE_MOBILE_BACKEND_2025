@@ -15,3 +15,5 @@ SELECT
     (SELECT id FROM admins ORDER BY id ASC LIMIT 1)
 FROM dual
 WHERE NOT EXISTS (SELECT 1 FROM auth_users WHERE email = 'admin@mutuelle.com');
+
+
