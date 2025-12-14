@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -18,4 +19,7 @@ public class AccountMemberDTO {
     private BigDecimal borrowAmount;
     private BigDecimal unpaidRenfoulement;
     private boolean isActive;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

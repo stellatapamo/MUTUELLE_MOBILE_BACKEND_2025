@@ -33,7 +33,7 @@ public class MutuelleConfigService {
     @Cacheable(value = "mutuelleConfig", key = "'current'")
     public MutuelleConfig getCurrentConfig() {
         return configRepository.findTopByOrderByUpdatedAtDesc()
-                .orElseThrow(() -> new RuntimeException("Mutuelle configuration not found"));
+                .orElseThrow(() -> new RuntimeException("Configuration de la mutuelle non trouvée"));
     }
 
     @Transactional
@@ -43,6 +43,7 @@ public class MutuelleConfigService {
         config.setRegistrationFeeAmount(updatedConfig.getRegistrationFeeAmount());
         config.setLoanInterestRatePercent(updatedConfig.getLoanInterestRatePercent());
         config.setUpdatedBy(updatedBy);
+        // updatedAt est géré automatiquement par @PreUpdate
         return configRepository.save(config);
     }
 }

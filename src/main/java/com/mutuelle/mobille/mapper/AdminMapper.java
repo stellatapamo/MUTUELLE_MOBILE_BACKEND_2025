@@ -12,11 +12,8 @@ public class AdminMapper {
 
         return AdminProfileDTO.builder()
                 .id(admin.getId())
-                .firstname(admin.getFirstname())
-                .lastname(admin.getLastname())
-                .phone(admin.getPhone())
-                .avatar(admin.getAvatar())
-                .isActive(admin.isActive())
+                .avatar(admin.getFullName())
+                .isActive(admin.getIsActive())
                 .createdAt(admin.getCreatedAt())
                 .updatedAt(admin.getUpdatedAt())
                 .build();

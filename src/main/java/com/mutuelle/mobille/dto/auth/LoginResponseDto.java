@@ -21,6 +21,5 @@ public class LoginResponseDto {
     private String refreshToken;
 
     // Profils typés (un seul sera non-null)
-    private MemberProfileDTO memberProfile;
-    private AdminProfileDTO adminProfile;
+    private Object profile;
 }
