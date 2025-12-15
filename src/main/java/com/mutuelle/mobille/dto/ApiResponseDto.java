@@ -27,6 +27,12 @@ public class ApiResponseDto<T> {
 
     private Integer code;
 
+    //pagination
+    private Long totalElements;
+    private Integer totalPages;
+    private Integer currentPage;
+    private Integer pageSize;
+
     @Builder.Default
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp = LocalDateTime.now();
@@ -42,6 +48,21 @@ public class ApiResponseDto<T> {
 
     public static <T> ApiResponseDto<T> ok(T data) {
         return ok(data, "Opération réussie");
+    }
+
+    public static <T> ApiResponseDto<T> okPaged(T content, String message,
+                                                long totalElements, int totalPages,
+                                                int currentPage, int pageSize) {
+        return ApiResponseDto.<T>builder()
+                .success(true)
+                .message(message)
+                .data(content)
+                .code(200)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .currentPage(currentPage)
+                .pageSize(pageSize)
+                .build();
     }
 
     public static <T> ApiResponseDto<T> created(T data) {
