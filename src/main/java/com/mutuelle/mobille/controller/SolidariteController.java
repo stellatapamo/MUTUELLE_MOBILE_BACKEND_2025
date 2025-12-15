@@ -1,34 +1,35 @@
 package com.mutuelle.mobille.controller;
 
+import com.mutuelle.mobille.dto.ApiResponseDto;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.service.SolidariteService;
-import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/solidarite")
+@RequiredArgsConstructor
+@Tag(name = "Solidarité")
 public class SolidariteController {
 
     private final SolidariteService solidariteService;
 
-    // Injection du service
-    public SolidariteController(SolidariteService solidariteService) {
-        this.solidariteService = solidariteService;
-    }
-
-    // Classe interne pour recevoir les données de paiement
+    // ─────────────────────────────────────────────
+    // DTO DE REQUÊTE
+    // ─────────────────────────────────────────────
     public static class PaiementRequest {
+
         private Long membreId;
         private BigDecimal montant;
         private Long sessionId;
 
-        // Getters et Setters
         public Long getMembreId() {
             return membreId;
         }
@@ -54,103 +55,43 @@ public class SolidariteController {
         }
     }
 
-    // endpoint pour enregistrer un paiement de solidarité
-
-    /**
-     * Enregistrer un paiement de solidarité
-     * POST /api/solidarite/payer
-     */
+    // PAIEMENT DE LA SOLIDARITÉ
     @PostMapping("/payer")
-    public ResponseEntity<Map<String, Object>> enregistrerPaiement(@RequestBody PaiementRequest request) {
+    @Operation(summary = "Enregistrer un paiement de solidarité")
+    public ResponseEntity<ApiResponseDto<Void>> payerSolidarite(
+            @Valid @RequestBody PaiementRequest request) {
+        solidariteService.paySolidarity(
+                request.getMembreId(),
+                request.getMontant(),
+                request.getSessionId());
 
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            // Appeler le service pour enregistrer le paiement
-            Transaction transaction = solidariteService.enregistrerPaiement(
-                    request.getMembreId(),
-                    request.getMontant(),
-                    request.getSessionId());
-
-            // Construire la réponse de succès
-            response.put("success", true);
-            response.put("message", "Paiement de solidarité enregistré avec succès");
-            response.put("transaction", transaction);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
-        } catch (IllegalArgumentException e) {
-            // Erreur de validation (montant invalide)
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-
-        } catch (RuntimeException e) {
-            // Erreur (membre ou session introuvable)
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
+        return ResponseEntity.ok(
+                ApiResponseDto.ok(null, "Paiement de solidarité enregistré avec succès"));
     }
 
-    // endpoint pour récupérer l'historique des paiements de solidarité d'un membre
-
-    /**
-     * Récupérer l'historique des paiements de solidarité d'un membre
-     * GET /api/solidarite/membre/{id}/historique
-     */
+    // ─────────────────────────────────────────────
+    // HISTORIQUE DES PAIEMENTS
+    // ─────────────────────────────────────────────
     @GetMapping("/membre/{id}/historique")
-    public ResponseEntity<Map<String, Object>> getHistoriquePaiements(@PathVariable Long id) {
+    @Operation(summary = "Historique des paiements de solidarité d'un membre")
+    public ResponseEntity<ApiResponseDto<List<Transaction>>> historiqueSolidarite(
+            @PathVariable Long id) {
+        List<Transaction> transactions = solidariteService.getSolidarityHistory(id);
 
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            // Récupérer les transactions
-            List<Transaction> transactions = solidariteService.getHistoriquePaiements(id);
-
-            // Calculer le total payé
-            BigDecimal totalPaye = solidariteService.calculerTotalPaye(id);
-
-            // Construire la réponse
-            response.put("success", true);
-            response.put("membreId", id);
-            response.put("transactions", transactions);
-            response.put("totalPaye", totalPaye);
-            response.put("nombrePaiements", transactions.size());
-
-            return ResponseEntity.ok(response);
-
-        } catch (RuntimeException e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
+        return ResponseEntity.ok(
+                ApiResponseDto.ok(transactions, "Historique récupéré avec succès"));
     }
 
-    // endpoints pour recuperer le total payé en solidarité par un membre
-
-    /**
-     * Récupérer le total payé en solidarité par un membre
-     * GET /api/solidarite/membre/{id}/total
-     */
+    // ─────────────────────────────────────────────
+    // TOTAL PAYÉ
+    // ─────────────────────────────────────────────
     @GetMapping("/membre/{id}/total")
-    public ResponseEntity<Map<String, Object>> getTotalPaye(@PathVariable Long id) {
+    @Operation(summary = "Total payé en solidarité par un membre")
+    public ResponseEntity<ApiResponseDto<BigDecimal>> totalSolidarite(
+            @PathVariable Long id) {
+        BigDecimal total = solidariteService.getTotalSolidarityPaid(id);
 
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            BigDecimal totalPaye = solidariteService.calculerTotalPaye(id);
-
-            response.put("success", true);
-            response.put("membreId", id);
-            response.put("totalPaye", totalPaye);
-
-            return ResponseEntity.ok(response);
-
-        } catch (RuntimeException e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
+        return ResponseEntity.ok(
+                ApiResponseDto.ok(total, "Total de solidarité récupéré avec succès"));
     }
 }
