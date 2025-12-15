@@ -7,4 +7,5 @@ public enum TransactionType {
     EMPRUNT,
     REMBOURSSEMENT,
     RENFOULEMENT,
+    INTERET
 }

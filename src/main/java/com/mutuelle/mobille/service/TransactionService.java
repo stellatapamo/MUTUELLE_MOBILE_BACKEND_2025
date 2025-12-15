@@ -2,9 +2,9 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.repository.TransactionRepository;
-import com.mutuelle.mobille.models.Transaction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,92 +17,98 @@ import java.math.BigDecimal;
 public class TransactionService {
 
     private final AccountService accountService;
+    private final InteretService interetService;   // ✅ NOUVEAU
     private final TransactionRepository transactionRepository;
     private final SessionService sessionService;
 
     /**
-     * Effectuer un emprunt
+     * =======================
+     * EMPRUNT D'UN MEMBRE
+     * =======================
      */
     public Transaction emprunter(Long memberId, BigDecimal montantSouhaite) {
 
-        AccountMember account = accountService.getMemberAccount(memberId);
+        AccountMember emprunteur = accountService.getMemberAccount(memberId);
 
-        // 1️⃣ Vérifier que le membre a déjà épargné
-        BigDecimal epargne = account.getSavingAmount();
-        if (epargne.compareTo(BigDecimal.ZERO) <= 0) {
+        // 1️⃣ Vérification : le membre a déjà épargné
+        if (emprunteur.getSavingAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalStateException("Un membre sans épargne ne peut pas emprunter");
         }
 
-        // 2️⃣ Vérifier qu'il n'a pas déjà un emprunt actif
-        if (account.getBorrowAmount().compareTo(BigDecimal.ZERO) > 0) {
-            throw new IllegalStateException("Un membre ne peut avoir qu'un seul emprunt actif");
+        // 2️⃣ Vérification : un seul emprunt actif
+        if (emprunteur.getBorrowAmount().compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalStateException("Ce membre a déjà un emprunt actif");
         }
 
-        // 3️⃣ Calculer le plafond autorisé
-        BigDecimal plafond = calculerPlafond(epargne);
+        // 3️⃣ Calcul du plafond (via InteretService ou Config)
+        BigDecimal plafond = interetService.calculerPlafond(emprunteur.getSavingAmount());
 
         if (montantSouhaite.compareTo(plafond) > 0) {
             throw new IllegalArgumentException(
-                    "Montant demandé supérieur au plafond autorisé : " + plafond
+                    "Montant supérieur au plafond autorisé : " + plafond
             );
         }
 
-        // 4️⃣ Calculer l’intérêt (3%)
-        BigDecimal tauxInteret = BigDecimal.valueOf(0.03);
-        BigDecimal interet = montantSouhaite.multiply(tauxInteret);
+        // 4️⃣ Calcul de l’intérêt
+        BigDecimal interet = interetService.calculerInteret(montantSouhaite);
 
-        // Montant réellement versé au membre
-        BigDecimal montantNet = montantSouhaite.subtract(interet);
-
-        // 5️⃣ Appliquer la logique financière (débit)
+        // 5️⃣ La mutuelle sort le montant BRUT
         accountService.borrowMoney(memberId, montantSouhaite);
 
-        // 6️⃣ Créer la transaction EMPRUNT
-        Transaction transaction = Transaction.builder()
-                .amount(montantNet)
+        // 6️⃣ Redistribution immédiate de l’intérêt
+        interetService.redistribuerInteret(memberId, interet);
+
+        // 7️⃣ Historique TRANSACTION (montant NET reçu)
+        Transaction transactionEmprunt = Transaction.builder()
+                .amount(montantSouhaite.subtract(interet))
                 .transactionDirection(TransactionDirection.DEBIT)
                 .transactionType(TransactionType.EMPRUNT)
-                .accountMember(account)
+                .accountMember(emprunteur)
+                .session(sessionService.getCurrentSession())
+                .build();
+
+        transactionRepository.save(transactionEmprunt);
+
+        // 8️⃣ Historique TRANSACTION INTERET
+        Transaction transactionInteret = Transaction.builder()
+                .amount(interet)
+                .transactionDirection(TransactionDirection.CREDIT)
+                .transactionType(TransactionType.INTERET)
+                .accountMember(emprunteur)
+                .session(sessionService.getCurrentSession())
+                .build();
+
+        transactionRepository.save(transactionInteret);
+
+        return transactionEmprunt;
+    }
+
+    /**
+     * =======================
+     * REMBOURSEMENT D'UN EMPRUNT
+     * =======================
+     */
+    public Transaction rembourser(Long memberId, BigDecimal montant) {
+
+        AccountMember membre = accountService.getMemberAccount(memberId);
+
+        // 1️⃣ Vérifier qu'il existe un emprunt actif
+        if (membre.getBorrowAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("Ce membre n'a aucun emprunt actif");
+        }
+
+        // 2️⃣ Appliquer la logique financière
+        accountService.repayBorrowedAmount(memberId, montant);
+
+        // 3️⃣ Historique TRANSACTION REMBOURSEMENT
+        Transaction transaction = Transaction.builder()
+                .amount(montant)
+                .transactionDirection(TransactionDirection.CREDIT)
+                .transactionType(TransactionType.REMBOURSSEMENT)
+                .accountMember(membre)
                 .session(sessionService.getCurrentSession())
                 .build();
 
         return transactionRepository.save(transaction);
     }
-
-    /**
-     * Calcul du plafond selon l'épargne
-     */
-    public BigDecimal calculerPlafond(BigDecimal epargne) {
-
-        BigDecimal plafond;
-
-        if (epargne.compareTo(BigDecimal.valueOf(500_000)) <= 0) {
-            plafond = epargne.multiply(BigDecimal.valueOf(5));
-            plafond = plafond.min(BigDecimal.valueOf(2_000_000));
-        }
-        else if (epargne.compareTo(BigDecimal.valueOf(1_000_000)) <= 0) {
-            plafond = epargne.multiply(BigDecimal.valueOf(4));
-        }
-        else if (epargne.compareTo(BigDecimal.valueOf(1_500_000)) <= 0) {
-            plafond = epargne.multiply(BigDecimal.valueOf(3));
-        }
-        else if (epargne.compareTo(BigDecimal.valueOf(2_000_000)) <= 0) {
-            plafond = epargne.multiply(BigDecimal.valueOf(2));
-            plafond = plafond.min(BigDecimal.valueOf(4_000_000));
-        }
-        else {
-            plafond = epargne.multiply(BigDecimal.valueOf(1.5));
-        }
-
-        return plafond;
-    }
-
-    /**
-     * Obtenir le montant max empruntable
-     */
-    public BigDecimal getPlafondEmprunt(Long memberId) {
-        AccountMember account = accountService.getMemberAccount(memberId);
-        return calculerPlafond(account.getSavingAmount());
-    }
 }
-
