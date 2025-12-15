@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 import java.math.BigDecimal;
 
@@ -139,7 +140,34 @@ public class AccountService {
         memberRepo.save(memberAccount);
         globalRepo.save(globalAccount);
     }
+    /**
+     * Retourne tous les comptes membres
+     */
+    public List<AccountMember> getAllMemberAccounts() {
+        return memberRepo.findAll();
+    }
 
+    /**
+     * Sauvegarde un compte membre (après redistribution)
+     */
+    public void saveMemberAccount(AccountMember account) {
+        memberRepo.save(account);
+    }
+
+    /**
+     * Ajoute un montant à la caisse de la mutuelle
+     * (miettes d'intérêts non redistribuées)
+     */
+    @Transactional
+    public void addToMutuelleCaisse(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        AccountMutuelle global = getMutuelleGlobalAccount();
+        global.setSavingAmount(global.getSavingAmount().add(amount));
+        globalRepo.save(global);
+    }
     /**
      * Un membre emprunte de l'argent à la mutuelle
      */

@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mutuelle.mobille.models.account.AccountMember;
 import jakarta.persistence.*;
@@ -39,7 +40,7 @@ public class Member {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             optional = false)
-    @JsonManagedReference
+    @JsonBackReference
     private AccountMember accountMember;
 
     @Column(name = "created_at", nullable = false, updatable = false)

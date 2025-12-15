@@ -20,7 +20,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     // Méthodes simples (optionnelles, utiles pour d'autres cas)
     List<Transaction> findByTransactionType(TransactionType type);
+
     List<Transaction> findByTransactionDirection(TransactionDirection direction);
+
     List<Transaction> findByTransactionTypeAndTransactionDirection(TransactionType type, TransactionDirection direction);
 
     // Méthode dynamique avec filtres (utilisée dans le service)

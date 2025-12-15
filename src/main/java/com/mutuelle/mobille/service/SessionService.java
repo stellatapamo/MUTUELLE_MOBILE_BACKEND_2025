@@ -96,4 +96,13 @@ public class SessionService {
                 .updatedAt(session.getUpdatedAt())
                 .build();
     }
+    /**
+     * Retourne la session actuellement en cours (inProgress = true)
+     */
+    public Session getCurrentSession() {
+        return sessionRepository.findByInProgressTrue()
+                .orElseThrow(() ->
+                        new RuntimeException("Aucune session active en cours"));
+    }
+
 }
