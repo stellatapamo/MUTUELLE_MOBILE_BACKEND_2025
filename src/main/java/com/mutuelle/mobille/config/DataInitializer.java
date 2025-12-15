@@ -36,13 +36,13 @@ public class DataInitializer implements CommandLineRunner {
     private final ResourceLoader resourceLoader;
 
     @Override
-    @Transactional // Très important pour que les deux saves soient dans la même transaction
     public void run(String... args) {
         createSuperAdminIfNotExists();
         createDefaultAdminIfNotExists();
         initializeMembersIfNeeded();
     }
 
+    @Transactional // Très important pour que les deux saves soient dans la même transaction
     private void createSuperAdminIfNotExists() {
         String email = "superadmin@mutuelle.com";
 
@@ -68,6 +68,7 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("Super Admin créé avec succès : " + email + " (mot de passe : admin123)");
     }
 
+    @Transactional
     private void createDefaultAdminIfNotExists() {
         String email = "admin@mutuelle.com";
 
@@ -94,7 +95,7 @@ public class DataInitializer implements CommandLineRunner {
     // Nouvelle méthode pour les membres
     private void initializeMembersIfNeeded() {
         // Vérification rapide : si des membres existent déjà, on skippe tout
-        if (memberRepository.count() > 100) {
+        if (memberRepository.count() > 60) {
             log.info("Des membres existent déjà en base ({}). Initialisation des 60 membres ignorée.",
                     memberRepository.count());
             return;
