@@ -19,9 +19,6 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     // - save(Session session)
     // - delete(Session session)
 
-    // Récupérer la session en cours (il ne doit y en avoir qu'une seule)
-    Optional<Session> findByInProgressTrue();
-
     // récupérer les sessions par exercice
     List<Session> findByExerciceId(Long exerciceId);
 
