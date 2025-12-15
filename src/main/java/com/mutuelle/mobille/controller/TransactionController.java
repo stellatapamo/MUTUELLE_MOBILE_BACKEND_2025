@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/emprunt-remboursement")
 @RequiredArgsConstructor
-@Tag(name = "mprunt-remboursement")
+@Tag(name = "emprunt-remboursement")
 public class TransactionController {
 
     private final TransactionService transactionService;
