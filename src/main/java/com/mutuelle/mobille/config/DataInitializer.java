@@ -1,17 +1,28 @@
 package com.mutuelle.mobille.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.enums.Role;
 import com.mutuelle.mobille.models.Admin;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.AdminRepository;
 import com.mutuelle.mobille.repository.AuthUserRepository;
+import com.mutuelle.mobille.repository.MemberRepository;
+import com.mutuelle.mobille.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.util.List;
+
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
@@ -19,11 +30,17 @@ public class DataInitializer implements CommandLineRunner {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private final MemberService memberService;
+    private final MemberRepository memberRepository;
+    private final ObjectMapper objectMapper;
+    private final ResourceLoader resourceLoader;
+
     @Override
     @Transactional // Très important pour que les deux saves soient dans la même transaction
     public void run(String... args) {
         createSuperAdminIfNotExists();
         createDefaultAdminIfNotExists();
+        initializeMembersIfNeeded();
     }
 
     private void createSuperAdminIfNotExists() {
@@ -72,5 +89,42 @@ public class DataInitializer implements CommandLineRunner {
         authUserRepository.save(authUser);
 
         System.out.println("Admin classique créé avec succès : " + email + " (mot de passe : admin123)");
+    }
+
+    // Nouvelle méthode pour les membres
+    private void initializeMembersIfNeeded() {
+        // Vérification rapide : si des membres existent déjà, on skippe tout
+        if (memberRepository.count() > 100) {
+            log.info("Des membres existent déjà en base ({}). Initialisation des 60 membres ignorée.",
+                    memberRepository.count());
+            return;
+        }
+
+        log.info("Aucun membre trouvé. Initialisation des 60 membres existants...");
+
+        try (InputStream inputStream = resourceLoader
+                .getResource("classpath:data/members.json")
+                .getInputStream()) {
+
+            List<MemberRegisterDTO> members = objectMapper.readValue(
+                    inputStream,
+                    new TypeReference<List<MemberRegisterDTO>>() {}
+            );
+
+            for (MemberRegisterDTO dto : members) {
+                try {
+                    memberService.registerMember(dto);
+                    log.info("Membre initialisé : {} {}", dto.getFirstname(), dto.getLastname());
+                } catch (Exception e) {
+                    log.warn("Échec création membre {} {} : {}",
+                            dto.getFirstname(), dto.getLastname(), e.getMessage());
+                    // On continue avec les autres membres même si un échoue
+                }
+            }
+
+            log.info("Initialisation des 60 membres terminée.");
+        } catch (Exception e) {
+            log.error("Erreur lors du chargement du fichier initial-members.json", e);
+        }
     }
 }
