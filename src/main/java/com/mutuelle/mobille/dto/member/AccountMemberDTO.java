@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AccountMemberDTO {
     private Long id;
+    private BigDecimal savingAmount;
     private BigDecimal unpaidRegistrationAmount;
     private BigDecimal solidarityAmount;
     private BigDecimal borrowAmount;

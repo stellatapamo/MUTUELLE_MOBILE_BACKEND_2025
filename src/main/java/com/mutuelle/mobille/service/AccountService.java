@@ -80,12 +80,51 @@ public class AccountService {
         AccountMember memberAccount = getMemberAccount(memberId);
         AccountMutuelle globalAccount = getMutuelleGlobalAccount();
 
+        BigDecimal currentAmount = memberAccount.getSavingAmount();
+        if (currentAmount == null) {
+            currentAmount = BigDecimal.ZERO;
+        }
+
         // Mise à jour compte membre
-        memberAccount.setSavingAmount(memberAccount.getSavingAmount().add(amount));
+        memberAccount.setSavingAmount(currentAmount.add(amount));
 
         // Mise à jour compte global (la mutuelle reçoit aussi cette épargne)
-        globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+        globalAccount.setSavingAmount(currentAmount.add(amount));
 
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    /**
+     * Retrait d'épargne par un membre
+     */
+    @Transactional
+    public void withdrawSaving(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant du retrait doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        BigDecimal currentAmount = memberAccount.getSavingAmount();
+        if (currentAmount == null) {
+            currentAmount = BigDecimal.ZERO;
+        }
+
+
+        // Vérifie que le membre a assez d'épargne
+        if (currentAmount.compareTo(amount) < 0) {
+            throw new IllegalStateException("Solde insuffisant pour effectuer le retrait");
+        }
+
+        // Mise à jour du compte membre
+        memberAccount.setSavingAmount(currentAmount.subtract(amount));
+
+        // Mise à jour du compte global
+        globalAccount.setSavingAmount(globalAccount.getSavingAmount().subtract(amount));
+
+        // Sauvegarde
         memberRepo.save(memberAccount);
         globalRepo.save(globalAccount);
     }

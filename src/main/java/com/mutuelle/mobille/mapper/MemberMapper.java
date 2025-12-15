@@ -29,11 +29,14 @@ public class MemberMapper {
 
         return AccountMemberDTO.builder()
                 .id(account.getId())
+                .savingAmount(account.getSavingAmount())
                 .unpaidRegistrationAmount(account.getUnpaidRegistrationAmount())
                 .solidarityAmount(account.getSolidarityAmount())
                 .borrowAmount(account.getBorrowAmount())
                 .unpaidRenfoulement(account.getUnpaidRenfoulement())
                 .isActive(account.isActive())
+                .createdAt(account.getCreatedAt())
+                .updatedAt(account.getUpdatedAt())
                 .build();
     }
 }
