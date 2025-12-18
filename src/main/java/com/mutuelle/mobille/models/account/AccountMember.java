@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.models.account;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mutuelle.mobille.models.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -44,6 +45,7 @@ public class AccountMember {
     private boolean isActive = true;
 
     @OneToOne(fetch = FetchType.LAZY)
+    @JsonManagedReference
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 

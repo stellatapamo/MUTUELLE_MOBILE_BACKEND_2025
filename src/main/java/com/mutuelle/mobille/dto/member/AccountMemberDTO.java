@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -11,17 +12,14 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MemberProfileDTO {
+public class AccountMemberDTO {
     private Long id;
-    private String firstname;
-    private String lastname;
-    private String phone;
-    private String avatar;
+    private BigDecimal unpaidRegistrationAmount;
+    private BigDecimal solidarityAmount;
+    private BigDecimal borrowAmount;
+    private BigDecimal unpaidRenfoulement;
     private boolean isActive;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    // Les données du compte
-    private AccountMemberDTO account;
 }

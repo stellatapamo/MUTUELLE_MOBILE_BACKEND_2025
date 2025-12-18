@@ -1,6 +1,12 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.auth.LoginResponseDto;
+import com.mutuelle.mobille.dto.member.MemberProfileDTO;
+import com.mutuelle.mobille.mapper.AdminMapper;
+import com.mutuelle.mobille.mapper.MemberMapper;
+import com.mutuelle.mobille.models.Admin;
+import com.mutuelle.mobille.models.Member;
+import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.models.auth.RefreshToken;
 import com.mutuelle.mobille.repository.*;
@@ -13,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +34,8 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepo;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
+    private final MemberMapper memberMapper;
+    private final AdminMapper adminMapper;
 
     public LoginResponseDto login(String email, String password) {
         AuthUser authUser = authUserRepo.findByEmail(email)
@@ -48,14 +57,21 @@ public class AuthService {
         refreshTokenRepo.save(refreshToken);
 
         Object profile = switch (authUser.getRole()) {
-            case MEMBER -> memberRepo.findById(authUser.getUserRefId()).orElse(null);
-            case ADMIN -> adminRepo.findById(authUser.getUserRefId()).orElse(null);
-            case SUPER_ADMIN -> adminRepo.findById(authUser.getUserRefId()).orElse(null);
-//            default -> null;
+            case MEMBER -> {
+                Member member = memberRepo.findById(authUser.getUserRefId())
+                        .orElse(null);
+                yield member != null ? memberMapper.toProfileDTO(member) : null;
+            }
+            case ADMIN, SUPER_ADMIN -> {
+                Admin admin = adminRepo.findById(authUser.getUserRefId())
+                        .orElse(null);
+                yield admin != null ? adminMapper.toProfileDTO(admin) : null; // supposant que tu as un AdminMapper similaire
+            }
+            default -> null;
         };
 
         return LoginResponseDto.builder()
-                .userType(authUser.getRole())
+                .role(authUser.getRole())
                 .userRefId(authUser.getUserRefId())
                 .accessToken(accessToken)
                 .refreshToken(refreshTokenValue)

@@ -57,14 +57,15 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
-                                "/webjars/**"
+                                "/webjars/**",
+                                "/api/config/current"
                         ).permitAll()
 
                         // SUPER_ADMIN uniquement
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
 
                         // ADMIN + SUPER_ADMIN (grâce à la hiérarchie)
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**","/api/config/**").hasRole("ADMIN")
 
                         // MEMBER + ADMIN + SUPER_ADMIN
                         .requestMatchers("/api/members/me", "/api/members/me/**").hasRole("MEMBER")
