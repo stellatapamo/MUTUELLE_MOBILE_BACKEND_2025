@@ -90,6 +90,34 @@ public class AccountService {
     }
 
     /**
+     * Retrait d'épargne par un membre
+     */
+    @Transactional
+    public void withdrawSaving(Long memberId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant du retrait doit être positif");
+        }
+
+        AccountMember memberAccount = getMemberAccount(memberId);
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        // Vérifie que le membre a assez d'épargne
+        if (memberAccount.getSavingAmount().compareTo(amount) < 0) {
+            throw new IllegalStateException("Solde insuffisant pour effectuer le retrait");
+        }
+
+        // Mise à jour du compte membre
+        memberAccount.setSavingAmount(memberAccount.getSavingAmount().subtract(amount));
+
+        // Mise à jour du compte global
+        globalAccount.setSavingAmount(globalAccount.getSavingAmount().subtract(amount));
+
+        // Sauvegarde
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+    /**
      * Un membre paie les frais d'inscription
      */
     @Transactional
