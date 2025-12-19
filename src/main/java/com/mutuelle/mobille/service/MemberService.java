@@ -43,6 +43,7 @@ public class MemberService {
         // 1. Création du compte financier
         AccountMember accountMember = AccountMember.builder()
                 .unpaidRegistrationAmount(config.getRegistrationFeeAmount())
+                .savingAmount(BigDecimal.ZERO)
                 .solidarityAmount(BigDecimal.ZERO)
                 .borrowAmount(BigDecimal.ZERO)
                 .unpaidRenfoulement(BigDecimal.ZERO)

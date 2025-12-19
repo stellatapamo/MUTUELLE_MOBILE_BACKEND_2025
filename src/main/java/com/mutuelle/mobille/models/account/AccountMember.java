@@ -30,6 +30,7 @@ public class AccountMember {
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
     // epargne
+    @Builder.Default
     @Column(name = "saving_amount", precision = 12, scale = 2)
     private BigDecimal savingAmount = BigDecimal.ZERO;
 

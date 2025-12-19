@@ -1,7 +1,9 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
+import com.mutuelle.mobille.dto.transaction.epargne.TransactionEpargneDto;
 import com.mutuelle.mobille.enums.TransactionDirection;
+import com.mutuelle.mobille.mapper.transactionEpargne.DtoMapper;
 import com.mutuelle.mobille.models.Member;
 import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.models.Transaction;
@@ -45,7 +47,7 @@ public class EpargneController {
             content = @Content(schema = @Schema(implementation = Transaction.class))
     )
     @ApiResponse(responseCode = "400", description = "Paramètres invalides")
-    public ResponseEntity<ApiResponseDto<Transaction>> transactionEpargne(
+    public ResponseEntity<ApiResponseDto<TransactionEpargneDto>> transactionEpargne(
             @Parameter(description = "ID du membre concerné", example = "1")
             @RequestParam Long memberId,
 
@@ -86,99 +88,14 @@ public class EpargneController {
         Transaction transaction =
                 epargneService.processEpargne(memberId, sessionId, amount, direction);
 
-        return ResponseEntity.ok(
-                ApiResponseDto.ok(transaction, "Transaction d'épargne effectuée avec succès")
-        );
-    }
-
-    // ========================================================================================
-    // 2) LISTER TOUTES LES TRANSACTIONS
-    // ========================================================================================
-    @GetMapping
-    @Operation(summary = "Lister toutes les transactions d'épargne")
-    public ResponseEntity<ApiResponseDto<List<Transaction>>> listAll() {
-
-        List<Transaction> list = epargneService.getAllEpargneTransactions();
+        TransactionEpargneDto dto = DtoMapper.toTransactionDto(transaction);
 
         return ResponseEntity.ok(
-                ApiResponseDto.ok(list, "Liste récupérée avec succès")
+                ApiResponseDto.ok(dto, "Transaction d'épargne effectuée avec succès")
         );
+
+
     }
 
-    // ========================================================================================
-    // 3) LISTER PAR MEMBRE
-    // ========================================================================================
-    @GetMapping("/member/{memberId}")
-    @Operation(summary = "Lister les transactions d'épargne d'un membre")
-    public ResponseEntity<ApiResponseDto<List<Transaction>>> getByMember(
-            @PathVariable Long memberId) {
 
-        if (!memberRepository.existsById(memberId)) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("Le membre avec l'id " + memberId + " n'existe pas")
-            );
-        }
-
-        List<Transaction> list = epargneService.getEpargneByMember(memberId);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.ok(list, "Transactions récupérées avec succès")
-        );
-    }
-
-    // ========================================================================================
-    // 4) LISTER PAR DIRECTION (CREDIT / DEBIT)
-    // ========================================================================================
-    @GetMapping("/direction")
-    @Operation(summary = "Lister les transactions selon la direction")
-    public ResponseEntity<ApiResponseDto<List<Transaction>>> getByDirection(
-            @RequestParam String transactionDirection) {
-
-        TransactionDirection direction;
-        try {
-            direction = TransactionDirection.valueOf(transactionDirection.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("TransactionDirection invalide : utilisez CREDIT ou DEBIT")
-            );
-        }
-
-        List<Transaction> list = epargneService.getEpargneByDirection(direction);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.ok(list, "Transactions récupérées avec succès")
-        );
-    }
-
-    // ========================================================================================
-    // 5) LISTER PAR MEMBRE + DIRECTION
-    // ========================================================================================
-    @GetMapping("/member/{memberId}/direction")
-    @Operation(summary = "Lister les transactions d'un membre selon la direction")
-    public ResponseEntity<ApiResponseDto<List<Transaction>>> getByMemberAndDirection(
-            @PathVariable Long memberId,
-            @RequestParam String transactionDirection) {
-
-        if (!memberRepository.existsById(memberId)) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("Le membre avec l'id " + memberId + " n'existe pas")
-            );
-        }
-
-        TransactionDirection direction;
-        try {
-            direction = TransactionDirection.valueOf(transactionDirection.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("TransactionDirection invalide : utilisez CREDIT ou DEBIT")
-            );
-        }
-
-        List<Transaction> list =
-                epargneService.getEpargneByMemberAndDirection(memberId, direction);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.ok(list, "Transactions récupérées avec succès")
-        );
-    }
 }
