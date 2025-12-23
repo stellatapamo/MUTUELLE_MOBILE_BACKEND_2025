@@ -12,17 +12,23 @@ import com.mutuelle.mobille.repository.AuthUserRepository;
 import com.mutuelle.mobille.repository.MemberRepository;
 import com.mutuelle.mobille.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
 
-    private final  MutuelleConfigService mutuelleConfigService;
+    private final MutuelleConfigService mutuelleConfigService;
     private final MemberRepository memberRepository;
     private final AuthUserRepository authUserRepository;  // On injecte directement le repo
     private final PasswordEncoder passwordEncoder;
@@ -32,7 +38,7 @@ public class MemberService {
     // ===========================================================================
     @Transactional
     public MemberResponseDTO registerMember(MemberRegisterDTO dto) {
-        MutuelleConfig config= mutuelleConfigService.getCurrentConfig();
+        MutuelleConfig config = mutuelleConfigService.getCurrentConfig();
         if (memberRepository.existsByPhone(dto.getPhone())) {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé");
         }
@@ -68,6 +74,7 @@ public class MemberService {
         authUser.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         authUser.setRole(Role.MEMBER);
         authUser.setUserRefId(member.getId());
+        authUser.setPin(dto.getPin());
 
         authUserRepository.save(authUser);
 
@@ -128,5 +135,61 @@ public class MemberService {
                 member.getCreatedAt(),
                 member.getUpdatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberResponseDTO> getAllActiveMembers() {
+        return memberRepository.findAllActiveWithAccount()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MemberResponseDTO> getMembersFiltered(
+            String search,
+            Boolean active,
+            LocalDate createdAfter,
+            LocalDate createdBefore,
+            Pageable pageable) {
+
+        // Construction des prédicats dynamiques
+        Specification<Member> spec = Specification.where(null);
+
+        // Filtre recherche (prénom, nom, téléphone)
+        if (search != null && !search.trim().isEmpty()) {
+            String term = "%" + search.trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) ->
+                    cb.or(
+                            cb.like(cb.lower(root.get("firstname")), term),
+                            cb.like(cb.lower(root.get("lastname")), term),
+                            cb.like(root.get("phone"), term)
+                    ));
+        }
+
+        // Filtre actif/inactif
+        if (active != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("isActive"), active));
+        } else {
+            // Par défaut : seulement les actifs (comme ton findAllActiveWithAccount)
+            spec = spec.and((root, query, cb) -> cb.isTrue(root.get("isActive")));
+        }
+
+        // Filtre date création après
+        if (createdAfter != null) {
+            LocalDateTime start = createdAfter.atStartOfDay();
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), start));
+        }
+
+        // Filtre date création avant
+        if (createdBefore != null) {
+            LocalDateTime end = createdBefore.plusDays(1).atStartOfDay();
+            spec = spec.and((root, query, cb) -> cb.lessThan(root.get("createdAt"), end));
+        }
+
+        // Requête avec fetch join + pagination
+        Page<Member> page = memberRepository.findAll(spec, pageable);
+
+        return page.map(this::toResponseDTO);
     }
 }

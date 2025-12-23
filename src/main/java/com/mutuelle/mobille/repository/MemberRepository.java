@@ -1,6 +1,9 @@
 package com.mutuelle.mobille.repository;
 
 import com.mutuelle.mobille.models.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,4 +41,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m FROM Member m LEFT JOIN FETCH m.accountMember WHERE m.phone = :phone")
     Optional<Member> findByPhoneWithAccount(@Param("phone") String phone);
+
+    Page<Member> findAll(Specification<Member> spec, Pageable pageable);
 }
