@@ -21,6 +21,11 @@ public class ConfigMutuelleRequestDto {
 
     @NotNull(message = "Le taux d'intérêt du prêt est obligatoire")
     @DecimalMin(value = "0.0", inclusive = true, message = "Le taux ne peut pas être négatif")
-    @Digits(integer = 3, fraction = 2, message = "Format du taux invalide (ex: 8.00)")
+    @Digits(integer = 3, fraction = 2, message = "Format du taux invalide (ex: 3.00)")
     private BigDecimal loanInterestRatePercent;
+
+    @NotNull(message = "")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Le montant doit être positif")
+    @Digits(integer = 12, fraction = 2, message = "Format du montant invalide")
+    private BigDecimal agapeAmount;
 }

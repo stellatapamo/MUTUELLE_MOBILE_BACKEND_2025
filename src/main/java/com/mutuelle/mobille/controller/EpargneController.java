@@ -34,7 +34,7 @@ public class EpargneController {
     private final SessionRepository sessionRepository;
 
     // ========================================================================================
-    // 1) CREER UNE TRANSACTION D'EPARGNE
+    // CREER UNE TRANSACTION D'EPARGNE
     // ========================================================================================
     @PostMapping
     @Operation(

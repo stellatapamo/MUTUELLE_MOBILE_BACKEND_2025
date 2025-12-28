@@ -89,7 +89,9 @@ public class AccountService {
         memberAccount.setSavingAmount(currentAmount.add(amount));
 
         // Mise à jour compte global (la mutuelle reçoit aussi cette épargne)
-        globalAccount.setSavingAmount(currentAmount.add(amount));
+        globalAccount.setSavingAmount(
+                globalAccount.getSavingAmount().add(amount)
+        );
 
         memberRepo.save(memberAccount);
         globalRepo.save(globalAccount);
@@ -254,5 +256,75 @@ public class AccountService {
         globalRepo.save(globalAccount);
     }
 
-    // Tu peux ajouter d'autres opérations : renfoulement
+    /**
+     * Renflouement
+     */
+
+    @Transactional
+    public void addRenflouementDebt(Long memberId, BigDecimal amount) {
+        AccountMember account = memberRepo.findByMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("Compte membre introuvable"));
+
+        account.setUnpaidRenfoulement(
+                account.getUnpaidRenfoulement().add(amount)
+        );
+
+        memberRepo.save(account);
+    }
+
+    @Transactional
+    public void setGlobalRenflouementAmount(BigDecimal amount) {
+        AccountMutuelle global = getMutuelleGlobalAccount();
+        global.setUnpaidRenfoulement(amount);
+        globalRepo.save(global);
+    }
+
+    @Transactional
+    public void payRenflouement(Long memberId, BigDecimal amount) {
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant doit être positif");
+        }
+
+        AccountMember memberAccount = memberRepo.findByMemberId(memberId)
+                .orElseThrow(() -> new RuntimeException("Compte membre introuvable"));
+
+        AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+        // Vérifier membre à jour
+        if (memberAccount.getUnpaidRegistrationAmount().compareTo(BigDecimal.ZERO) > 0) {
+            throw new RuntimeException("Le membre n'est pas à jour de son inscription");
+        }
+
+        // Vérifier dette existante
+        if (memberAccount.getUnpaidRenfoulement().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Aucune dette de renflouement à payer");
+        }
+
+        // Vérifier dépassement
+        if (amount.compareTo(memberAccount.getUnpaidRenfoulement()) > 0) {
+            throw new RuntimeException("Montant supérieur à la dette de renflouement");
+        }
+
+        // 1️⃣ Diminution de la dette du membre
+        memberAccount.setUnpaidRenfoulement(
+                memberAccount.getUnpaidRenfoulement().subtract(amount)
+        );
+
+        // 2️⃣ Diminution de la dette globale
+        globalAccount.setUnpaidRenfoulement(
+                globalAccount.getUnpaidRenfoulement().subtract(amount)
+        );
+
+        // 3️⃣ ➕ Augmentation de la solidarité de la mutuelle
+        globalAccount.setSolidarityAmount(
+                globalAccount.getSolidarityAmount().add(amount)
+        );
+
+        memberRepo.save(memberAccount);
+        globalRepo.save(globalAccount);
+    }
+
+
+
 }

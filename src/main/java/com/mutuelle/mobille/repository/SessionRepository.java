@@ -22,4 +22,8 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     // récupérer les sessions par exercice
     List<Session> findByExerciceId(Long exerciceId);
 
+
+    //  DERNIÈRE SESSION D’UN EXERCICE
+    Optional<Session> findFirstByExerciceIdOrderByCreatedAtDesc(Long exerciceId);
+
 }

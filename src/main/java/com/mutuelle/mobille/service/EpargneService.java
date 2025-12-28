@@ -51,22 +51,6 @@ public class EpargneService {
 
 
 
-    public List<Transaction> getAllEpargneTransactions() {
-        return transactionRepository.findByTransactionType(TransactionType.EPARGNE);
-    }
-//
-//    public List<Transaction> getEpargneByMember(Long memberId) {
-//        return transactionRepository.findByTransactionTypeAndAccountMemberId(TransactionType.EPARGNE, memberId);
-//    }
 
-    public List<Transaction> getEpargneByDirection(TransactionDirection direction) {
-        return transactionRepository.findByTransactionTypeAndTransactionDirection(
-                TransactionType.EPARGNE, direction);
-    }
-
-//    public List<Transaction> getEpargneByMemberAndDirection(Long memberId, TransactionDirection direction) {
-//        return transactionRepository.findByAccountMemberIdAndTransactionTypeAndTransactionDirection(
-//                memberId, TransactionType.EPARGNE, direction);
-//    }
 
 }

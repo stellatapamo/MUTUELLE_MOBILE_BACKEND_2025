@@ -54,6 +54,7 @@ public class ConfigController {
         MutuelleConfig updated = new MutuelleConfig();
         updated.setRegistrationFeeAmount(request.getRegistrationFeeAmount());
         updated.setLoanInterestRatePercent(request.getLoanInterestRatePercent());
+        updated.setAgapeAmount(request.getAgapeAmount());
 
         String updatedBy = authentication != null && authentication.getName() != null
                 ? authentication.getName()
