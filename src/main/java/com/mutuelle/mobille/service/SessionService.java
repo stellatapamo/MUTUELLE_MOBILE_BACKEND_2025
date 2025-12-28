@@ -82,7 +82,7 @@ public class SessionService {
         sessionRepository.deleteById(id);
     }
 
-    private SessionResponseDTO mapToResponseDTO(Session session) {
+    public SessionResponseDTO mapToResponseDTO(Session session) {
         return SessionResponseDTO.builder()
                 .id(session.getId())
                 .name(session.getName())

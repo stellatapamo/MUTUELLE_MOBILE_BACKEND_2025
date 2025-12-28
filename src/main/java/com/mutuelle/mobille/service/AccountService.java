@@ -256,6 +256,22 @@ public class AccountService {
         globalRepo.save(globalAccount);
     }
 
+        /**
+         * Récupère un compte membre par son ID (ID de la table accounts_member)
+         */
+        public AccountMember getMemberAccountById(Long accountId) {
+            return memberRepo.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Compte membre introuvable avec l'ID : " + accountId));
+        }
+
+        /**
+         * Récupère le compte d'un membre à partir de l'ID du membre
+         */
+        public AccountMember getMemberAccountByMemberId(Long memberId) {
+            return memberRepo.findByMemberId(memberId)
+                    .orElseThrow(() -> new RuntimeException("Compte membre introuvable pour le membre ID : " + memberId));
+        }
+    }
     /**
      * Renflouement
      */

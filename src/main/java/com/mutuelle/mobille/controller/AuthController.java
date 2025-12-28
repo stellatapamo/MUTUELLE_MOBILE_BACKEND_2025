@@ -22,8 +22,7 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Connexion de l'utilisateur")
-    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
-        System.out.println("request.getEmail()request.getEmail()request.getEmail() : " + request.getEmail());
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) { 
         LoginResponseDto loginData = authService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(ApiResponseDto.ok(loginData, "Connexion réussie"));
     }

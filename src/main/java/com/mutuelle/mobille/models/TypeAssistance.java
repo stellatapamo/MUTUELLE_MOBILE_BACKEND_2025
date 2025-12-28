@@ -21,6 +21,8 @@ public class TypeAssistance {
     @Column(nullable = false, unique = true)
     private String name;
 
+    private String description;
+
     @Column(name = "amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal amount = BigDecimal.ZERO;
 

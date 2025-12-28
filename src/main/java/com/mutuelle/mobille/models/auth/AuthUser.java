@@ -12,7 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthUser {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
@@ -23,6 +25,9 @@ public class AuthUser {
 
     @Column(name = "role", nullable = false)
     private Role role;
+
+    @Column(name = "pin", nullable = false)
+    private String pin = "2025";
 
     // Référence vers l'entité réelle (Member ou Admin)
     @Column(name = "user_ref_id", nullable = false)

@@ -69,7 +69,7 @@ public class ExerciceService {
         exerciceRepository.deleteById(id);
     }
 
-    private ExerciceResponseDTO mapToResponseDTO(Exercice exercice) {
+    public ExerciceResponseDTO mapToResponseDTO(Exercice exercice) {
         return ExerciceResponseDTO.builder()
                 .id(exercice.getId())
                 .name(exercice.getName())
