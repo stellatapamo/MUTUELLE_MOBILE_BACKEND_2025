@@ -119,14 +119,20 @@ public class MemberService {
     // ===========================================================================
     private MemberResponseDTO toResponseDTO(Member member) {
         AccountMember accountMember = member.getAccountMember();
+        AuthUser authUser = authUserRepository.findByUserRefId(member.getId())
+                .orElse(null);
+
+        String email = authUser != null ? authUser.getEmail() : null;
+        Role role = authUser != null ? authUser.getRole() : null;
 
         return new MemberResponseDTO(
                 member.getId(),
                 member.getFirstname(),
                 member.getLastname(),
                 member.getPhone(),
-                null, // ou tu peux faire une jointure pour récupérer l'email si tu veux
+                email,
                 member.getAvatar(),
+                role,
                 member.isActive(),
                 accountMember.getUnpaidRegistrationAmount(),
                 accountMember.getSolidarityAmount(),

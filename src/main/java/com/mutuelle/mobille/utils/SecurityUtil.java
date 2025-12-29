@@ -1,18 +1,35 @@
 package com.mutuelle.mobille.utils;
 
+import com.mutuelle.mobille.config.security.CustomUserDetails;
 import org.springframework.security.core.context.SecurityContextHolder;
-import com.mutuelle.mobille.models.auth.AuthUser;
 
 public class SecurityUtil {
+
+    private static CustomUserDetails getCurrentCustomUserDetails() {
+        Object principal = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        if (!(principal instanceof CustomUserDetails)) {
+            throw new IllegalStateException("Principal n'est pas une instance de CustomUserDetails");
+        }
+
+        return (CustomUserDetails) principal;
+    }
+
     public static Long getCurrentUserRefId() {
-        AuthUser user = (AuthUser) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
-        return user.getUserRefId();
+        return getCurrentCustomUserDetails().getUserRefId();
     }
 
     public static String getCurrentUserEmail() {
-        AuthUser user = (AuthUser) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
-        return user.getEmail();
+        return getCurrentCustomUserDetails().getEmail();
+    }
+
+    public static Long getCurrentAuthUserId() {
+        return getCurrentCustomUserDetails().getId();
+    }
+
+    public static com.mutuelle.mobille.models.auth.AuthUser getCurrentAuthUser() {
+        return getCurrentCustomUserDetails().getAuthUser();
     }
 }

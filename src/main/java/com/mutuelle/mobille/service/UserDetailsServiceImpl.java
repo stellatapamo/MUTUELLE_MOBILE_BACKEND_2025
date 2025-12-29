@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.service;
 
+import com.mutuelle.mobille.config.security.CustomUserDetails;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.AuthUserRepository;
 import com.mutuelle.mobille.utils.JwtUtils;
@@ -21,16 +22,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String identifier) {
         System.out.println("loadUserByUsername appelé avec : " + identifier);
 
-        AuthUser authUser;
-
-        authUser = authUserRepository.findByEmail(identifier)
+        AuthUser authUser = authUserRepository.findByEmail(identifier)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé : " + identifier));
 
-        String authority = "ROLE_" + authUser.getRole().name();
-
-        return User.withUsername(authUser.getId().toString())
-                .password("")
-                .authorities(authority)
-                .build();
+        return new CustomUserDetails(authUser);
     }
 }

@@ -2,6 +2,8 @@
 // Retourné après inscription, login, ou consultation de profil
 package com.mutuelle.mobille.dto.member;
 
+import com.mutuelle.mobille.enums.Role;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -13,6 +15,7 @@ public record MemberResponseDTO(
         String phone,
         String email,
         String avatar,
+        Role role,
 
         boolean isActive,
 
