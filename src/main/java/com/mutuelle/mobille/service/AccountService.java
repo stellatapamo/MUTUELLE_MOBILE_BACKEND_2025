@@ -271,7 +271,7 @@ public class AccountService {
             return memberRepo.findByMemberId(memberId)
                     .orElseThrow(() -> new RuntimeException("Compte membre introuvable pour le membre ID : " + memberId));
         }
-    }
+
     /**
      * Renflouement
      */
