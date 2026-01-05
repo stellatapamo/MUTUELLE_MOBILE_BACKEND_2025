@@ -93,7 +93,7 @@ public class MembersController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.refId")
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.userRefId")
     @Operation(summary = "Voir le profil d'un membre (admin ou soi-même)")
     public ResponseEntity<ApiResponseDto<MemberResponseDTO>> getMemberById(@PathVariable Long id) {
         MemberResponseDTO member = memberService.getMemberById(id);
@@ -106,6 +106,4 @@ public class MembersController {
         memberService.updateAvatar(avatarUrl);
         return ResponseEntity.ok(ApiResponseDto.ok(avatarUrl, "Avatar mis à jour"));
     }
-
-
 }

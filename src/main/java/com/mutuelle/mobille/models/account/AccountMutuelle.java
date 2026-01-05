@@ -27,11 +27,11 @@ public class AccountMutuelle {
     @Column(name = "borrow_amount", precision = 12, scale = 2)
     private BigDecimal borrowAmount = BigDecimal.ZERO;
 
-    @Column(name = "unpaid_registration_amount", precision = 12, scale = 2)
-    private BigDecimal unpaidRegistrationAmount = BigDecimal.ZERO;
+    @Column(name = "total_registration_amount", precision = 12, scale = 2)
+    private BigDecimal totalRegistrationAmount = BigDecimal.ZERO;
 
-    @Column(name = "unpaid_renfoulement", precision = 12, scale = 2)
-    private BigDecimal unpaidRenfoulement = BigDecimal.ZERO;
+    @Column(name = "total_renfoulement", precision = 12, scale = 2)
+    private BigDecimal totalRenfoulement = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private boolean isActive = true;

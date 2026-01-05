@@ -68,7 +68,7 @@ public class ExerciceService {
     public ExerciceResponseDTO createExercice(ExerciceRequestDTO request) {
         Exercice exercice = Exercice.builder()
                 .name(request.getName())
-                .amount(request.getAmount())
+                .agapeAmount(request.getAgapeAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .build();
@@ -86,7 +86,7 @@ public class ExerciceService {
                 .orElseThrow(() -> new RuntimeException("Exercice non trouvé avec l'id : " + id));
 
         exercice.setName(request.getName());
-        exercice.setAmount(request.getAmount());
+        exercice.setAgapeAmount(request.getAgapeAmount());
         exercice.setStartDate(request.getStartDate());
         exercice.setEndDate(request.getEndDate());
 
@@ -109,7 +109,7 @@ public class ExerciceService {
         return ExerciceResponseDTO.builder()
                 .id(exercice.getId())
                 .name(exercice.getName())
-                .amount(exercice.getAmount())
+                .agapeAmount(exercice.getAgapeAmount())
                 .startDate(exercice.getStartDate())
                 .endDate(exercice.getEndDate())
                 .createdAt(exercice.getCreatedAt())

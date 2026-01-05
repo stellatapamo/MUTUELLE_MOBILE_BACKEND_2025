@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -65,7 +66,11 @@ public class SessionController {
 
     @GetMapping("/current")
     public ResponseEntity<ApiResponseDto<SessionResponseDTO>> getCurrentSession() {
-        Session session = sessionService.getCurrentSession();
+        Optional<Session> sessionOpt = sessionService.getCurrentSession();
+        if(sessionOpt.isEmpty()){
+            new IllegalStateException("Aucune session en cours trouvée");
+        }
+        Session session = sessionOpt.get();
         return ResponseEntity.ok(ApiResponseDto.ok(sessionService.mapToResponseDTO(session)));
     }
 }

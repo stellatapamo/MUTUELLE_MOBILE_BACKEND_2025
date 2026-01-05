@@ -12,7 +12,7 @@ public class ExerciceResponseDTO {
 
     private Long id;
     private String name;
-    private BigDecimal amount;
+    private BigDecimal agapeAmount;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private LocalDateTime createdAt;
