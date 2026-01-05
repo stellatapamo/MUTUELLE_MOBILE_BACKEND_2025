@@ -1,7 +1,6 @@
 package com.mutuelle.mobille.dto.transaction.epargne;
 
-import com.mutuelle.mobille.dto.member.AccountMemberDTO;
-import com.mutuelle.mobille.dto.member.MemberProfileDTO;
+import com.mutuelle.mobille.dto.profile.MemberProfileDTO;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

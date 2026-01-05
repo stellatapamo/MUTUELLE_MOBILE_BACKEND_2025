@@ -1,10 +1,11 @@
-package com.mutuelle.mobille.dto.member;
+package com.mutuelle.mobille.dto.profile;
 
+import com.mutuelle.mobille.dto.member.AccountMemberDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -18,6 +19,7 @@ public class MemberProfileDTO {
     private String phone;
     private String avatar;
     private boolean isActive;
+    private String pin;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

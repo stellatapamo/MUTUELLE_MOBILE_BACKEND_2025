@@ -139,6 +139,7 @@ public class MemberService {
                 accountMember.getSolidarityAmount(),
                 accountMember.getBorrowAmount(),
                 accountMember.getUnpaidRenfoulement(),
+                member.getPin(),
                 member.getCreatedAt(),
                 member.getUpdatedAt()
         );

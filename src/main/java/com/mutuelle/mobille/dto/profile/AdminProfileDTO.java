@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.dto.admin;
+package com.mutuelle.mobille.dto.profile;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +17,7 @@ public class AdminProfileDTO {
     private String lastname;
     private String phone;
     private String avatar;
+    private String pin;
     private boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

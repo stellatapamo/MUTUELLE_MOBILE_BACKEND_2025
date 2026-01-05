@@ -24,6 +24,8 @@ public record MemberResponseDTO(
         BigDecimal solidarityAmount,          // cotisation solidarité due
         BigDecimal borrowAmount,              // montant emprunté
         BigDecimal unpaidRenfoulement,        // renflouement impayé
+        String pin,
+
 
         LocalDateTime createdAt,
         LocalDateTime updatedAt

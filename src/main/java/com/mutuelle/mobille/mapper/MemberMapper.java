@@ -1,7 +1,7 @@
 package com.mutuelle.mobille.mapper;
 
 import com.mutuelle.mobille.dto.member.AccountMemberDTO;
-import com.mutuelle.mobille.dto.member.MemberProfileDTO;
+import com.mutuelle.mobille.dto.profile.MemberProfileDTO;
 import com.mutuelle.mobille.models.Member;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +18,7 @@ public class MemberMapper {
                 .phone(member.getPhone())
                 .avatar(member.getAvatar())
                 .isActive(member.isActive())
+                .pin(member.getPin())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
                 .account(toAccountDTO(member.getAccountMember()))

@@ -1,8 +1,7 @@
 package com.mutuelle.mobille.mapper.transactionEpargne;
 
-import com.mutuelle.mobille.dto.*;
 import com.mutuelle.mobille.dto.member.AccountMemberDTO;
-import com.mutuelle.mobille.dto.member.MemberProfileDTO;
+import com.mutuelle.mobille.dto.profile.MemberProfileDTO;
 import com.mutuelle.mobille.dto.transaction.epargne.TransactionEpargneDto;
 import com.mutuelle.mobille.models.*;
 import com.mutuelle.mobille.models.account.AccountMember;

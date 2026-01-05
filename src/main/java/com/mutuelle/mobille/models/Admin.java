@@ -20,6 +20,9 @@ public class Admin {
     @Column(name = "is_active")
     private Boolean isActive=true;
 
+    @Column(name = "pin", nullable = false, length = 4)
+    private String pin = "2025";
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt ;
 
@@ -30,6 +33,9 @@ public class Admin {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (pin == null) {
+            pin = "2025";
+        }
     }
 
     @PreUpdate

@@ -1,12 +1,10 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.auth.LoginResponseDto;
-import com.mutuelle.mobille.dto.member.MemberProfileDTO;
 import com.mutuelle.mobille.mapper.AdminMapper;
 import com.mutuelle.mobille.mapper.MemberMapper;
 import com.mutuelle.mobille.models.Admin;
 import com.mutuelle.mobille.models.Member;
-import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.models.auth.RefreshToken;
 import com.mutuelle.mobille.repository.*;
@@ -19,7 +17,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

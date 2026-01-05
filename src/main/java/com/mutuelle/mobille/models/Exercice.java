@@ -26,6 +26,9 @@ public class Exercice {
     @Column(name = "agape_amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal agapeAmount = BigDecimal.ZERO;
 
+    @Column(name = "in_progress")
+    private boolean inProgress = false;
+
     @Column(name = "start_date", nullable = false, updatable = false)
     private LocalDateTime startDate;
 

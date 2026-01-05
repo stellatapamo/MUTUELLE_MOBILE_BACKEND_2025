@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.mapper;
 
-import com.mutuelle.mobille.dto.admin.AdminProfileDTO;
+import com.mutuelle.mobille.dto.profile.AdminProfileDTO;
 import com.mutuelle.mobille.models.Admin;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,9 @@ public class AdminMapper {
 
         return AdminProfileDTO.builder()
                 .id(admin.getId())
-                .avatar(admin.getFullName())
+                .firstname(admin.getFullName())
+                .lastname(admin.getFullName())
+                .pin(admin.getPin())
                 .isActive(admin.getIsActive())
                 .createdAt(admin.getCreatedAt())
                 .updatedAt(admin.getUpdatedAt())

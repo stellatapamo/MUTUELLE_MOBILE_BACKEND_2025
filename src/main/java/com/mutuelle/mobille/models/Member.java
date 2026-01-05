@@ -34,6 +34,9 @@ public class Member {
     @Column(name = "is_active")
     private boolean isActive = true;
 
+    @Column(name = "pin", nullable = false, length = 4)
+    private String pin = "2025";
+
     // Relation OneToOne obligatoire et bidirectionnelle avec Account
     @OneToOne(mappedBy = "member",
             fetch = FetchType.LAZY,
@@ -53,7 +56,11 @@ public class Member {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (pin == null) {
+            pin = "2025";
+        }
     }
+
 
     @PreUpdate
     protected void onUpdate() {

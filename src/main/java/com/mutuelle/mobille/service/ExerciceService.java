@@ -75,6 +75,9 @@ public class ExerciceService {
 
         validateExerciceDates(exercice, null);
 
+        if (exercice.isInProgress()) {
+            onExerciceStarted(exercice);
+        }
         exercice = exerciceRepository.save(exercice);
         return mapToResponseDTO(exercice);
     }
@@ -84,6 +87,7 @@ public class ExerciceService {
     public ExerciceResponseDTO updateExercice(Long id, ExerciceRequestDTO request) {
         Exercice exercice = exerciceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exercice non trouvé avec l'id : " + id));
+        boolean wasInProgress = exercice.isInProgress();
 
         exercice.setName(request.getName());
         exercice.setAgapeAmount(request.getAgapeAmount());
@@ -93,6 +97,14 @@ public class ExerciceService {
         validateExerciceDates(exercice, id);
 
         exercice = exerciceRepository.save(exercice);
+
+        // Détection des changements de statut
+        if (!wasInProgress && exercice.isInProgress()) {
+            onExerciceStarted(exercice);
+        } else if (wasInProgress && !exercice.isInProgress()) {
+            onExerciceEnded(exercice);
+        }
+
         return mapToResponseDTO(exercice);
     }
 
@@ -117,9 +129,57 @@ public class ExerciceService {
                 .build();
     }
 
+    /**
+     * Méthode appelée quand un exercice se termine (n'est plus en cours)
+     * Tu pourras remplir cette méthode plus tard avec la logique souhaitée.
+     */
+    @Transactional
+    public void onExerciceEnded(Exercice exercice) {
+        // TODO : implémenter la logique quand un exercice se termine
+        // Exemples possibles :
+        // - Clôturer les comptes de l'exercice
+        // - Générer un rapport final
+        // - Archiver des données
+        // - etc.
+        System.out.println("Exercice terminé : " + exercice.getName() + " (ID: " + exercice.getId() + ")");
+    }
+
+    /**
+     * Méthode appelée quand un exercice passe à l'état "en cours"
+     * Tu pourras remplir cette méthode plus tard avec la logique souhaitée.
+     */
+    @Transactional
+    public void onExerciceStarted(Exercice exercice) {
+        // TODO : implémenter la logique quand un exercice démarre
+        // Exemples possibles :
+        // - Envoyer une notification aux membres
+        // - Initialiser des compteurs
+        // - Créer des entrées comptables
+        // - etc.
+        System.out.println("Exercice démarré : " + exercice.getName() + " (ID: " + exercice.getId() + ")");
+    }
+
+    /**
+     * Retourne l'exercice actuellement en cours (avec mise à jour automatique du flag)
+     */
     @Transactional
     public Optional<Exercice> getCurrentExercice() {
         LocalDateTime now = LocalDateTime.now();
-        return exerciceRepository.findCurrentExercice(now);
+        Optional<Exercice> optionalExercice = exerciceRepository.findCurrentExercice(now);
+
+        if (optionalExercice.isPresent()) {
+            Exercice exercice = optionalExercice.get();
+            boolean wasInProgress = exercice.isInProgress();
+
+            // Le flag est déjà mis à jour par @PreUpdate, mais on vérifie au cas où
+            if (!wasInProgress && exercice.isInProgress()) {
+                onExerciceStarted(exercice);
+            } else if (wasInProgress && !exercice.isInProgress()) {
+                onExerciceEnded(exercice);
+            }
+
+            return Optional.of(exercice);
+        }
+        return Optional.empty();
     }
 }
