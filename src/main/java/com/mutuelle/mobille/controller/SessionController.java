@@ -3,6 +3,7 @@ package com.mutuelle.mobille.controller;
 import com.mutuelle.mobille.dto.ApiResponseDto;
 import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
+import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.service.SessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,5 +61,11 @@ public class SessionController {
     public ResponseEntity<ApiResponseDto<Void>> deleteSession(@PathVariable Long id) {
         sessionService.deleteSession(id);
         return ResponseEntity.ok(ApiResponseDto.ok(null, "Session supprimée avec succès"));
+    }
+
+    @GetMapping("/current")
+    public ResponseEntity<ApiResponseDto<SessionResponseDTO>> getCurrentSession() {
+        Session session = sessionService.getCurrentSession();
+        return ResponseEntity.ok(ApiResponseDto.ok(sessionService.mapToResponseDTO(session)));
     }
 }

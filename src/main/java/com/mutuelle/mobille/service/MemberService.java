@@ -30,7 +30,7 @@ public class MemberService {
 
     private final MutuelleConfigService mutuelleConfigService;
     private final MemberRepository memberRepository;
-    private final AuthUserRepository authUserRepository;  // On injecte directement le repo
+    private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
 
     // ===========================================================================
@@ -53,6 +53,7 @@ public class MemberService {
                 .solidarityAmount(BigDecimal.ZERO)
                 .borrowAmount(BigDecimal.ZERO)
                 .unpaidRenfoulement(BigDecimal.ZERO)
+                .unpaidSolidarityAmount(BigDecimal.ZERO)
                 .isActive(true)
                 .build();
 

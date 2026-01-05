@@ -8,5 +8,6 @@ public enum TransactionType {
     REMBOURSSEMENT,
     RENFOULEMENT,
     INTERET,
-    ASSISTANCE
+    ASSISTANCE,
+    AGAPE
 }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,15 +21,18 @@ public class EpargneService {
 
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
-    private final SessionRepository sessionRepository;
+    private final SessionService sessionService;
 
     @Transactional
     public Transaction processEpargne(Long memberId, Long sessionId, BigDecimal amount, TransactionDirection direction) {
 
         AccountMember memberAccount = accountService.getMemberAccount(memberId);
 
-        Session session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+        Optional<Session> currentSessionOpt = sessionService.getCurrentSession();
+        if (currentSessionOpt.isEmpty()) {
+            throw new IllegalStateException("Session not found");
+        }
+        Session currentSession = currentSessionOpt.get();
 
         if (direction == TransactionDirection.CREDIT) {
             accountService.addSaving(memberId, amount);
@@ -40,7 +44,7 @@ public class EpargneService {
 
         Transaction transaction = Transaction.builder()
                 .accountMember(memberAccount)
-                .session(session)
+                .session(currentSession)
                 .amount(amount)
                 .transactionType(TransactionType.EPARGNE)
                 .transactionDirection(direction)

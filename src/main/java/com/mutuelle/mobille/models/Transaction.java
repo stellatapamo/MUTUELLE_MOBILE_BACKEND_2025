@@ -45,6 +45,11 @@ public class Transaction {
     @JoinColumn(name = "session_id", nullable = false)
     private Session session;
 
+    // transaction parente
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_transaction_id", nullable = true)
+    private Transaction parentTransaction;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

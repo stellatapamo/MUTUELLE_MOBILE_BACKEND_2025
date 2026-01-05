@@ -4,37 +4,31 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
-@Table(name = "exercices")
+@Table(name = "borrowing_ceiling_intervals")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Exercice {
+public class BorrowingCeilingInterval {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "min_epargne", nullable = false)
+    private BigDecimal minEpargne;
 
-    @Column(name = "agape_amount", precision = 12, scale = 2, nullable = false)
-    private BigDecimal agapeAmount = BigDecimal.ZERO;
+    @Column(name = "max_epargne")
+    private BigDecimal maxEpargne; // Null indicates no upper limit
 
-    @Column(name = "start_date", nullable = false, updatable = false)
-    private LocalDateTime startDate;
+    @Column(name = "multiplier", nullable = false)
+    private BigDecimal multiplier;
 
-    @Column(name = "end_date")
-    private LocalDateTime endDate;
-
-    // Relation inverse : un exercice a plusieurs sessions
-    @OneToMany(mappedBy = "exercice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Session> sessions = new HashSet<>();
+    @Column(name = "max_plafond")
+    private BigDecimal maxPlafond; // Null indicates no cap
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

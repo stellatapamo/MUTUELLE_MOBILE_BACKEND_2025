@@ -29,6 +29,14 @@ public class AccountMember {
     @Column(name = "solidarity_amount", precision = 12, scale = 2)
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
+    // Cotisation solidarité impayée
+    @Column(name = "unpaid_solidarity_amount", precision = 12, scale = 2)
+    private BigDecimal unpaidSolidarityAmount = BigDecimal.ZERO;
+
+    // agapes  impayée
+    @Column(name = "unpaid_agapes_amount", precision = 12, scale = 2)
+    private BigDecimal unpaidAgapesAmount = BigDecimal.ZERO;
+
     // epargne
     @Builder.Default
     @Column(name = "saving_amount", precision = 12, scale = 2)

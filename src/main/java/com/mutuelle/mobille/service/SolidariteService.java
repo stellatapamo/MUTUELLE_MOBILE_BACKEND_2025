@@ -27,6 +27,8 @@ public class SolidariteService {
         private final AccountMutuelleRepository globalRepo;
         private final SessionRepository sessionRepo;
         private final SolidariteRepository solidariteRepo;
+        private final AccountService accountService;
+
 
         /**
          * Paiement d'une cotisation de solidarité par un membre
@@ -46,9 +48,7 @@ public class SolidariteService {
                 AccountMember memberAccount = memberRepo.findByMemberId(memberId)
                                 .orElseThrow(() -> new RuntimeException("Compte membre introuvable"));
 
-                AccountMutuelle globalAccount = globalRepo.findAll().stream()
-                                .findFirst()
-                                .orElseThrow(() -> new RuntimeException("Compte global introuvable"));
+                AccountMutuelle globalAccount = accountService.getMutuelleGlobalAccount();
 
                 Session session = sessionRepo.findById(sessionId)
                                 .orElseThrow(() -> new RuntimeException("Session introuvable"));
@@ -62,6 +62,8 @@ public class SolidariteService {
                 // - le montant de solidarité du compte global de la mutuelle
                 memberAccount.setSolidarityAmount(
                                 memberAccount.getSolidarityAmount().add(amount));
+                memberAccount.setUnpaidSolidarityAmount(
+                        memberAccount.getUnpaidSolidarityAmount().subtract(amount));
 
                 globalAccount.setSolidarityAmount(
                                 globalAccount.getSolidarityAmount().add(amount));

@@ -2,6 +2,7 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.repository.TransactionRepository;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,10 +21,19 @@ public class EmpruntService {
     private final InteretService interetService;
     private final SessionService sessionService;
     private final TransactionRepository transactionRepository;
+    private final BorrowingCeilingService borrowingCeilingService;
+
 
     public void emprunter(Long memberId, BigDecimal montant) {
 
         AccountMember emprunteur = accountService.getMemberAccount(memberId);
+        Optional<Session> currentSessionOpt = sessionService.getCurrentSession();
+
+        if (currentSessionOpt.isEmpty()) {
+            throw new IllegalStateException("Impossible d'effectuer un emprunt : aucune session active en cours");
+        }
+
+        Session currentSession = currentSessionOpt.get();
 
         BigDecimal saving = emprunteur.getSavingAmount() == null
                 ? BigDecimal.ZERO
@@ -44,7 +55,7 @@ public class EmpruntService {
             );
         }
 
-        BigDecimal plafond = interetService.calculerPlafond(saving);
+        BigDecimal plafond = borrowingCeilingService.calculerPlafond(saving);
 
         if (montant.compareTo(plafond) > 0) {
             throw new IllegalArgumentException(
@@ -52,36 +63,32 @@ public class EmpruntService {
             );
         }
 
-        BigDecimal interet = interetService.calculerInteret(montant);
+        BigDecimal interet = interetService.calculerInteret(montant); // valeur de l'interet
 
         accountService.borrowMoney(memberId, montant);
-        interetService.redistribuerInteret(memberId, interet);
 
-        transactionRepository.save(
+        Transaction trans = transactionRepository.save(
                 Transaction.builder()
                         .accountMember(emprunteur)
                         .amount(montant.subtract(interet))
                         .transactionType(TransactionType.EMPRUNT)
                         .transactionDirection(TransactionDirection.DEBIT)
-                        .session(sessionService.getCurrentSession())
+                        .session(currentSession)
                         .build()
         );
 
-        transactionRepository.save(
-                Transaction.builder()
-                        .accountMember(emprunteur)
-                        .amount(interet)
-                        .transactionType(TransactionType.INTERET)
-                        .transactionDirection(TransactionDirection.CREDIT)
-                        .session(sessionService.getCurrentSession())
-                        .build()
-        );
+        interetService.redistribuerInteret(emprunteur.getId(), interet,trans,currentSession);
     }
 
     @Transactional
     public void rembourser(Long memberId, BigDecimal montant) {
 
         AccountMember membre = accountService.getMemberAccount(memberId);
+        Optional<Session> currentSessionOpt = sessionService.getCurrentSession();
+        if (currentSessionOpt.isEmpty()) {
+            throw new IllegalStateException("Impossible d'effectuer un remboursement : aucune session active en cours");
+        }
+        Session currentSession = currentSessionOpt.get();
 
         BigDecimal borrow = membre.getBorrowAmount() == null
                 ? BigDecimal.ZERO
@@ -101,7 +108,7 @@ public class EmpruntService {
                         .amount(montant)
                         .transactionType(TransactionType.REMBOURSSEMENT)
                         .transactionDirection(TransactionDirection.CREDIT)
-                        .session(sessionService.getCurrentSession())
+                        .session(currentSession)
                         .build()
         );
     }

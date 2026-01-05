@@ -51,20 +51,6 @@
                     .orElseThrow(() -> new RuntimeException("Compte membre introuvable pour l'ID : " + memberId));
         }
 
-        // Créer un compte membre (lors de l'inscription d'un nouveau membre)
-        @Transactional
-        public AccountMember createMemberAccount(Member member) {
-            AccountMember account = AccountMember.builder()
-                    .member(member)
-                    .isActive(true)
-                    .savingAmount(BigDecimal.ZERO)
-                    .solidarityAmount(BigDecimal.ZERO)
-                    .borrowAmount(BigDecimal.ZERO)
-                    .unpaidRegistrationAmount(BigDecimal.ZERO)
-                    .unpaidRenfoulement(BigDecimal.ZERO)
-                    .build();
-            return memberRepo.save(account);
-        }
 
         // ──────────────────────────────────────────────────────────────
         // ─────────────── OPÉRATIONS FINANCIÈRES (avec mise à jour globale)
@@ -163,24 +149,6 @@
             globalRepo.save(globalAccount);
         }
 
-        /**
-         * Ajouter une cotisation de solidarité (ex: décès, maladie, etc.)
-         */
-        @Transactional
-        public void addSolidarityContribution(Long memberId, BigDecimal amount) {
-            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Le montant de solidarité doit être positif");
-            }
-
-            AccountMember memberAccount = getMemberAccount(memberId);
-            AccountMutuelle globalAccount = getMutuelleGlobalAccount();
-
-            memberAccount.setSolidarityAmount(memberAccount.getSolidarityAmount().add(amount));
-            globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(amount));
-
-            memberRepo.save(memberAccount);
-            globalRepo.save(globalAccount);
-        }
         /**
          * Retourne tous les comptes membres
          */

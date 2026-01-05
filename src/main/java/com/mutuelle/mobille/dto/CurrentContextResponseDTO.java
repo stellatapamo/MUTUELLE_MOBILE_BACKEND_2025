@@ -3,6 +3,7 @@ package com.mutuelle.mobille.dto;
 import com.mutuelle.mobille.dto.assistance.TypeAssistanceResponseDto;
 import com.mutuelle.mobille.dto.exercice.ExerciceResponseDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
+import com.mutuelle.mobille.models.BorrowingCeilingInterval;
 import com.mutuelle.mobille.models.MutuelleConfig;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,5 +24,6 @@ public class CurrentContextResponseDTO {
     private MutuelleConfig config;
 
     private List<TypeAssistanceResponseDto> typeAssistance;
+    private List<BorrowingCeilingInterval> borrowingCeilingIntervals;
 
 }
