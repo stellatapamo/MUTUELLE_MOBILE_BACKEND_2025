@@ -55,7 +55,6 @@ public class ContributionService {
 
         switch (type) {
             case INSCRIPTION -> accountService.payFeeInscriptionAmount(memberId, amount);
-            case AGAPE -> accountService.payRenfoulementAmount(memberId, amount);
             case RENFOULEMENT -> accountService.payRenfoulementAmount(memberId, amount);
             default -> throw new IllegalArgumentException("Type non supporté");
         }
@@ -91,7 +90,6 @@ public class ContributionService {
     
     private BigDecimal getUnpaidAmount(AccountMember account, TransactionType type) {
         return switch (type) {
-            case AGAPE -> account.getUnpaidAgapesAmount();
             case INSCRIPTION -> account.getUnpaidRegistrationAmount();
             case RENFOULEMENT -> account.getUnpaidRenfoulement();
             default -> throw new IllegalArgumentException("Type non supporté : " + type);
@@ -100,7 +98,6 @@ public class ContributionService {
 
     private String getContributionName(TransactionType type) {
         return switch (type) {
-            case AGAPE -> "agapes";
             case INSCRIPTION -> "frais d'inscription";
             case RENFOULEMENT -> "renfoulement";
             default -> "contribution";

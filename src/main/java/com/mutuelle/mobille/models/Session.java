@@ -26,6 +26,9 @@ public class Session {
     @Column(name = "solidarity_amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
+    @Column(name = "agape_amount_per_member", precision = 12, scale = 2, nullable = false)
+    private BigDecimal agapeAmountPerMember = BigDecimal.ZERO;
+
     @Column(name = "start_date", nullable = false, updatable = false)
     private LocalDateTime startDate;
 
