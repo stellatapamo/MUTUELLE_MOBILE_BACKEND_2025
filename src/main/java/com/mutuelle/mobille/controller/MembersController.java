@@ -1,12 +1,10 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
-import com.mutuelle.mobille.dto.auth.LoginRequestDto;
-import com.mutuelle.mobille.dto.auth.LoginResponseDto;
-import com.mutuelle.mobille.dto.auth.RefreshRequestDto;
-import com.mutuelle.mobille.dto.auth.TokenResponseDto;
+import com.mutuelle.mobille.dto.auth.*;
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
+import com.mutuelle.mobille.dto.member.MemberUpdateDTO;
 import com.mutuelle.mobille.service.AuthService;
 import com.mutuelle.mobille.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -92,18 +90,55 @@ public class MembersController {
         return ResponseEntity.ok(ApiResponseDto.ok(profile, "Profil récupéré avec succès"));
     }
 
+    @PatchMapping("/me")
+    @Operation(summary = "Mettre à jour ses propres informations de base (prénom, nom, téléphone)")
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> updateMyProfile(
+            @Valid @RequestBody MemberUpdateDTO updateRequest) {
+
+        MemberResponseDTO updatedMember = memberService.updateCurrentMemberProfile(updateRequest);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.ok(updatedMember, "Profil mis à jour avec succès")
+        );
+    }
+
+    @PatchMapping("/me/pin")
+    @Operation(summary = "Changer le code PIN (4 chiffres)")
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> updatePin(
+            @Valid @RequestBody PinUpdateDTO dto) {
+
+        MemberResponseDTO updated = memberService.updatePin(dto);
+        return ResponseEntity.ok(ApiResponseDto.ok(updated, "PIN mis à jour avec succès"));
+    }
+
+    @PatchMapping("/me/password")
+    @Operation(summary = "Changer le mot de passe")
+    public ResponseEntity<ApiResponseDto<Void>> updatePassword(
+            @Valid @RequestBody PasswordUpdateDTO dto) {
+
+        memberService.updatePassword(dto);
+        return ResponseEntity.ok(ApiResponseDto.ok(null, "Mot de passe modifié avec succès"));
+    }
+
+    @PatchMapping("/me/email")
+    @Operation(summary = "Changer l'adresse email du membre connecté",
+            description = "Nécessite le mot de passe actuel pour valider l'identité. " +
+                    "L'email doit être unique dans le système.")
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> updateMyEmail(
+            @Valid @RequestBody EmailUpdateDTO dto) {
+
+        MemberResponseDTO updatedProfile = memberService.updateEmail(dto);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.ok(updatedProfile, "Email mis à jour avec succès")
+        );
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == principal.userRefId")
     @Operation(summary = "Voir le profil d'un membre (admin ou soi-même)")
     public ResponseEntity<ApiResponseDto<MemberResponseDTO>> getMemberById(@PathVariable Long id) {
         MemberResponseDTO member = memberService.getMemberById(id);
         return ResponseEntity.ok(ApiResponseDto.ok(member, "Membre trouvé"));
-    }
-
-    @PatchMapping("/me/avatar")
-    @Operation(summary = "Mettre à jour son avatar")
-    public ResponseEntity<ApiResponseDto<String>> updateAvatar(@RequestParam String avatarUrl) {
-        memberService.updateAvatar(avatarUrl);
-        return ResponseEntity.ok(ApiResponseDto.ok(avatarUrl, "Avatar mis à jour"));
     }
 }

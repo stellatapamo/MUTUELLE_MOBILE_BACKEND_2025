@@ -4,8 +4,10 @@ import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
 import com.mutuelle.mobille.models.Exercice;
 import com.mutuelle.mobille.models.Session;
+import com.mutuelle.mobille.models.SessionHistory;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.repository.ExerciceRepository;
+import com.mutuelle.mobille.repository.SessionHistoryRepository;
 import com.mutuelle.mobille.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +27,7 @@ public class SessionService {
 
     private final SessionRepository sessionRepository;
     private final ExerciceRepository exerciceRepository;
+    private final SessionHistoryRepository sessionHistoryRepository;
     private final AccountService accountService;
 
     private static final LocalDateTime NOW = LocalDateTime.now();
@@ -63,6 +66,10 @@ public class SessionService {
             if (newIsCurrent) {
                 throw new IllegalArgumentException("Une session est déjà en cours à cette période");
             }
+        }
+        // 3. Interdire les mises à jour si historique existe (considérée comme passée)
+        if (excludeId != null && sessionHistoryRepository.existsBySessionId(excludeId)) {
+            throw new IllegalArgumentException("Impossible de mettre à jour une session qui possède déjà un historique (considérée comme passée)");
         }
     }
 
@@ -134,6 +141,8 @@ public class SessionService {
         // Détecter le passage à "en cours" (manuellement ou par dates)
         if (!wasInProgress && shouldBeInProgress) {
             applySolidarityAgapesToAllMembers(session);
+        }else if (wasInProgress && !shouldBeInProgress) {
+            onSessionEnded(session);
         }
 
         return mapToResponseDTO(session);
@@ -144,6 +153,10 @@ public class SessionService {
     public void deleteSession(Long id) {
         if (!sessionRepository.existsById(id)) {
             throw new RuntimeException("Session non trouvée avec l'id : " + id);
+        }
+        // Interdire la suppression si historique existe
+        if (sessionHistoryRepository.existsBySessionId(id)) {
+            throw new IllegalArgumentException("Impossible de supprimer une session qui possède un historique");
         }
         sessionRepository.deleteById(id);
     }
@@ -183,6 +196,8 @@ public class SessionService {
             boolean wasInProgress = session.isInProgress();
             if (!wasInProgress && isCurrentlyActive) {
                 applySolidarityAgapesToAllMembers(session);
+            }else if (wasInProgress && !isCurrentlyActive) {
+                onSessionEnded(session);
             }
 
             // Correction du flag si nécessaire
@@ -192,9 +207,23 @@ public class SessionService {
             }
 
             return Optional.of(session);
+        }else {
+            // Vérifier s'il y a une session marquée inProgress mais expirée
+            Optional<Session> expiredOpt = sessionRepository.findByInProgressTrue();
+            if (expiredOpt.isPresent()) {
+                Session expired = expiredOpt.get();
+                boolean isCurrentlyActive = expired.getStartDate().isBefore(now) || expired.getStartDate().equals(now);
+                if (expired.getEndDate() != null) {
+                    isCurrentlyActive = isCurrentlyActive && !expired.getEndDate().isBefore(now);
+                }
+                if (!isCurrentlyActive) {
+                    onSessionEnded(expired);
+                    expired.setInProgress(false);
+                    sessionRepository.save(expired);
+                }
+            }
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 
     /**
@@ -229,6 +258,25 @@ public class SessionService {
         // Sauvegarde en batch si possible, ou via saveAll si tu ajoutes la méthode
         accountService.getAllMemberAccounts().forEach(accountService::saveMemberAccount);
         // Ou mieux : ajouter une méthode saveAll dans AccountMemberRepository
+    }
+
+    /**
+     * Génère l'historique quand la session se termine
+     */
+    @Transactional
+    public void onSessionEnded(Session session) {
+        if (session.getHistory() != null) {
+            return; // Déjà fermé
+        }
+
+        SessionHistory history = SessionHistory.builder()
+                .session(session)
+                .totalAssistanceAmount(BigDecimal.ZERO)
+                .totalAssistanceCount(0)
+                .build();
+
+        session.setHistory(history);
+        sessionRepository.save(session);
     }
 
 }

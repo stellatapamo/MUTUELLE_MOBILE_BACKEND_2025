@@ -3,12 +3,15 @@ package com.mutuelle.mobille.service;
 import com.mutuelle.mobille.dto.exercice.ExerciceRequestDTO;
 import com.mutuelle.mobille.dto.exercice.ExerciceResponseDTO;
 import com.mutuelle.mobille.models.Exercice;
+import com.mutuelle.mobille.models.ExerciceHistory;
+import com.mutuelle.mobille.repository.ExerciceHistoryRepository;
 import com.mutuelle.mobille.repository.ExerciceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 public class ExerciceService {
 
     private final ExerciceRepository exerciceRepository;
+    private final ExerciceHistoryRepository exerciceHistoryRepository;
     private static final LocalDateTime NOW = LocalDateTime.now();
 
     private void validateExerciceDates(Exercice exercice, Long excludeId) {
@@ -87,6 +91,11 @@ public class ExerciceService {
     public ExerciceResponseDTO updateExercice(Long id, ExerciceRequestDTO request) {
         Exercice exercice = exerciceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exercice non trouvé avec l'id : " + id));
+
+        if (exercice.getHistory() != null) {
+            throw new IllegalStateException("Impossible de mettre à jour un exercice fermé avec historique");
+        }
+
         boolean wasInProgress = exercice.isInProgress();
 
         exercice.setName(request.getName());
@@ -94,14 +103,17 @@ public class ExerciceService {
         exercice.setStartDate(request.getStartDate());
         exercice.setEndDate(request.getEndDate());
 
+        boolean shouldBeInProgress = (exercice.getEndDate() == null || exercice.getEndDate().isAfter(NOW))
+                && exercice.getStartDate().isBefore(NOW);
+        exercice.setInProgress(shouldBeInProgress);
+
         validateExerciceDates(exercice, id);
 
         exercice = exerciceRepository.save(exercice);
 
-        // Détection des changements de statut
-        if (!wasInProgress && exercice.isInProgress()) {
+        if (!wasInProgress && shouldBeInProgress) {
             onExerciceStarted(exercice);
-        } else if (wasInProgress && !exercice.isInProgress()) {
+        } else if (wasInProgress && !shouldBeInProgress) {
             onExerciceEnded(exercice);
         }
 
@@ -111,9 +123,13 @@ public class ExerciceService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteExercice(Long id) {
-        if (!exerciceRepository.existsById(id)) {
-            throw new RuntimeException("Exercice non trouvé avec l'id : " + id);
+        Exercice exercice = exerciceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exercice non trouvé avec l'id : " + id));
+
+        if (exercice.getHistory() != null) {
+            throw new IllegalStateException("Impossible de supprimer un exercice fermé avec historique");
         }
+
         exerciceRepository.deleteById(id);
     }
 
@@ -131,22 +147,25 @@ public class ExerciceService {
 
     /**
      * Méthode appelée quand un exercice se termine (n'est plus en cours)
-     * Tu pourras remplir cette méthode plus tard avec la logique souhaitée.
      */
     @Transactional
     public void onExerciceEnded(Exercice exercice) {
-        // TODO : implémenter la logique quand un exercice se termine
-        // Exemples possibles :
-        // - Clôturer les comptes de l'exercice
-        // - Générer un rapport final
-        // - Archiver des données
-        // - etc.
-        System.out.println("Exercice terminé : " + exercice.getName() + " (ID: " + exercice.getId() + ")");
+        if (exercice.getHistory() != null) {
+            return; // Déjà fermé
+        }
+
+        ExerciceHistory history = ExerciceHistory.builder()
+                .exercice(exercice)
+                .totalAssistanceAmount(BigDecimal.ZERO)
+                .totalAssistanceCount(0)
+                .build();
+
+        exercice.setHistory(history);
+        exerciceRepository.save(exercice); // Cascade sauvegarde l'historique
     }
 
     /**
      * Méthode appelée quand un exercice passe à l'état "en cours"
-     * Tu pourras remplir cette méthode plus tard avec la logique souhaitée.
      */
     @Transactional
     public void onExerciceStarted(Exercice exercice) {
