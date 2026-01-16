@@ -53,7 +53,7 @@ public class StatusSchedules {
         log.debug("Fin synchronisation statuts");
     }
 
-    private void synchronizeSessions(LocalDateTime now) {
+    public void synchronizeSessions(LocalDateTime now) {
 
         // Étape 1 : TERMINER les sessions expirées (priorité absolue)
         List<Session> expired = sessionRepository.findByStatusAndEndDateLessThan(

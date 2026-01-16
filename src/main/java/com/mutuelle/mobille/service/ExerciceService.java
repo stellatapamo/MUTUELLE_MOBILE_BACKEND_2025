@@ -56,10 +56,11 @@ public class ExerciceService {
         boolean overlap = exerciceRepository.existsOverlapping(
                 start,
                 end != null ? end : LocalDateTime.MAX,
-                excludeId != null ? excludeId : -1L);
+                excludeId != null ? excludeId : null
+        );
 
         if (overlap) {
-            throw new IllegalArgumentException("Chevauchement détecté avec un autre exercice");
+            throw new IllegalArgumentException("les plages de date de l'exercice coincide avec une autre");
         }
 
         // Unicité IN_PROGRESS

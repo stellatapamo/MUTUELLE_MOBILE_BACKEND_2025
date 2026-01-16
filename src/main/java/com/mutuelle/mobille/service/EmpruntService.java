@@ -1,19 +1,24 @@
 package com.mutuelle.mobille.service;
 
+import com.mutuelle.mobille.dto.NotificationRequestDto;
+import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
+import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.TransactionRepository;
+import com.mutuelle.mobille.service.notifications.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
+import static com.mutuelle.mobille.enums.NotificationChannel.EMAIL;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,9 @@ public class EmpruntService {
     private final SessionService sessionService;
     private final TransactionRepository transactionRepository;
     private final BorrowingCeilingService borrowingCeilingService;
+    private final NotificationService notificationService;
+    private final MemberService memberService;
+    private final AdminService adminService;
 
     @Transactional
     public void emprunter(Long memberId, BigDecimal montant) {
@@ -164,12 +172,53 @@ public class EmpruntService {
 
             // 4. Décision
             if (montantEquivalent.compareTo(plafondActuel) > 0) {
-//                // Alerte – ne pas prélever
-//                log.info("Plafond dépassé pour membre {} | solde={} | equiv={} | plafond={}",
-//                        membreAcc.getId(), soldeActuel, montantEquivalent, plafondActuel);
-//
-//                createAlertePlafondDepasse(membre, soldeActuel, montantEquivalent, plafondActuel, interets, session);
-//                // Note : on n'avance PAS la date ici → on réessaiera au prochain passage
+
+                Optional<AuthUser> authOpt=memberService.getAuthMember(membreAcc.getMember());
+                AuthUser AuthUser=authOpt.get();
+
+                BigDecimal ecart = montantEquivalent.subtract(plafondActuel);
+
+                // --- Notification MEMBRE ---
+                Map<String, Object> varsMembre = new HashMap<>();
+                varsMembre.put("memberName", membreAcc.getMember().getLastname());
+                varsMembre.put("soldeActuel", soldeActuel);
+                varsMembre.put("montantEquivalent", montantEquivalent);
+                varsMembre.put("plafondActuel", plafondActuel);
+
+                notificationService.sendNotification(NotificationRequestDto.builder()
+                        .email(AuthUser.getEmail())
+                        .title("Alerte : Plafond d'emprunt dépassé")
+                        .templateName(TemplateMailsName.PLAFOND_DEPASSE_MEMBER)
+                        .variables(varsMembre)
+                        .channels(Set.of(EMAIL))
+                        .build());
+
+                // --- Notification ADMIN ---
+                 Optional <AuthUser> authAdminOpt= Optional.ofNullable(adminService.getAuthAdmin());
+                 AuthUser authAdmin=authAdminOpt.get();
+
+                Map<String, Object> varsAdmin = new HashMap<>();
+                varsAdmin.put("memberName", membreAcc.getMember().getLastname());
+                varsAdmin.put("memberId", membreAcc.getMember().getId());
+                varsAdmin.put("soldeActuel", soldeActuel);
+                varsAdmin.put("montantEquivalent", montantEquivalent);
+                varsAdmin.put("plafondActuel", plafondActuel);
+                varsAdmin.put("ecart", ecart);
+                varsAdmin.put("interets", interets);
+                varsAdmin.put("sessionName", session.getName());
+
+                notificationService.sendNotification(NotificationRequestDto.builder()
+                        .email(authAdmin.getEmail())   // ou liste d'emails admins
+                        .title("[ALERTE] Plafond dépassé – Membre " + membreAcc.getMember().getLastname())
+                        .templateName(TemplateMailsName.PLAFOND_DEPASSE_ADMIN)
+                        .variables(varsAdmin)
+                        .channels(Set.of(EMAIL))
+                        .build());
+
+                // log + suite (pas d'update lastInterestDate)
+//                log.warn("Plafond dépassé membre {} | solde={} | equiv={} | plafond={} | écart={}",
+//                        membreAcc.getId(), soldeActuel, montantEquivalent, plafondActuel, ecart);
+
                 continue;
             }
 

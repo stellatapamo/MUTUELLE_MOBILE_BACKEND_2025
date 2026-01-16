@@ -19,6 +19,8 @@ public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
     // Récupérer par type (MEMBER ou ADMIN)
     Optional<AuthUser> findByEmailAndRole(String email, Role role);
 
+    AuthUser  findByRole(Role role);
+
     // Pour les admins uniquement
     Optional<AuthUser> findByUserRefIdAndRole(Long userRefId, Role role);
 

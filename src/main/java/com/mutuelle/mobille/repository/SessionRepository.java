@@ -76,16 +76,29 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
      * Vérifie s'il existe une session qui chevauche l'intervalle [start, end]
      * (end peut être LocalDateTime.MAX si pas de fin)
      */
+//    @Query("""
+//        SELECT COUNT(s) > 0 FROM Session s
+//        WHERE s.id != :excludeId
+//          AND s.startDate < :candidateEnd
+//          AND (s.endDate IS NULL OR s.endDate > :candidateStart)
+//    """)
+//    boolean existsOverlapping(
+//            @Param("candidateStart") LocalDateTime candidateStart,
+//            @Param("candidateEnd") LocalDateTime candidateEnd,
+//            @Param("excludeId") Long excludeId);
+
     @Query("""
-        SELECT COUNT(s) > 0 FROM Session s
-        WHERE s.id != :excludeId
-          AND s.startDate < :candidateEnd
-          AND (s.endDate IS NULL OR s.endDate > :candidateStart)
+    SELECT COUNT(s) > 0 FROM Session s
+    WHERE s.startDate <= :proposedEnd
+      AND :proposedStart <= COALESCE(s.endDate, :proposedEnd)
+      AND (:excludeId IS NULL OR s.id <> :excludeId)
     """)
     boolean existsOverlapping(
-            @Param("candidateStart") LocalDateTime candidateStart,
-            @Param("candidateEnd") LocalDateTime candidateEnd,
-            @Param("excludeId") Long excludeId);
+            @Param("proposedStart") LocalDateTime proposedStart,
+            @Param("proposedEnd")   LocalDateTime proposedEnd,
+            @Param("excludeId")     Long excludeId
+    );
+
 
     // Variante plus permissive (pour debug ou cas spéciaux)
     default boolean existsOverlapping(Session session, Long excludeId) {

@@ -157,4 +157,20 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.accountMember.id = :accountMemberId")
+    Long countByAccountMemberId(@Param("accountMemberId") Long accountMemberId);
+
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.accountMember.member.id = :memberId")
+    Long countByMemberId(@Param("memberId") Long memberId);
+
+    @Query("SELECT COUNT(t) FROM Transaction t")
+    Long countTotalTransactions();
+
+    @Query("""
+    SELECT COALESCE(SUM(t.amount), 0)
+    FROM Transaction t
+    WHERE t.transactionType = :type""")
+    BigDecimal sumAmountByType(@Param("type") TransactionType type);
+
 }

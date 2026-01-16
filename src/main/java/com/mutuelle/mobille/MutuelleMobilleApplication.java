@@ -2,6 +2,7 @@ package com.mutuelle.mobille;
 
 import com.mutuelle.mobille.dto.NotificationRequestDto;
 import com.mutuelle.mobille.enums.NotificationChannel;
+import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.service.notifications.EmailService;
 import com.mutuelle.mobille.service.notifications.NotificationService;
 import jakarta.annotation.PostConstruct;
@@ -54,7 +55,7 @@ public class MutuelleMobilleApplication {
 //			NotificationRequestDto request = NotificationRequestDto.builder()
 //					.email("pandoraanimp@gmail.com")
 //					.title("Démarrage Backend Mutuelle")
-//					.templateName("welcome") // Nom du fichier : email/welcome.html
+//					.templateName(TemplateMailsName.WELCOME) // Nom du fichier : email/welcome.html
 //					.variables(testVars)
 //					.channels(Set.of(NotificationChannel.EMAIL))
 //					.message("Ceci est le message de fallback si le template échoue.")

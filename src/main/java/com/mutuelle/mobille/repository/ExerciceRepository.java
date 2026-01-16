@@ -44,14 +44,14 @@ public interface ExerciceRepository extends JpaRepository<Exercice, Long> {
 
     // Vérifie chevauchement de dates
     @Query("""
-        SELECT COUNT(e) > 0 FROM Exercice e
-        WHERE e.startDate <= :end
-          AND (e.endDate IS NULL OR e.endDate >= :start)
-          AND (:excludeId IS NULL OR e.id <> :excludeId)
+    SELECT COUNT(e) > 0 FROM Exercice e
+    WHERE e.startDate <= :proposedEnd
+      AND :proposedStart <= COALESCE(e.endDate, :proposedEnd)
+      AND (:excludeId IS NULL OR e.id <> :excludeId)
     """)
     boolean existsOverlapping(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end,
-            @Param("excludeId") Long excludeId
+            @Param("proposedStart") LocalDateTime proposedStart,
+            @Param("proposedEnd")   LocalDateTime proposedEnd,
+            @Param("excludeId")     Long excludeId
     );
 }

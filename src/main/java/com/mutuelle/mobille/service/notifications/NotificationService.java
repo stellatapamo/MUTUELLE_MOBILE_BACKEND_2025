@@ -2,6 +2,7 @@ package com.mutuelle.mobille.service.notifications;
 
 import com.mutuelle.mobille.dto.NotificationRequestDto;
 import com.mutuelle.mobille.enums.NotificationChannel;
+import com.mutuelle.mobille.enums.TemplateMailsName;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -59,7 +60,7 @@ public class NotificationService {
         NotificationRequestDto req = NotificationRequestDto.builder()
                 .email(email)
                 .title("Bienvenue dans la Mutuelle ENSPY !")
-                .templateName("welcome.html")
+                .templateName(TemplateMailsName.WELCOME)
                 .variables(vars)
                 .channels(Set.of(NotificationChannel.EMAIL))  // ou .of(EMAIL, PUSH) plus tard
                 .build();

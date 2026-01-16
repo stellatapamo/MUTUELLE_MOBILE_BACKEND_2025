@@ -138,4 +138,20 @@ public class AssistanceService {
     public Long countTotalAssistanceForSession(Long sessionId){
         return  transactionRepository.countBySessionId(sessionId);
     }
+
+    // Nombre total d'assistances pour un membre donné
+    public Long countAssistancesByMember(Long memberId) {
+        return assistanceRepository.countByMemberId(memberId);
+    }
+
+    // Nombre total d'assistances global (toutes sessions, tous membres)
+    public Long countAllAssistances() {
+        return assistanceRepository.count();
+    }
+
+    // Somme totale des montants d'assistances global
+    public BigDecimal sumAllAssistanceAmounts() {
+        return transactionRepository.sumAmountByType(TransactionType.ASSISTANCE);
+    }
+
 }

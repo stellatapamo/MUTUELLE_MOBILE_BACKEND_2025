@@ -17,4 +17,10 @@ public interface AssistanceRepository extends JpaRepository<Assistance, Long> {
 
     // Par membre et session (si besoin)
     List<Assistance> findByMemberIdAndSessionId(Long memberId, Long sessionId);
+
+    //  Nombre d'assistances pour un membre
+    Long countByMemberId(Long memberId);
+
+    //   Nombre d'assistances pour une session
+    Long countBySessionId(Long sessionId);
 }

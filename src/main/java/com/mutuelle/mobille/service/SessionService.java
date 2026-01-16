@@ -66,12 +66,14 @@ public class SessionService {
         }
 
         // Pas de chevauchement avec d'autres sessions (tous statuts confondus)
-        boolean overlap = sessionRepository.existsOverlapping(
+        boolean overlap = exerciceRepository.existsOverlapping(
                 start,
                 end != null ? end : LocalDateTime.MAX,
-                excludeId != null ? excludeId : -1L);
+                excludeId != null ? excludeId : null
+        );
+
         if (overlap) {
-            throw new IllegalArgumentException("Chevauchement détecté avec une autre session");
+            throw new IllegalArgumentException("les plages de date de la session coincide avec une autre ");
         }
 
         // Si la session est ou devient IN_PROGRESS → vérifier qu'aucune autre ne l'est déjà

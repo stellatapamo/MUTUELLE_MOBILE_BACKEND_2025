@@ -74,4 +74,14 @@ public class TransactionService {
                 tx.getUpdatedAt()
         );
     }
+
+    // Nombre total de transactions pour un membre
+    public Long countTransactionsByMember(Long accountMemberId) {
+        return transactionRepository.countByAccountMemberId(accountMemberId);
+    }
+
+    // Nombre total de transactions global
+    public Long countAllTransactions() {
+        return transactionRepository.count();
+    }
 }

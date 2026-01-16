@@ -123,7 +123,7 @@ public class MemberService {
     // ===========================================================================
     // MAPPER → DTO
     // ===========================================================================
-    private MemberResponseDTO toResponseDTO(Member member) {
+    public MemberResponseDTO toResponseDTO(Member member) {
         AccountMember accountMember = member.getAccountMember();
         AuthUser authUser = authUserRepository.findByUserRefId(member.getId())
                 .orElse(null);
@@ -144,6 +144,7 @@ public class MemberService {
                 accountMember.getSolidarityAmount(),
                 accountMember.getBorrowAmount(),
                 accountMember.getUnpaidRenfoulement(),
+                accountMember.getId(),
                 member.getPin(),
                 member.getCreatedAt(),
                 member.getUpdatedAt()
@@ -342,4 +343,10 @@ public class MemberService {
         return account.getUnpaidRegistrationAmount().compareTo(BigDecimal.ZERO) == 0 &&
                 account.getUnpaidSolidarityAmount().compareTo(BigDecimal.ZERO) == 0;
     }
+
+
+    public Optional<AuthUser> getAuthMember(Member member) {
+        return  authUserRepository.findByUserRefId(member.getId());
+    }
+
 }

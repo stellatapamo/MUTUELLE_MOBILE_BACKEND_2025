@@ -22,8 +22,8 @@ public class MutuelleConfigService {
     public void initDefaultConfig() {
         if (configRepository.count() == 0) {
             MutuelleConfig defaultConfig = MutuelleConfig.builder()
-                    .registrationFeeAmount(new BigDecimal("25000.00"))
-                    .loanInterestRatePercent(new BigDecimal("8.00"))
+                    .registrationFeeAmount(new BigDecimal("150000.00"))
+                    .loanInterestRatePercent(new BigDecimal("3.00"))
                     .updatedBy("system")
                     .build();
             configRepository.save(defaultConfig);
