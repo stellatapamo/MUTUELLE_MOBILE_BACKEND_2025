@@ -147,7 +147,12 @@ public class ExerciceService {
             if (request.getEndDate() != null) exercice.setEndDate(request.getEndDate());
         }
 
-        validateExerciceDates(exercice, id);
+        Exercice fakeClone = Exercice.builder()
+                .startDate(request.getStartDate() != null ? request.getStartDate() : exercice.getStartDate())
+                .endDate(request.getEndDate() != null ? request.getEndDate() : exercice.getEndDate())
+                .build();
+
+        validateExerciceDates(fakeClone, id);
         exercice = exerciceRepository.save(exercice);
         return toResponseDTO(exercice);
     }
@@ -157,9 +162,17 @@ public class ExerciceService {
     public void deleteExercice(Long id) {
         Exercice ex = exerciceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Exercice non trouvé"));
+
+        // Nouvelle règle : Interdire si en cours ou terminé
+        if (ex.getStatus() == StatusExercice.IN_PROGRESS || ex.getStatus() == StatusExercice.COMPLETED) {
+            throw new IllegalStateException("Impossible de supprimer un exercice en cours ou terminé");
+        }
+
+        // Sécurité supplémentaire existante (historique)
         if (exerciceHistoryRepository.existsByExerciceId(id)) {
             throw new IllegalStateException("Impossible de supprimer un exercice historisé");
         }
+
         exerciceRepository.delete(ex);
     }
 

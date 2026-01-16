@@ -166,7 +166,12 @@ public class SessionService {
             if (dto.getEndDate() != null) session.setEndDate(dto.getEndDate());
         }
 
-        validateSession(session, id);
+        Session fakeClone = Session.builder()
+                .startDate(dto.getStartDate() != null ? dto.getStartDate() : session.getStartDate())
+                .endDate(dto.getEndDate() != null ? dto.getEndDate() : session.getEndDate())
+                .build();
+
+        validateSession(fakeClone, id);
         session = sessionRepository.save(session);
         return toResponseDTO(session);
     }
@@ -176,9 +181,17 @@ public class SessionService {
     public void deleteSession(Long id) {
         Session s = sessionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Session non trouvée"));
+
+        // Nouvelle règle : Interdire si en cours ou terminée
+        if (s.getStatus() == StatusSession.IN_PROGRESS || s.getStatus() == StatusSession.COMPLETED) {
+            throw new IllegalStateException("Impossible de supprimer une session en cours ou terminée");
+        }
+
+        // Sécurité supplémentaire existante (historique)
         if (sessionHistoryRepository.existsBySessionId(id)) {
             throw new IllegalStateException("Impossible de supprimer une session historisée");
         }
+
         sessionRepository.delete(s);
     }
 
