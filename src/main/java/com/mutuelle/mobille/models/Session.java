@@ -26,6 +26,9 @@ public class Session {
     @Column(name = "solidarity_amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
+    @Column(name = "agape_amount_per_member", precision = 12, scale = 2, nullable = false)
+    private BigDecimal agapeAmountPerMember = BigDecimal.ZERO;
+
     @Column(name = "start_date", nullable = false, updatable = false)
     private LocalDateTime startDate;
 
@@ -44,11 +47,15 @@ public class Session {
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Assistance> assistances = new HashSet<>();
 
+    @OneToOne(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private SessionHistory history;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
 
     @PrePersist
     protected void onCreate() {
@@ -59,5 +66,7 @@ public class Session {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        this.inProgress = (endDate == null || endDate.isAfter(LocalDateTime.now())) && startDate.isBefore(LocalDateTime.now());
     }
+
 }

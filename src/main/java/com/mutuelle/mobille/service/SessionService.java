@@ -2,11 +2,14 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
+import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.models.Exercice;
 import com.mutuelle.mobille.models.Session;
+import com.mutuelle.mobille.models.SessionHistory;
+import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
-import com.mutuelle.mobille.repository.ExerciceRepository;
-import com.mutuelle.mobille.repository.SessionRepository;
+import com.mutuelle.mobille.models.account.AccountMutuelle;
+import com.mutuelle.mobille.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ public class SessionService {
 
     private final SessionRepository sessionRepository;
     private final ExerciceRepository exerciceRepository;
+    private final SessionHistoryRepository sessionHistoryRepository;
+    private final TransactionRepository transactionRepository;
     private final AccountService accountService;
 
     private static final LocalDateTime NOW = LocalDateTime.now();
@@ -64,6 +69,10 @@ public class SessionService {
                 throw new IllegalArgumentException("Une session est déjà en cours à cette période");
             }
         }
+        // 3. Interdire les mises à jour si historique existe (considérée comme passée)
+        if (excludeId != null && sessionHistoryRepository.existsBySessionId(excludeId)) {
+            throw new IllegalArgumentException("Impossible de mettre à jour une session qui possède déjà un historique (considérée comme passée)");
+        }
     }
 
     public List<SessionResponseDTO> getAllSessions() {
@@ -87,6 +96,7 @@ public class SessionService {
         Session session = Session.builder()
                 .name(request.getName())
                 .solidarityAmount(request.getSolidarityAmount())
+                .agapeAmountPerMember(request.getAgapeAmountPerMember())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .inProgress(true) // par défaut une nouvelle session est active si elle chevauche "now"
@@ -99,7 +109,7 @@ public class SessionService {
 
         // Si la nouvelle session est immédiatement en cours → appliquer la cotisation
         if (session.isInProgress()) {
-            applySolidarityAgapesToAllMembers(session);
+            applySolidarityToAllMembers(session);
         }
 
         return mapToResponseDTO(session);
@@ -133,7 +143,9 @@ public class SessionService {
 
         // Détecter le passage à "en cours" (manuellement ou par dates)
         if (!wasInProgress && shouldBeInProgress) {
-            applySolidarityAgapesToAllMembers(session);
+            applySolidarityToAllMembers(session);
+        }else if (wasInProgress && !shouldBeInProgress) {
+            onSessionEnded(session);
         }
 
         return mapToResponseDTO(session);
@@ -144,6 +156,10 @@ public class SessionService {
     public void deleteSession(Long id) {
         if (!sessionRepository.existsById(id)) {
             throw new RuntimeException("Session non trouvée avec l'id : " + id);
+        }
+        // Interdire la suppression si historique existe
+        if (sessionHistoryRepository.existsBySessionId(id)) {
+            throw new IllegalArgumentException("Impossible de supprimer une session qui possède un historique");
         }
         sessionRepository.deleteById(id);
     }
@@ -182,7 +198,9 @@ public class SessionService {
             // Si le flag inProgress était faux et passe à vrai → c'est un nouveau démarrage
             boolean wasInProgress = session.isInProgress();
             if (!wasInProgress && isCurrentlyActive) {
-                applySolidarityAgapesToAllMembers(session);
+                applySolidarityToAllMembers(session);
+            }else if (wasInProgress && !isCurrentlyActive) {
+                onSessionEnded(session);
             }
 
             // Correction du flag si nécessaire
@@ -192,16 +210,30 @@ public class SessionService {
             }
 
             return Optional.of(session);
+        }else {
+            // Vérifier s'il y a une session marquée inProgress mais expirée
+            Optional<Session> expiredOpt = sessionRepository.findByInProgressTrue();
+            if (expiredOpt.isPresent()) {
+                Session expired = expiredOpt.get();
+                boolean isCurrentlyActive = expired.getStartDate().isBefore(now) || expired.getStartDate().equals(now);
+                if (expired.getEndDate() != null) {
+                    isCurrentlyActive = isCurrentlyActive && !expired.getEndDate().isBefore(now);
+                }
+                if (!isCurrentlyActive) {
+                    onSessionEnded(expired);
+                    expired.setInProgress(false);
+                    sessionRepository.save(expired);
+                }
+            }
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 
     /**
      * Applique la cotisation solidarité et l'agapes  de la session à tous les membres actifs
      */
     @Transactional
-    public void applySolidarityAgapesToAllMembers(Session session) {
+    public void applySolidarityToAllMembers(Session session) {
         if (session.getSolidarityAmount() == null || session.getSolidarityAmount().compareTo(BigDecimal.ZERO) <= 0) {
             return;
         }
@@ -217,18 +249,47 @@ public class SessionService {
                     currentUnpaid = BigDecimal.ZERO;
                 }
                 account.setUnpaidSolidarityAmount(currentUnpaid.add(session.getSolidarityAmount()));
-
-                BigDecimal currentUnpaidAgape = account.getUnpaidAgapesAmount();
-                if (currentUnpaidAgape == null) {
-                    currentUnpaidAgape = BigDecimal.ZERO;
-                }
-                account.setUnpaidAgapesAmount(currentUnpaidAgape.add(exercice.getAgapeAmount()));
             }
         }
 
         // Sauvegarde en batch si possible, ou via saveAll si tu ajoutes la méthode
         accountService.getAllMemberAccounts().forEach(accountService::saveMemberAccount);
-        // Ou mieux : ajouter une méthode saveAll dans AccountMemberRepository
+
+    }
+
+    /**
+     * Génère l'historique quand la session se termine
+     */
+    @Transactional
+    public void onSessionEnded(Session session) {
+
+        if (session.getHistory() != null) {
+            return; // Déjà fermé
+        }
+
+        SessionHistory history = SessionHistory.builder()
+                .session(session)
+                .totalAssistanceAmount(BigDecimal.ZERO)
+                .totalAssistanceCount(0)
+                .build();
+
+        session.setHistory(history);
+        sessionRepository.save(session);
+
+
+        List<AccountMember> allActiveAccounts = accountService.getAllMemberAccountsWithActive(true);
+        BigDecimal amountAgapesPerMember = session.getAgapeAmountPerMember();
+        BigDecimal totalToDebit = amountAgapesPerMember.multiply(BigDecimal.valueOf(allActiveAccounts.size()));
+
+        accountService.removeToMutuelleCaisse(totalToDebit);
+        Transaction transaction = Transaction.builder()
+                .transactionType(TransactionType.AGAPE)
+                .amount(totalToDebit)
+                .description("Agapes :")
+                .session(session)
+                .build();
+        transactionRepository.save(transaction);
+
     }
 
 }

@@ -43,4 +43,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByPhoneWithAccount(@Param("phone") String phone);
 
     Page<Member> findAll(Specification<Member> spec, Pageable pageable);
+
+    boolean existsByPhoneAndIdNot(String phone, Long id);
 }

@@ -58,7 +58,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/api/config/current"
+                                "/api/config/current",
+                                "/api/context"
                         ).permitAll()
 
                         // SUPER_ADMIN uniquement

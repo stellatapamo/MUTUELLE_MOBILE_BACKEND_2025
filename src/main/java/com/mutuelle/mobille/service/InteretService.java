@@ -7,14 +7,16 @@ import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.repository.TransactionRepository;
+import com.mutuelle.mobille.util.MoneyUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,88 +26,95 @@ public class InteretService {
     private final AccountService accountService;
     private final MutuelleConfigService mutuelleConfigService;
 
-    /**
-     * ============================
-     * CALCUL DE L’INTÉRÊT
-     * ============================
-     */
     public BigDecimal calculerInteret(BigDecimal montantEmprunte) {
-        MutuelleConfig  config = mutuelleConfigService.getCurrentConfig();
-        return montantEmprunte.multiply(config.getLoanInterestRatePercent().divide(BigDecimal.valueOf(100)));
+        if (montantEmprunte == null || montantEmprunte.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        MutuelleConfig config = mutuelleConfigService.getCurrentConfig();
+        BigDecimal taux = config.getLoanInterestRatePercent()
+                .divide(BigDecimal.valueOf(100), 4, BigDecimal.ROUND_HALF_UP);
+
+        return MoneyUtil.round(montantEmprunte.multiply(taux));
     }
 
-    /**
-     * ==================================================
-     * REDISTRIBUTION DE L’INTÉRÊT AUX MEMBRES
-     * ==================================================
-     */
-    public void redistribuerInteret(Long emprunteurAccountId, BigDecimal interetTotalVal,
-                                    Transaction parentTransaction, Session session) {
+    public void redistribuerInteret(Long emprunteurAccountId,
+                                    BigDecimal interetTotal,
+                                    Transaction parentTransaction,
+                                    Session session) {
 
-        List<AccountMember> comptes = accountService.getAllMemberAccounts();
-
-        List<AccountMember> beneficiaires = comptes.stream()
-                .filter(acc -> acc.getSavingAmount().compareTo(BigDecimal.ZERO) > 0)
-                .toList();
-
-        // Aucun bénéficiaire → tout va en caisse
-        if (beneficiaires.isEmpty()) {
-            accountService.addToMutuelleCaisse(interetTotalVal);
-
-            transactionRepository.save(Transaction.builder()
-                    .accountMember(null)
-                    .amount(interetTotalVal)
-                    .description("Intérêt redistribué à la caisse (aucun épargnant)")
-                    .transactionType(TransactionType.INTERET)
-                    .transactionDirection(TransactionDirection.CREDIT)
-                    .session(session)
-                    .parentTransaction(parentTransaction)
-                    .build());
-
+        if (interetTotal == null || interetTotal.compareTo(BigDecimal.ZERO) <= 0) {
+            log.info("Aucun intérêt à redistribuer");
             return;
         }
 
-        long nombreBeneficiaires = beneficiaires.size();
-        BigDecimal interetParMembre = interetTotalVal
-                .divide(BigDecimal.valueOf(nombreBeneficiaires), 2, RoundingMode.DOWN);
+        List<AccountMember> beneficiaires = accountService.getAllMemberAccounts().stream()
+                .filter(acc -> acc.getSavingAmount().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+
+        if (beneficiaires.isEmpty()) {
+            log.info("Aucun bénéficiaire → tout en caisse");
+            accountService.addToMutuelleCaisse(interetTotal);
+            saveCaisseTransaction(interetTotal, "Intérêt → caisse (aucun épargnant)", session, parentTransaction);
+            return;
+        }
+
+        BigDecimal totalEpargne = beneficiaires.stream()
+                .map(AccountMember::getSavingAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalEpargne.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("Total épargne nulle → redistribution en caisse");
+            accountService.addToMutuelleCaisse(interetTotal);
+            return;
+        }
 
         BigDecimal totalDistribue = BigDecimal.ZERO;
 
         for (AccountMember beneficiaire : beneficiaires) {
-            // Créditer le compte du membre
-            beneficiaire.setSavingAmount(beneficiaire.getSavingAmount().add(interetParMembre));
+            BigDecimal partBrute = calculPartMembre(totalEpargne, beneficiaire.getSavingAmount(), interetTotal);
+
+            // ARRONDISSAGE À L'INFÉRIEUR AU MULTIPLE DE 25
+            BigDecimal interetPart = MoneyUtil.floorToNearest25(partBrute);
+
+            // Crédit sur le compte
+            beneficiaire.setSavingAmount(beneficiaire.getSavingAmount().add(interetPart));
             accountService.saveMemberAccount(beneficiaire);
 
-            // Créer la transaction de redistribution
-            Transaction transactionRedistribution = Transaction.builder()
-                    .accountMember(beneficiaire)
-                    .amount(interetParMembre)
-                    .description("Redistribution d'intérêt")
-                    .transactionType(TransactionType.INTERET)
-                    .transactionDirection(TransactionDirection.CREDIT)
-                    .session(session)
-                    .parentTransaction(parentTransaction)
-                    .build();
+            // Transaction
+            saveTransaction(beneficiaire, interetPart, "Redistribution d'intérêt", session, parentTransaction);
 
-            transactionRepository.save(transactionRedistribution);
-
-            totalDistribue = totalDistribue.add(interetParMembre);
+            totalDistribue = totalDistribue.add(interetPart);
         }
 
-        // Reliquat (arrondi perdu) → caisse mutuelle
-        BigDecimal reliquat = interetTotalVal.subtract(totalDistribue);
+        // Reliquat → caisse
+        BigDecimal reliquat = interetTotal.subtract(totalDistribue);
         if (reliquat.compareTo(BigDecimal.ZERO) > 0) {
+            log.info("Reliquat de {} FCFA envoyé à la caisse", reliquat);
             accountService.addToMutuelleCaisse(reliquat);
-
-            transactionRepository.save(Transaction.builder()
-                    .accountMember(null)
-                    .amount(reliquat)
-                    .description("Reliquat d'intérêt (arrondi)")
-                    .transactionType(TransactionType.INTERET)
-                    .transactionDirection(TransactionDirection.CREDIT)
-                    .session(session)
-                    .parentTransaction(parentTransaction)
-                    .build());
+            saveCaisseTransaction(reliquat, "Reliquat d'intérêt (arrondi)", session, parentTransaction);
         }
+    }
+
+    private BigDecimal calculPartMembre(BigDecimal totalEpargne, BigDecimal epargneMembre, BigDecimal interetTotal) {
+        if (totalEpargne.compareTo(BigDecimal.ZERO) <= 0) return BigDecimal.ZERO;
+        return interetTotal.multiply(epargneMembre).divide(totalEpargne, 4, BigDecimal.ROUND_HALF_UP);
+    }
+
+    private void saveTransaction(AccountMember account, BigDecimal montant, String desc, Session session, Transaction parent) {
+        Transaction tx = Transaction.builder()
+                .accountMember(account)
+                .amount(montant)
+                .description(desc)
+                .transactionType(TransactionType.INTERET)
+                .transactionDirection(TransactionDirection.CREDIT)
+                .session(session)
+                .parentTransaction(parent)
+                .build();
+        transactionRepository.save(tx);
+    }
+
+    private void saveCaisseTransaction(BigDecimal montant, String desc, Session session, Transaction parent) {
+        saveTransaction(null, montant, desc, session, parent);
     }
 }

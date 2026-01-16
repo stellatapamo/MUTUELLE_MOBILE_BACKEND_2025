@@ -156,6 +156,10 @@
             return memberRepo.findAll();
         }
 
+        public List<AccountMember> getAllMemberAccountsWithActive(boolean isActive) {
+            return memberRepo.findAllByIsActive(isActive);
+        }
+
         /**
          * Sauvegarde un compte membre (après redistribution)
          */
@@ -165,7 +169,6 @@
 
         /**
          * Ajoute un montant à la caisse de la mutuelle
-         * (miettes d'intérêts non redistribuées)
          */
         @Transactional
         public void addToMutuelleCaisse(BigDecimal amount) {
@@ -177,6 +180,21 @@
             global.setSavingAmount(global.getSavingAmount().add(amount));
             globalRepo.save(global);
         }
+
+        /**
+         * retirer un montant à la caisse de la mutuelle
+         */
+        @Transactional
+        public void removeToMutuelleCaisse(BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                return;
+            }
+
+            AccountMutuelle global = getMutuelleGlobalAccount();
+            global.setSavingAmount(global.getSavingAmount().subtract(amount));
+            globalRepo.save(global);
+        }
+
         /**
          * Un membre emprunte de l'argent à la mutuelle
          */
@@ -288,33 +306,6 @@
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);
         }
-
-        @Transactional
-        public void payAgapesAmount(Long memberId, BigDecimal amount) {
-            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Le montant payé doit être positif");
-            }
-
-            AccountMember memberAccount = getMemberAccount(memberId);
-            AccountMutuelle globalAccount = getMutuelleGlobalAccount();
-
-            BigDecimal unpaid = memberAccount.getUnpaidAgapesAmount();
-
-            if (unpaid.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalStateException("Aucunes agapes impayées");
-            }
-
-            if (amount.compareTo(unpaid) > 0) {
-                throw new IllegalArgumentException("Le paiement dépasse les agapes dues");
-            }
-
-            memberAccount.setUnpaidAgapesAmount(unpaid.subtract(amount));
-//            globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
-
-            memberRepo.save(memberAccount);
-//            globalRepo.save(globalAccount);
-        }
-
 
         /**
          * Récupère un compte membre par son ID (ID de la table accounts_member)

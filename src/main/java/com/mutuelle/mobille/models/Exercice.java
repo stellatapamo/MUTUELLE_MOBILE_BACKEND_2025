@@ -40,6 +40,9 @@ public class Exercice {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
+    @OneToOne(mappedBy = "exercice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ExerciceHistory history;
+
     // Relation inverse : un exercice a plusieurs sessions
     @OneToMany(mappedBy = "exercice", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Session> sessions = new HashSet<>();
@@ -59,5 +62,6 @@ public class Exercice {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        this.inProgress = (endDate == null || endDate.isAfter(LocalDateTime.now())) && startDate.isBefore(LocalDateTime.now());
     }
 }

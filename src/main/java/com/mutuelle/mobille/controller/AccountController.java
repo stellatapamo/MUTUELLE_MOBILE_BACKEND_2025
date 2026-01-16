@@ -1,6 +1,9 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
+import com.mutuelle.mobille.dto.account.AccountMemberResponseDTO;
+import com.mutuelle.mobille.dto.member.AccountMemberDTO;
+import com.mutuelle.mobille.mapper.transactionEpargne.DtoMapper;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.service.AccountService;
@@ -12,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -27,10 +31,15 @@ public class AccountController {
 
     @GetMapping("/members")
     @Operation(summary = "Lister tous les comptes des membres")
-    public ResponseEntity<ApiResponseDto<List<AccountMember>>> getAllMemberAccounts() {
+    public ResponseEntity<ApiResponseDto<List<AccountMemberDTO>>> getAllMemberAccounts() {
         List<AccountMember> accounts = accountService.getAllMemberAccounts();
+
+        List<AccountMemberDTO> dtos = accounts.stream()
+                .map(DtoMapper::toAccountMemberDto)
+                .toList();
+
         return ResponseEntity.ok(
-                ApiResponseDto.ok(accounts, "Liste de tous les comptes membres récupérée")
+                ApiResponseDto.ok(dtos, "Liste de tous les comptes membres récupérée")
         );
     }
 

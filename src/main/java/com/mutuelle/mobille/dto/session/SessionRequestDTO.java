@@ -17,6 +17,10 @@ public class SessionRequestDTO {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal solidarityAmount;
 
+    @NotNull(message = "Le montant de l'agape est obligatoire")
+    @DecimalMin(value = "0.0", inclusive = false)
+    private BigDecimal agapeAmountPerMember;
+
     @NotNull(message = "La date de début est obligatoire")
     private LocalDateTime startDate;
 
