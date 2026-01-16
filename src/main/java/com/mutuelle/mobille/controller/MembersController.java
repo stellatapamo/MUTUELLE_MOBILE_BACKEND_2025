@@ -41,14 +41,14 @@ public class MembersController {
     @Operation(summary = "Lister tous les membres actifs avec filtres optionnels")
     public ResponseEntity<ApiResponseDto<List<MemberResponseDTO>>> getAllMembers(
             // Filtres optionnels
-            @RequestParam(required = false) String search,                          // recherche sur prénom, nom ou téléphone
-            @RequestParam(required = false) Boolean active,                         // true/false/null (null = tous)
+            @RequestParam(required = false) String search, // recherche sur prénom, nom ou téléphone
+            @RequestParam(required = false) Boolean active, // true/false/null (null = tous)
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdBefore,
 
             // Pagination et tri manuels (comme ton exemple transactions)
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,          // limite raisonnable
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size, // limite raisonnable
             @RequestParam(defaultValue = "lastname,asc") String sort) {
 
         // Préparation du tri
@@ -71,15 +71,14 @@ public class MembersController {
                 resultPage.getTotalElements(),
                 resultPage.getTotalPages(),
                 resultPage.getNumber(),
-                resultPage.getSize()
-        );
+                resultPage.getSize());
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
     @Operation(summary = "Inscription d'un nouveau membre - crée automatiquement : Member + Account + AuthUser")
-    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> register(@Valid @RequestBody MemberRegisterDTO request) { 
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> register(@Valid @RequestBody MemberRegisterDTO request) {
         MemberResponseDTO response = memberService.registerMember(request);
         return ResponseEntity.status(201)
                 .body(ApiResponseDto.created(response));
@@ -105,5 +104,13 @@ public class MembersController {
     public ResponseEntity<ApiResponseDto<String>> updateAvatar(@RequestParam String avatarUrl) {
         memberService.updateAvatar(avatarUrl);
         return ResponseEntity.ok(ApiResponseDto.ok(avatarUrl, "Avatar mis à jour"));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Désinscrire un membre (Admin uniquement)")
+    public ResponseEntity<ApiResponseDto<Void>> deleteMember(@PathVariable Long id) {
+        memberService.unsubscribeMember(id);
+        return ResponseEntity.ok(ApiResponseDto.ok(null, "Membre désinscrit avec succès"));
     }
 }

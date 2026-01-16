@@ -31,11 +31,14 @@ public class ExerciceService {
         }
 
         // Vérifier chevauchement avec un autre exercice
-        boolean overlap = exerciceRepository.existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIdNot(end, start, excludeId != null ? excludeId : -1L)
-                || (excludeId == null && exerciceRepository.existsByStartDateBetweenOrEndDateBetween(start, end, start, end));
+        boolean overlap = exerciceRepository.existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIdNot(end,
+                start, excludeId != null ? excludeId : -1L)
+                || (excludeId == null
+                        && exerciceRepository.existsByStartDateBetweenOrEndDateBetween(start, end, start, end));
 
         if (overlap) {
-            throw new IllegalArgumentException("Les dates de cet exercice se chevauchent avec un autre exercice existant");
+            throw new IllegalArgumentException(
+                    "Les dates de cet exercice se chevauchent avec un autre exercice existant");
         }
 
         // Vérifier unicité de l'exercice en cours
@@ -69,6 +72,7 @@ public class ExerciceService {
         Exercice exercice = Exercice.builder()
                 .name(request.getName())
                 .agapeAmount(request.getAgapeAmount())
+                .renflouementAmount(request.getRenflouementAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .build();
@@ -91,6 +95,7 @@ public class ExerciceService {
 
         exercice.setName(request.getName());
         exercice.setAgapeAmount(request.getAgapeAmount());
+        exercice.setRenflouementAmount(request.getRenflouementAmount());
         exercice.setStartDate(request.getStartDate());
         exercice.setEndDate(request.getEndDate());
 
@@ -122,6 +127,7 @@ public class ExerciceService {
                 .id(exercice.getId())
                 .name(exercice.getName())
                 .agapeAmount(exercice.getAgapeAmount())
+                .renflouementAmount(exercice.getRenflouementAmount())
                 .startDate(exercice.getStartDate())
                 .endDate(exercice.getEndDate())
                 .createdAt(exercice.getCreatedAt())
@@ -160,7 +166,8 @@ public class ExerciceService {
     }
 
     /**
-     * Retourne l'exercice actuellement en cours (avec mise à jour automatique du flag)
+     * Retourne l'exercice actuellement en cours (avec mise à jour automatique du
+     * flag)
      */
     @Transactional
     public Optional<Exercice> getCurrentExercice() {

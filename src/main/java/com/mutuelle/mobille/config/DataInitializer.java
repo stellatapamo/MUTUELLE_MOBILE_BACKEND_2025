@@ -9,6 +9,8 @@ import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.AdminRepository;
 import com.mutuelle.mobille.repository.AuthUserRepository;
 import com.mutuelle.mobille.repository.MemberRepository;
+import com.mutuelle.mobille.repository.TypeAssistanceRepository;
+import com.mutuelle.mobille.models.TypeAssistance;
 import com.mutuelle.mobille.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final MemberService memberService;
     private final MemberRepository memberRepository;
+    private final TypeAssistanceRepository typeAssistanceRepository;
     private final ObjectMapper objectMapper;
     private final ResourceLoader resourceLoader;
 
@@ -39,7 +42,33 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         createSuperAdminIfNotExists();
         createDefaultAdminIfNotExists();
+        createDefaultAdminIfNotExists();
+        initializeTypeAssistances();
         initializeMembersIfNeeded();
+    }
+
+    @Transactional
+    private void initializeTypeAssistances() {
+        if (typeAssistanceRepository.count() > 0) {
+            return;
+        }
+
+        List<TypeAssistance> types = List.of(
+                TypeAssistance.builder().name("Mariage").description("Allocations mariage")
+                        .amount(java.math.BigDecimal.valueOf(100000)).build(),
+                TypeAssistance.builder().name("Décès d'un membre").description("Allocations décès membre")
+                        .amount(java.math.BigDecimal.valueOf(1000000)).build(),
+                TypeAssistance.builder().name("Décès conjoint").description("Allocations décès conjoint")
+                        .amount(java.math.BigDecimal.valueOf(500000)).build(),
+                TypeAssistance.builder().name("Décès d'un enfant").description("Allocations décès enfant")
+                        .amount(java.math.BigDecimal.valueOf(300000)).build(),
+                TypeAssistance.builder().name("Départ à la retraite").description("Allocations retraite")
+                        .amount(java.math.BigDecimal.valueOf(500000)).build(),
+                TypeAssistance.builder().name("Promotion de grade").description("Allocations promotion")
+                        .amount(java.math.BigDecimal.valueOf(50000)).build());
+
+        typeAssistanceRepository.saveAll(types);
+        System.out.println("Types d'assistance initialisés avec succès.");
     }
 
     @Transactional // Très important pour que les deux saves soient dans la même transaction
@@ -109,8 +138,8 @@ public class DataInitializer implements CommandLineRunner {
 
             List<MemberRegisterDTO> members = objectMapper.readValue(
                     inputStream,
-                    new TypeReference<List<MemberRegisterDTO>>() {}
-            );
+                    new TypeReference<List<MemberRegisterDTO>>() {
+                    });
 
             for (MemberRegisterDTO dto : members) {
                 try {

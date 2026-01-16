@@ -9,25 +9,27 @@ import java.time.LocalDateTime;
 
 public record MemberResponseDTO(
 
-        Long id,
-        String firstname,
-        String lastname,
-        String phone,
-        String email,
-        String avatar,
-        Role role,
+                Long id,
+                String firstname,
+                String lastname,
+                String phone,
+                String email,
+                String avatar,
+                Role role,
 
-        boolean isActive,
+                boolean isActive,
 
-        // Données financières du compte
-        BigDecimal unpaidRegistrationAmount,  // frais d'inscription impayés
-        BigDecimal solidarityAmount,          // cotisation solidarité due
-        BigDecimal borrowAmount,              // montant emprunté
-        BigDecimal unpaidRenfoulement,        // renflouement impayé
-        String pin,
+                // Données financières du compte
+                BigDecimal unpaidRegistrationAmount, // frais d'inscription impayés
+                BigDecimal solidarityAmount, // cotisation solidarité due
+                BigDecimal borrowAmount, // montant emprunté
+                BigDecimal unpaidRenfoulement, // renflouement impayé
+                String pin,
 
+                boolean isCompliant,
 
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt
 
-) {}
+) {
+}

@@ -24,7 +24,8 @@ public class EpargneService {
     private final SessionService sessionService;
 
     @Transactional
-    public Transaction processEpargne(Long memberId, Long sessionId, BigDecimal amount, TransactionDirection direction) {
+    public Transaction processEpargne(Long memberId, Long sessionId, BigDecimal amount,
+            TransactionDirection direction) {
 
         AccountMember memberAccount = accountService.getMemberAccount(memberId);
 
@@ -53,24 +54,26 @@ public class EpargneService {
         return transactionRepository.save(transaction);
     }
 
-
-
     public List<Transaction> getAllEpargneTransactions() {
         return transactionRepository.findByTransactionType(TransactionType.EPARGNE);
     }
-//
-//    public List<Transaction> getEpargneByMember(Long memberId) {
-//        return transactionRepository.findByTransactionTypeAndAccountMemberId(TransactionType.EPARGNE, memberId);
-//    }
+    //
+    // public List<Transaction> getEpargneByMember(Long memberId) {
+    // return
+    // transactionRepository.findByTransactionTypeAndAccountMemberId(TransactionType.EPARGNE,
+    // memberId);
+    // }
 
     public List<Transaction> getEpargneByDirection(TransactionDirection direction) {
         return transactionRepository.findByTransactionTypeAndTransactionDirection(
                 TransactionType.EPARGNE, direction);
     }
 
-//    public List<Transaction> getEpargneByMemberAndDirection(Long memberId, TransactionDirection direction) {
-//        return transactionRepository.findByAccountMemberIdAndTransactionTypeAndTransactionDirection(
-//                memberId, TransactionType.EPARGNE, direction);
-//    }
+    // public List<Transaction> getEpargneByMemberAndDirection(Long memberId,
+    // TransactionDirection direction) {
+    // return
+    // transactionRepository.findByAccountMemberIdAndTransactionTypeAndTransactionDirection(
+    // memberId, TransactionType.EPARGNE, direction);
+    // }
 
 }

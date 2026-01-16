@@ -23,7 +23,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     List<Transaction> findByTransactionDirection(TransactionDirection direction);
 
-    List<Transaction> findByTransactionTypeAndTransactionDirection(TransactionType type, TransactionDirection direction);
+    List<Transaction> findByTransactionTypeAndTransactionDirection(TransactionType type,
+            TransactionDirection direction);
+
+    List<Transaction> findByAccountMember_MemberAndTransactionTypeAndCreatedAtBetween(
+            com.mutuelle.mobille.models.Member member,
+            TransactionType type,
+            LocalDateTime startDate,
+            LocalDateTime endDate);
 
     // Méthode dynamique avec filtres (utilisée dans le service)
     default Page<Transaction> findFiltered(

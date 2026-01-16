@@ -23,9 +23,14 @@ public class Exercice {
     @Column(nullable = false)
     private String name;
 
+    @Builder.Default
     @Column(name = "agape_amount", precision = 12, scale = 2, nullable = false)
-    private BigDecimal agapeAmount = BigDecimal.ZERO;
+    private BigDecimal agapeAmount = BigDecimal.valueOf(45000);
 
+    @Column(name = "renflouement_amount", precision = 12, scale = 2)
+    private BigDecimal renflouementAmount;
+
+    @Builder.Default
     @Column(name = "in_progress")
     private boolean inProgress = false;
 

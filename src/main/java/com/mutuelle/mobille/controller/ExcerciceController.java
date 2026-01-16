@@ -39,7 +39,8 @@ public class ExcerciceController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Créer un nouvel exercice (administrateurs uniquement)")
-    public ResponseEntity<ApiResponseDto<ExerciceResponseDTO>> createExercice(@Valid @RequestBody ExerciceRequestDTO request) {
+    public ResponseEntity<ApiResponseDto<ExerciceResponseDTO>> createExercice(
+            @Valid @RequestBody ExerciceRequestDTO request) {
         ExerciceResponseDTO response = exerciceService.createExercice(request);
         return ResponseEntity.status(201).body(ApiResponseDto.created(response));
     }

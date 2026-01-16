@@ -29,7 +29,6 @@ public class SolidariteService {
         private final SolidariteRepository solidariteRepo;
         private final AccountService accountService;
 
-
         /**
          * Paiement d'une cotisation de solidarité par un membre
          * - met à jour les comptes (membre + global)
@@ -63,7 +62,7 @@ public class SolidariteService {
                 memberAccount.setSolidarityAmount(
                                 memberAccount.getSolidarityAmount().add(amount));
                 memberAccount.setUnpaidSolidarityAmount(
-                        memberAccount.getUnpaidSolidarityAmount().subtract(amount));
+                                memberAccount.getUnpaidSolidarityAmount().subtract(amount));
 
                 globalAccount.setSolidarityAmount(
                                 globalAccount.getSolidarityAmount().add(amount));

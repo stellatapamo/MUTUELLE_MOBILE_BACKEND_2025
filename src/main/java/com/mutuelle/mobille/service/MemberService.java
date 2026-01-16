@@ -2,7 +2,7 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
-import com.mutuelle.mobille.enums.TransactionType;
+
 import com.mutuelle.mobille.enums.Role;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.auth.AuthUser;
@@ -32,6 +32,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RenflouementService renflouementService;
 
     // ===========================================================================
     // INSCRIPTION MEMBRE → Crée Member + Account + AuthUser (comme le superadmin)
@@ -116,6 +117,22 @@ public class MemberService {
     }
 
     // ===========================================================================
+    // DÉSACTIVATION MEMBRE (Admin)
+    // ===========================================================================
+    @Transactional
+    public void unsubscribeMember(Long id) {
+        Member member = memberRepository.findByIdWithAccount(id)
+                .orElseThrow(() -> new IllegalArgumentException("Membre non trouvé"));
+
+        member.setActive(false);
+        if (member.getAccountMember() != null) {
+            member.getAccountMember().setActive(false);
+        }
+
+        memberRepository.save(member);
+    }
+
+    // ===========================================================================
     // MAPPER → DTO
     // ===========================================================================
     private MemberResponseDTO toResponseDTO(Member member) {
@@ -125,6 +142,8 @@ public class MemberService {
 
         String email = authUser != null ? authUser.getEmail() : null;
         Role role = authUser != null ? authUser.getRole() : null;
+
+        boolean isCompliant = renflouementService.isMemberCompliant(member);
 
         return new MemberResponseDTO(
                 member.getId(),
@@ -140,9 +159,9 @@ public class MemberService {
                 accountMember.getBorrowAmount(),
                 accountMember.getUnpaidRenfoulement(),
                 member.getPin(),
+                isCompliant,
                 member.getCreatedAt(),
-                member.getUpdatedAt()
-        );
+                member.getUpdatedAt());
     }
 
     @Transactional(readOnly = true)
@@ -167,12 +186,10 @@ public class MemberService {
         // Filtre recherche (prénom, nom, téléphone)
         if (search != null && !search.trim().isEmpty()) {
             String term = "%" + search.trim().toLowerCase() + "%";
-            spec = spec.and((root, query, cb) ->
-                    cb.or(
-                            cb.like(cb.lower(root.get("firstname")), term),
-                            cb.like(cb.lower(root.get("lastname")), term),
-                            cb.like(root.get("phone"), term)
-                    ));
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("firstname")), term),
+                    cb.like(cb.lower(root.get("lastname")), term),
+                    cb.like(root.get("phone"), term)));
         }
 
         // Filtre actif/inactif
