@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -324,4 +325,21 @@ public class MemberService {
         return toResponseDTO(memberRepository.findById(memberId).orElseThrow());
     }
 
+    /**
+     * Vérifie si un membre est à jour : a payé tous les frais d'inscription et la solidarité.
+     * (unpaidRegistrationAmount == 0 && unpaidSolidarityAmount == 0)
+     *
+     * @param memberId L'ID du membre à vérifier
+     * @return true si le membre est à jour, false sinon
+     */
+    @Transactional(readOnly = true)
+    public boolean isMemberAJour(Long memberId) {
+        Optional<Member> optionalMember = memberRepository.findByIdWithAccount(memberId);
+        if (optionalMember.isEmpty()) {
+            throw new IllegalArgumentException("Membre non trouvé avec l'ID : " + memberId);
+        }
+        AccountMember account = optionalMember.get().getAccountMember();
+        return account.getUnpaidRegistrationAmount().compareTo(BigDecimal.ZERO) == 0 &&
+                account.getUnpaidSolidarityAmount().compareTo(BigDecimal.ZERO) == 0;
+    }
 }

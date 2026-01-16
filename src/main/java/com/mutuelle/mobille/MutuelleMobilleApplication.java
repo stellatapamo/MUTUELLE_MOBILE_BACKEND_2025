@@ -1,32 +1,73 @@
 package com.mutuelle.mobille;
 
-import com.mutuelle.mobille.service.EmailService;
+import com.mutuelle.mobille.dto.NotificationRequestDto;
+import com.mutuelle.mobille.enums.NotificationChannel;
+import com.mutuelle.mobille.service.notifications.EmailService;
+import com.mutuelle.mobille.service.notifications.NotificationService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@EnableScheduling
 @SpringBootApplication
 @EnableAsync
 public class MutuelleMobilleApplication {
 
 	private final EmailService emailService;
+	private final NotificationService notificationService;
 
 	@Autowired
-	public MutuelleMobilleApplication(EmailService emailService) {
+	public MutuelleMobilleApplication(EmailService emailService, NotificationService notificationService) {
 		this.emailService = emailService;
+		this.notificationService = notificationService;
 	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(MutuelleMobilleApplication.class, args);
 	}
+
+
+//	/**
+//	 * Test de l'envoi de notification Thymeleaf au démarrage
+//	 */
+//	@PostConstruct
+//	public void sendTestEmailOnStartup() {
+//		try {
+//			// Préparation des variables pour Thymeleaf
+//			Map<String, Object> testVars = new HashMap<>();
+//			testVars.put("userName", "Admin Mutuelle");
+//			testVars.put("startupTime", java.time.LocalDateTime.now().toString());
+//
+//			// Construction du DTO avec le Builder
+//			NotificationRequestDto request = NotificationRequestDto.builder()
+//					.email("pandoraanimp@gmail.com")
+//					.title("Démarrage Backend Mutuelle")
+//					.templateName("welcome") // Nom du fichier : email/welcome.html
+//					.variables(testVars)
+//					.channels(Set.of(NotificationChannel.EMAIL))
+//					.message("Ceci est le message de fallback si le template échoue.")
+//					.build();
+//
+//			notificationService.sendNotification(request);
+//			System.out.println(" Test de notification de démarrage envoyé !");
+//
+//		} catch (Exception e) {
+//			System.err.println(" Erreur lors du test de démarrage : " + e.getMessage());
+//		}
+//	}
+
 
 //	/**
 //	 * Envoyer un email de test une fois que l'application est complètement démarrée

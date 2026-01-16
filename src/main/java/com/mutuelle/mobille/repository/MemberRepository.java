@@ -45,4 +45,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Page<Member> findAll(Specification<Member> spec, Pageable pageable);
 
     boolean existsByPhoneAndIdNot(String phone, Long id);
+
+    @Query("SELECT m FROM Member m WHERE m.isActive = true")
+    List<Member> findAllActiveMembers();
 }

@@ -63,4 +63,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        // Chemins publics qui ne nécessitent pas de token JWT
+        return path.startsWith("/preview/") ||
+                path.startsWith("/preview/email/welcome") ||
+                path.startsWith("/auth/") ||
+                path.startsWith("/api/auth/") ||
+                path.startsWith("/api/public/") ||
+                path.startsWith("/swagger-ui/") ||
+                path.startsWith("/v3/api-docs/") ||
+                path.equals("/actuator/health") ||
+                path.equals("/api/config/current") ||
+                path.equals("/api/context");
+    }
 }

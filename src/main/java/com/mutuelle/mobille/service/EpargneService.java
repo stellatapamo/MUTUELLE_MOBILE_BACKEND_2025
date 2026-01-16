@@ -28,7 +28,7 @@ public class EpargneService {
 
         AccountMember memberAccount = accountService.getMemberAccount(memberId);
 
-        Optional<Session> currentSessionOpt = sessionService.getCurrentSession();
+        Optional<Session> currentSessionOpt = sessionService.findCurrentSession();
         if (currentSessionOpt.isEmpty()) {
             throw new IllegalStateException("Session not found");
         }

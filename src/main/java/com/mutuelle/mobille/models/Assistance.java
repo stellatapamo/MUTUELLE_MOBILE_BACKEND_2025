@@ -24,6 +24,9 @@ public class Assistance {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "type_assistance_id", nullable = false)
     private TypeAssistance typeAssistance;
+
+    @Column(name = "amount_move", precision = 12, scale = 2, nullable = false)
+    private BigDecimal amountMove = BigDecimal.ZERO;
  
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "transaction_id", nullable = false)

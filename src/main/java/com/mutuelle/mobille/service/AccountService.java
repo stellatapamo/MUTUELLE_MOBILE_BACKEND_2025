@@ -11,6 +11,9 @@
     import jakarta.transaction.Transactional;
     import lombok.RequiredArgsConstructor;
     import org.springframework.stereotype.Service;
+
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
     import java.util.List;
 
     import java.math.BigDecimal;
@@ -51,10 +54,53 @@
                     .orElseThrow(() -> new RuntimeException("Compte membre introuvable pour l'ID : " + memberId));
         }
 
+        /**
+         * Récupère tous les membres ayant un emprunt en cours (> 0)
+         */
+        public List<AccountMember> findMembersWithBorrowGreaterThanZero() {
+            return memberRepo.findByBorrowAmountGreaterThan(BigDecimal.ZERO);
+        }
+
+        /**
+         * Met à jour uniquement la date de dernier calcul d'intérêt trimestriel
+         */
+        @Transactional
+        public void updateLastInterestDate(Long memberId, LocalDateTime newDate) {
+            AccountMember account = getMemberAccount(memberId);
+            account.setLastInterestDate(newDate);
+            memberRepo.save(account);
+        }
 
         // ──────────────────────────────────────────────────────────────
         // ─────────────── OPÉRATIONS FINANCIÈRES (avec mise à jour globale)
         // ──────────────────────────────────────────────────────────────
+
+        /**
+         * augmenter la dette d'un membre
+         */
+        @Transactional
+        public void addBorrowAmount(AccountMember accountMember, BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Le a ajouter doit être positif");
+            }
+
+            AccountMutuelle globalAccount = getMutuelleGlobalAccount();
+
+            BigDecimal currentAmount = accountMember.getBorrowAmount();
+            if (currentAmount == null) {
+                currentAmount = BigDecimal.ZERO;
+            }
+
+            // Mise à jour compte membre
+            accountMember.setBorrowAmount(currentAmount.add(amount));
+
+            // Mise à jour compte global
+            globalAccount.setBorrowAmount(currentAmount.add(amount));
+
+            memberRepo.save(accountMember);
+            globalRepo.save(globalAccount);
+        }
+
 
         /**
          * Un membre fait une épargne
@@ -185,13 +231,13 @@
          * retirer un montant à la caisse de la mutuelle
          */
         @Transactional
-        public void removeToMutuelleCaisse(BigDecimal amount) {
+        public void removeToSolidarityMutuelleCaisse(BigDecimal amount) {
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 return;
             }
 
             AccountMutuelle global = getMutuelleGlobalAccount();
-            global.setSavingAmount(global.getSavingAmount().subtract(amount));
+            global.setSolidarityAmount(global.getSolidarityAmount().subtract(amount));
             globalRepo.save(global);
         }
 
@@ -200,6 +246,8 @@
          */
         @Transactional
         public void borrowMoney(Long memberId, BigDecimal amount) {
+            LocalDateTime now = LocalDateTime.now();
+
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Le montant emprunté doit être positif");
             }
@@ -211,6 +259,8 @@
             if (globalAccount.getSavingAmount().compareTo(amount) < 0) {
                 throw new IllegalStateException("Fonds insuffisants dans la mutuelle");
             }
+            memberAccount.setInitialBorrowAmount(amount);
+            memberAccount.setLastInterestDate(now);
 
             memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().add(amount));
             globalAccount.setSavingAmount(globalAccount.getSavingAmount().subtract(amount)); // prêt sorti

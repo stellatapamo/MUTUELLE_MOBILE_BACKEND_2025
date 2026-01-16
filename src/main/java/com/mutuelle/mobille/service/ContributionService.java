@@ -36,7 +36,7 @@ public class ContributionService {
 
         AccountMember memberAccount = accountService.getMemberAccount(memberId);
 
-        Session currentSession = sessionService.getCurrentSession()
+        Session currentSession = sessionService.findCurrentSession()
                 .orElseThrow(() -> new IllegalStateException("Aucune session en cours trouvée"));
 
         BigDecimal unpaidBefore = getUnpaidAmount(memberAccount, type);

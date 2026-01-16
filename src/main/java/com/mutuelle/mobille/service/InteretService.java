@@ -38,6 +38,31 @@ public class InteretService {
         return MoneyUtil.round(montantEmprunte.multiply(taux));
     }
 
+    /**
+     * Calcule le montant d'emprunt initial fictif qui aurait conduit au solde restant dû actuel (Valeur de l'interet restant),
+     * en tenant compte de la formule : net_reçu = montant_emprunt - interet(montant_emprunt)
+     * → montant_emprunt = solde_dû / (1 - taux)
+     */
+    public BigDecimal calculMontantEmpruntEquivalent(BigDecimal soldeRestant) {
+        if (soldeRestant == null || soldeRestant.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        MutuelleConfig config = mutuelleConfigService.getCurrentConfig();
+        BigDecimal taux = config.getLoanInterestRatePercent()
+                .divide(BigDecimal.valueOf(100), 8, BigDecimal.ROUND_HALF_UP);
+
+        if (taux.compareTo(BigDecimal.ONE) >= 0 || taux.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("Taux invalide ({}) → retour solde tel quel", taux);
+            return soldeRestant;
+        }
+
+        BigDecimal diviseur = BigDecimal.ONE.subtract(taux);
+        BigDecimal montantEquivalent = soldeRestant.divide(diviseur, 2, BigDecimal.ROUND_HALF_UP);
+
+        return MoneyUtil.floorToNearest25(montantEquivalent);
+    }
+
     public void redistribuerInteret(Long emprunteurAccountId,
                                     BigDecimal interetTotal,
                                     Transaction parentTransaction,

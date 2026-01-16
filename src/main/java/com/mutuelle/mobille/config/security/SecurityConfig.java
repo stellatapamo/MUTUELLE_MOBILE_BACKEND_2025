@@ -50,6 +50,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Routes publiques (sans token)
                         .requestMatchers(
+                                "/preview/**",
+                                "/preview/email/**",
+                                "/preview/email",
+                                "/preview/email/*",
+                                "/preview/email/welcome/**",
                                 "/auth/**",
                                 "/api/auth/**",
                                 "/api/public/**",

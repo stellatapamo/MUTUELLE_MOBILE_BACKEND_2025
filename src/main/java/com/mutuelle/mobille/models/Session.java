@@ -1,5 +1,7 @@
 package com.mutuelle.mobille.models;
 
+import com.mutuelle.mobille.enums.StatusExercice;
+import com.mutuelle.mobille.enums.StatusSession;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -35,8 +37,8 @@ public class Session {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
-    @Column(name = "in_progress")
-    private boolean inProgress = true;
+    @Enumerated(EnumType.STRING)
+    private StatusSession status = StatusSession.PLANNED;
 
     // Une session appartient à un exercice
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -62,11 +64,4 @@ public class Session {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-        this.inProgress = (endDate == null || endDate.isAfter(LocalDateTime.now())) && startDate.isBefore(LocalDateTime.now());
-    }
-
 }

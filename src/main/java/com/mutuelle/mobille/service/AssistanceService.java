@@ -123,4 +123,19 @@ public class AssistanceService {
                 type.getAmount()
         );
     }
+
+    /**
+     * Calcule le montant total des assistances validées/accordées pour une session donnée.
+     * (on peut filtrer sur un statut si tu en ajoutes un plus tard : APPROVED, PAID, etc.)
+     */
+    public BigDecimal getTotalAssistanceAmountForSession(Long sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session non trouvée : " + sessionId));
+
+        return transactionRepository.sumAssistanceAmountBySessionId(sessionId);
+    }
+
+    public Long countTotalAssistanceForSession(Long sessionId){
+        return  transactionRepository.countBySessionId(sessionId);
+    }
 }

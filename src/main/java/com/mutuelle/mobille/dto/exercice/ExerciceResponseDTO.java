@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.dto.exercice;
 
+import com.mutuelle.mobille.enums.StatusExercice;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,6 +15,7 @@ public class ExerciceResponseDTO {
     private String name;
     private BigDecimal agapeAmount;
     private LocalDateTime startDate;
+    private StatusExercice status;
     private LocalDateTime endDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

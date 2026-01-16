@@ -66,11 +66,11 @@ public class SessionController {
 
     @GetMapping("/current")
     public ResponseEntity<ApiResponseDto<SessionResponseDTO>> getCurrentSession() {
-        Optional<Session> sessionOpt = sessionService.getCurrentSession();
+        Optional<Session> sessionOpt = sessionService.findCurrentSession();
         if(sessionOpt.isEmpty()){
             new IllegalStateException("Aucune session en cours trouvée");
         }
         Session session = sessionOpt.get();
-        return ResponseEntity.ok(ApiResponseDto.ok(sessionService.mapToResponseDTO(session)));
+        return ResponseEntity.ok(ApiResponseDto.ok(sessionService.toResponseDTO(session)));
     }
 }

@@ -1,11 +1,13 @@
 package com.mutuelle.mobille.models;
 
+import com.mutuelle.mobille.enums.StatusExercice;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import  com.mutuelle.mobille.enums.StatusExercice;
 
 @Entity
 @Table(name = "exercices")
@@ -26,8 +28,10 @@ public class Exercice {
     @Column(name = "agape_amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal agapeAmount = BigDecimal.ZERO;
 
-    @Column(name = "in_progress")
-    private boolean inProgress = false;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private StatusExercice status = StatusExercice.PLANNED;
 
     @Column(name = "start_date", nullable = false, updatable = false)
     private LocalDateTime startDate;
@@ -54,9 +58,4 @@ public class Exercice {
         updatedAt = LocalDateTime.now();
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-        this.inProgress = (endDate == null || endDate.isAfter(LocalDateTime.now())) && startDate.isBefore(LocalDateTime.now());
-    }
 }

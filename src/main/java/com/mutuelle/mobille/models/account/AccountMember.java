@@ -42,6 +42,12 @@ public class AccountMember {
     @Column(name = "borrow_amount", precision = 12, scale = 2)
     private BigDecimal borrowAmount = BigDecimal.ZERO;
 
+    @Column(name = "last_interest_date" )
+    private LocalDateTime lastInterestDate;
+
+    @Column(name = "initial_borrow_amount" )
+    private BigDecimal initialBorrowAmount = BigDecimal.ZERO;
+
     // Renflouement impayé
     @Column(name = "unpaid_renfoulement", precision = 12, scale = 2)
     private BigDecimal unpaidRenfoulement = BigDecimal.ZERO;

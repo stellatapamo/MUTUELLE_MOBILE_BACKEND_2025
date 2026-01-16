@@ -31,11 +31,19 @@ public class SessionHistory {
 
     private BigDecimal totalAssistanceAmount = BigDecimal.ZERO;
 
-    private Integer totalAssistanceCount = 0;
+    private Long totalAssistanceCount ;
+
+    private BigDecimal agapeAmount = BigDecimal.ZERO;
 
     private BigDecimal mutuelleCash = BigDecimal.ZERO;
 
-    private BigDecimal totalTransactions = BigDecimal.ZERO;
+    @Column(name = "mutuelle_saving_amount", precision = 12, scale = 2)
+    private BigDecimal mutuellesSavingAmount = BigDecimal.ZERO;
+
+    @Column(name = "mutuelle_borrow_amount", precision = 12, scale = 2)
+    private BigDecimal mutuelleBorrowAmount = BigDecimal.ZERO;
+
+    private Long totalTransactions ;
 
 
     @CreatedDate

@@ -27,11 +27,11 @@ public class CurrentContextService {
     public CurrentContextResponseDTO buildCurrentContext() {
 
         // 1. Récupérer la session courante (optionnelle)
-        Optional<Session> optionalSession = sessionService.getCurrentSession();
+        Optional<Session> optionalSession = sessionService.findCurrentSession();
 
         // 2. Mapper la session courante en DTO (ou null si absente)
         SessionResponseDTO currentSessionDto = optionalSession
-                .map(sessionService::mapToResponseDTO)
+                .map(sessionService::toResponseDTO)
                 .orElse(null);
 
         // 3. Déterminer l'exercice courant
@@ -39,9 +39,9 @@ public class CurrentContextService {
         // Priorité 2 : un exercice en cours même sans session active
         ExerciceResponseDTO currentExerciceDto = optionalSession
                 .map(Session::getExercice)
-                .map(exerciceService::mapToResponseDTO)
-                .orElseGet(() -> exerciceService.getCurrentExercice()
-                        .map(exerciceService::mapToResponseDTO)
+                .map(exerciceService::toResponseDTO)
+                .orElseGet(() -> exerciceService.findCurrentExercice()
+                        .map(exerciceService::toResponseDTO)
                         .orElse(null));
 
         // 4. Config et types d'assistance
@@ -51,7 +51,7 @@ public class CurrentContextService {
         // 5. Grille des plafonds d'emprunt
         List<BorrowingCeilingInterval> borrowingCeilingIntervals = borrowingCeilingService.getAllIntervalsOrdered() ;
 
-        // 6. Construire la réponse
+        // Construire la réponse
         return CurrentContextResponseDTO.builder()
                 .currentSession(currentSessionDto)
                 .currentExercice(currentExerciceDto)

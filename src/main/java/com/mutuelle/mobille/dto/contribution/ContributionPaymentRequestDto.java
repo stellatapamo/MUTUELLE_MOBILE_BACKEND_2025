@@ -25,10 +25,9 @@ public record ContributionPaymentRequestDto(
 
 ) {
 
-    @AssertTrue(message = "Le type de contribution doit être AGAPE, INSCRIPTION ou RENFOULEMENT")
+    @AssertTrue(message = "Le type de contribution doit être  INSCRIPTION ou RENFOULEMENT")
     private boolean isValidContributionType() {
-        return contributionType == TransactionType.AGAPE ||
-                contributionType == TransactionType.INSCRIPTION ||
+        return  contributionType == TransactionType.INSCRIPTION ||
                 contributionType == TransactionType.RENFOULEMENT;
     }
 }

@@ -31,13 +31,19 @@ public class ExerciceHistory {
 
     private BigDecimal totalAssistanceAmount = BigDecimal.ZERO;
 
-    private Integer totalAssistanceCount = 0;
+    private Long totalAssistanceCount ;
+
+    private BigDecimal totalAgapeAmount = BigDecimal.ZERO;
 
     private BigDecimal mutuelleCash = BigDecimal.ZERO;
 
-    private BigDecimal totalTransactions = BigDecimal.ZERO;
+    private Long totalTransactions;
 
-    private BigDecimal totalAmountToRefund = BigDecimal.ZERO;
+    @Column(name = "mutuelle_saving_amount", precision = 12, scale = 2)
+    private BigDecimal mutuellesSavingAmount = BigDecimal.ZERO;
+
+    @Column(name = "mutuelle_borrow_amount", precision = 12, scale = 2)
+    private BigDecimal mutuelleBorrowAmount = BigDecimal.ZERO;
 
     @CreatedDate
     @Column(updatable = false)

@@ -2,6 +2,7 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
+import com.mutuelle.mobille.enums.StatusSession;
 import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.models.Exercice;
 import com.mutuelle.mobille.models.Session;
@@ -16,10 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,265 +32,262 @@ public class SessionService {
     private final SessionHistoryRepository sessionHistoryRepository;
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
+    private final AssistanceService assistanceService;
 
-    private static final LocalDateTime NOW = LocalDateTime.now();
+
+//    private final Clock clock;  // ← à injecter (configurable pour les tests)
+
+    private LocalDateTime now() {
+        return LocalDateTime.now();
+    }
+
+    // ───────────────────────────────────────────────
+    //              Validation centrale
+    // ───────────────────────────────────────────────
 
     private void validateSession(Session session, Long excludeId) {
-        LocalDateTime sessionStart = session.getStartDate();
-        LocalDateTime sessionEnd = session.getEndDate();
+        LocalDateTime start = session.getStartDate();
+        LocalDateTime end = session.getEndDate();
+        LocalDateTime now = now();
 
-        if (sessionEnd != null && sessionStart.isAfter(sessionEnd)) {
-            throw new IllegalArgumentException("La date de début de la session doit être avant la date de fin");
+        if (end != null && start.isAfter(end)) {
+            throw new IllegalArgumentException("Date de début doit être ≤ date de fin");
         }
 
-        Exercice exercice = session.getExercice();
-
-        // 4. La session doit être contenue dans l'exercice
-        if (sessionStart.isBefore(exercice.getStartDate()) ||
-                (exercice.getEndDate() != null && sessionEnd != null && sessionEnd.isAfter(exercice.getEndDate())) ||
-                (exercice.getEndDate() != null && sessionEnd == null)) {
-            throw new IllegalArgumentException("Les dates de la session doivent être comprises dans les dates de l'exercice parent");
+        Exercice ex = session.getExercice();
+        if (ex == null) {
+            throw new IllegalArgumentException("Exercice parent obligatoire");
         }
 
-        // 2. Pas de chevauchement global entre sessions
-        boolean overlap = sessionRepository.existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIdNot(
-                sessionEnd == null ? LocalDateTime.MAX : sessionEnd,
-                sessionStart,
+        // Session doit être contenue dans l'exercice
+        if (start.isBefore(ex.getStartDate()) ||
+                (ex.getEndDate() != null && end != null && end.isAfter(ex.getEndDate()))) {
+            throw new IllegalArgumentException("Session hors des dates de l'exercice parent");
+        }
+
+        // Pas de chevauchement avec d'autres sessions (tous statuts confondus)
+        boolean overlap = sessionRepository.existsOverlapping(
+                start,
+                end != null ? end : LocalDateTime.MAX,
                 excludeId != null ? excludeId : -1L);
-
         if (overlap) {
-            throw new IllegalArgumentException("Cette session se chevauche avec une autre session existante");
+            throw new IllegalArgumentException("Chevauchement détecté avec une autre session");
         }
 
-        // 1. Unicité de la session en cours
-        Optional<Session> currentSession = sessionRepository.findCurrentSession(NOW);
-        if (currentSession.isPresent() && !currentSession.get().getId().equals(excludeId)) {
-            boolean newIsCurrent = (sessionEnd == null || sessionEnd.isAfter(NOW)) && sessionStart.isBefore(NOW);
-            if (newIsCurrent) {
-                throw new IllegalArgumentException("Une session est déjà en cours à cette période");
+        // Si la session est ou devient IN_PROGRESS → vérifier qu'aucune autre ne l'est déjà
+        boolean wouldBeInProgress = !start.isAfter(now) && (end == null || !end.isBefore(now));
+        if (wouldBeInProgress && excludeId != null) {
+            Optional<Session> other = sessionRepository.findFirstByStatus(StatusSession.IN_PROGRESS);
+            if (other.isPresent() && !other.get().getId().equals(excludeId)) {
+                throw new IllegalStateException("Une autre session est déjà IN_PROGRESS");
             }
         }
-        // 3. Interdire les mises à jour si historique existe (considérée comme passée)
+
+        // Interdire modification si déjà historisée
         if (excludeId != null && sessionHistoryRepository.existsBySessionId(excludeId)) {
-            throw new IllegalArgumentException("Impossible de mettre à jour une session qui possède déjà un historique (considérée comme passée)");
+            throw new IllegalStateException("Session déjà clôturée (historique existant)");
         }
     }
+
+    // ───────────────────────────────────────────────
+    //              CRUD de base
+    // ───────────────────────────────────────────────
 
     public List<SessionResponseDTO> getAllSessions() {
         return sessionRepository.findAll().stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+                .map(this::toResponseDTO)
+                .toList();
     }
 
     public SessionResponseDTO getSessionById(Long id) {
-        Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session non trouvée avec l'id : " + id));
-        return mapToResponseDTO(session);
+        Session s = sessionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Session non trouvée : " + id));
+        return toResponseDTO(s);
     }
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public SessionResponseDTO createSession(SessionRequestDTO request) {
-        Exercice exercice = exerciceRepository.findById(request.getExerciceId())
+    public SessionResponseDTO createSession(SessionRequestDTO dto) {
+        Exercice ex = exerciceRepository.findById(dto.getExerciceId())
                 .orElseThrow(() -> new RuntimeException("Exercice non trouvé"));
 
         Session session = Session.builder()
-                .name(request.getName())
-                .solidarityAmount(request.getSolidarityAmount())
-                .agapeAmountPerMember(request.getAgapeAmountPerMember())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .inProgress(true) // par défaut une nouvelle session est active si elle chevauche "now"
-                .exercice(exercice)
+                .name(dto.getName())
+                .solidarityAmount(dto.getSolidarityAmount())
+                .agapeAmountPerMember(dto.getAgapeAmountPerMember())
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
+                .status(StatusSession.PLANNED)
+                .exercice(ex)
                 .build();
 
         validateSession(session, null);
-
         session = sessionRepository.save(session);
-
-        // Si la nouvelle session est immédiatement en cours → appliquer la cotisation
-        if (session.isInProgress()) {
-            applySolidarityToAllMembers(session);
-        }
-
-        return mapToResponseDTO(session);
+        return toResponseDTO(session);
     }
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public SessionResponseDTO updateSession(Long id, SessionRequestDTO request) {
+    public SessionResponseDTO updateSession(Long id, SessionRequestDTO dto) {
         Session session = sessionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Session non trouvée"));
 
-        boolean wasInProgress = session.isInProgress();
-
-        Exercice exercice = exerciceRepository.findById(request.getExerciceId())
-                .orElseThrow(() -> new RuntimeException("Exercice non trouvé"));
-
-        session.setName(request.getName());
-        session.setSolidarityAmount(request.getSolidarityAmount());
-        session.setStartDate(request.getStartDate());
-        session.setEndDate(request.getEndDate());
-        session.setExercice(exercice);
-
-        validateSession(session, id);
-
-        // Mise à jour automatique du flag inProgress
-        boolean shouldBeInProgress = (session.getEndDate() == null || session.getEndDate().isAfter(NOW))
-                && session.getStartDate().isBefore(NOW);
-        session.setInProgress(shouldBeInProgress);
-
-        session = sessionRepository.save(session);
-
-        // Détecter le passage à "en cours" (manuellement ou par dates)
-        if (!wasInProgress && shouldBeInProgress) {
-            applySolidarityToAllMembers(session);
-        }else if (wasInProgress && !shouldBeInProgress) {
-            onSessionEnded(session);
+        StatusSession currentStatus = session.getStatus();
+        if (currentStatus == StatusSession.COMPLETED || currentStatus == StatusSession.CANCELLED) {
+            throw new IllegalStateException("Modification interdite sur session terminée ou annulée");
         }
 
-        return mapToResponseDTO(session);
+        // Mise à jour des champs modifiables
+        if (dto.getName() != null) session.setName(dto.getName());
+        if (dto.getSolidarityAmount() != null) session.setSolidarityAmount(dto.getSolidarityAmount());
+        if (dto.getAgapeAmountPerMember() != null) session.setAgapeAmountPerMember(dto.getAgapeAmountPerMember());
+
+        // Gestion stricte des dates
+        if (currentStatus == StatusSession.IN_PROGRESS) {
+            // startDate interdit
+            if (dto.getStartDate() != null && !dto.getStartDate().equals(session.getStartDate())) {
+                throw new IllegalArgumentException("Modification de startDate interdite sur session en cours");
+            }
+            // endDate → prolongation uniquement
+            if (dto.getEndDate() != null) {
+                LocalDateTime newEnd = dto.getEndDate();
+                if (newEnd.isBefore(session.getEndDate())) {
+                    throw new IllegalArgumentException("Raccourcissement de session en cours interdit");
+                }
+                if (newEnd.isBefore(now())) {
+                    throw new IllegalArgumentException("Nouvelle fin doit être dans le futur");
+                }
+                session.setEndDate(newEnd);
+            }
+        } else {
+            if (dto.getStartDate() != null) session.setStartDate(dto.getStartDate());
+            if (dto.getEndDate() != null) session.setEndDate(dto.getEndDate());
+        }
+
+        validateSession(session, id);
+        session = sessionRepository.save(session);
+        return toResponseDTO(session);
     }
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteSession(Long id) {
-        if (!sessionRepository.existsById(id)) {
-            throw new RuntimeException("Session non trouvée avec l'id : " + id);
-        }
-        // Interdire la suppression si historique existe
+        Session s = sessionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Session non trouvée"));
         if (sessionHistoryRepository.existsBySessionId(id)) {
-            throw new IllegalArgumentException("Impossible de supprimer une session qui possède un historique");
+            throw new IllegalStateException("Impossible de supprimer une session historisée");
         }
-        sessionRepository.deleteById(id);
+        sessionRepository.delete(s);
     }
 
-    public SessionResponseDTO mapToResponseDTO(Session session) {
-        return SessionResponseDTO.builder()
-                .id(session.getId())
-                .name(session.getName())
-                .solidarityAmount(session.getSolidarityAmount())
-                .startDate(session.getStartDate())
-                .endDate(session.getEndDate())
-                .inProgress(session.isInProgress())
-                .exerciceId(session.getExercice().getId())
-                .exerciceName(session.getExercice().getName())
-                .createdAt(session.getCreatedAt())
-                .updatedAt(session.getUpdatedAt())
-                .build();
+    // ───────────────────────────────────────────────
+    //              Méthodes lecture / état
+    // ───────────────────────────────────────────────
+
+    public Optional<Session> findCurrentSession() {
+        return sessionRepository.findCurrentInProgress(LocalDateTime.now());
     }
-    /**
-     * Retourne la session actuellement en cours
-     */
+
+    public Optional<SessionResponseDTO> getCurrentSessionDTO() {
+        return findCurrentSession().map(this::toResponseDTO);
+    }
+
+    // ───────────────────────────────────────────────
+    //              Actions importantes (appelées par scheduler)
+    // ───────────────────────────────────────────────
+
     @Transactional
-    public Optional<Session> getCurrentSession() {
-        LocalDateTime now = LocalDateTime.now();
+    public void startSessionIfDue(Session session) {
+        if (session.getStatus() != StatusSession.PLANNED) return;
 
-        Optional<Session> optionalSession = sessionRepository.findCurrentSession(now);
-
-        if (optionalSession.isPresent()) {
-            Session session = optionalSession.get();
-
-            boolean isCurrentlyActive = session.getStartDate().isBefore(now) || session.getStartDate().equals(now);
-            if (session.getEndDate() != null) {
-                isCurrentlyActive = isCurrentlyActive && !session.getEndDate().isBefore(now);
-            }
-
-            // Si le flag inProgress était faux et passe à vrai → c'est un nouveau démarrage
-            boolean wasInProgress = session.isInProgress();
-            if (!wasInProgress && isCurrentlyActive) {
-                applySolidarityToAllMembers(session);
-            }else if (wasInProgress && !isCurrentlyActive) {
-                onSessionEnded(session);
-            }
-
-            // Correction du flag si nécessaire
-            if (session.isInProgress() != isCurrentlyActive) {
-                session.setInProgress(isCurrentlyActive);
-                sessionRepository.save(session);
-            }
-
-            return Optional.of(session);
-        }else {
-            // Vérifier s'il y a une session marquée inProgress mais expirée
-            Optional<Session> expiredOpt = sessionRepository.findByInProgressTrue();
-            if (expiredOpt.isPresent()) {
-                Session expired = expiredOpt.get();
-                boolean isCurrentlyActive = expired.getStartDate().isBefore(now) || expired.getStartDate().equals(now);
-                if (expired.getEndDate() != null) {
-                    isCurrentlyActive = isCurrentlyActive && !expired.getEndDate().isBefore(now);
-                }
-                if (!isCurrentlyActive) {
-                    onSessionEnded(expired);
-                    expired.setInProgress(false);
-                    sessionRepository.save(expired);
-                }
-            }
-            return Optional.empty();
+        LocalDateTime n = now();
+        if (!session.getStartDate().isAfter(n)) {
+            session.setStatus(StatusSession.IN_PROGRESS);
+            sessionRepository.save(session);
+            applySolidarityToAllMembers(session);
         }
     }
 
-    /**
-     * Applique la cotisation solidarité et l'agapes  de la session à tous les membres actifs
-     */
+    @Transactional
+    public void closeSessionIfExpired(Session session) {
+        if (session.getStatus() != StatusSession.IN_PROGRESS) return;
+
+        LocalDateTime n = now();
+        if (session.getEndDate() != null && session.getEndDate().isBefore(n)) {
+            session.setStatus(StatusSession.COMPLETED);
+            sessionRepository.save(session);
+            onSessionEnded(session);
+        }
+    }
+
     @Transactional
     public void applySolidarityToAllMembers(Session session) {
         if (session.getSolidarityAmount() == null || session.getSolidarityAmount().compareTo(BigDecimal.ZERO) <= 0) {
             return;
         }
 
-        Exercice exercice = session.getExercice();
+        List<AccountMember> activeMembers = accountService.getAllMemberAccounts().stream()
+                .filter(AccountMember::isActive)
+                .toList();
 
-        List<AccountMember> allAccounts = accountService.getAllMemberAccounts();
-
-        for (AccountMember account : allAccounts) {
-            if (account.isActive()) {
-                BigDecimal currentUnpaid = account.getUnpaidSolidarityAmount();
-                if (currentUnpaid == null) {
-                    currentUnpaid = BigDecimal.ZERO;
-                }
-                account.setUnpaidSolidarityAmount(currentUnpaid.add(session.getSolidarityAmount()));
-            }
+        for (AccountMember m : activeMembers) {
+            BigDecimal unpaid = m.getUnpaidSolidarityAmount();
+            if (unpaid == null) unpaid = BigDecimal.ZERO;
+            m.setUnpaidSolidarityAmount(unpaid.add(session.getSolidarityAmount()));
+            accountService.saveMemberAccount(m);
         }
-
-        // Sauvegarde en batch si possible, ou via saveAll si tu ajoutes la méthode
-        accountService.getAllMemberAccounts().forEach(accountService::saveMemberAccount);
-
     }
 
-    /**
-     * Génère l'historique quand la session se termine
-     */
     @Transactional
     public void onSessionEnded(Session session) {
+        if (session.getHistory() != null) return;
+        AccountMutuelle mutuelleacc=accountService.getMutuelleGlobalAccount();
+        Long sessionId=session.getId();
 
-        if (session.getHistory() != null) {
-            return; // Déjà fermé
-        }
+        // Débit agapes
+        List<AccountMember> active = accountService.getAllMemberAccountsWithActive(true);
+        BigDecimal perMember = session.getAgapeAmountPerMember();
+        BigDecimal totalDebit = perMember.multiply(BigDecimal.valueOf(active.size()));
+
+        accountService.removeToSolidarityMutuelleCaisse(totalDebit);
+
+        Transaction tx = Transaction.builder()
+                .transactionType(TransactionType.AGAPE)
+                .amount(totalDebit)
+                .description("Agapes session " + session.getName())
+                .session(session)
+                .build();
+        transactionRepository.save(tx);
+
+        sessionRepository.save(session);
 
         SessionHistory history = SessionHistory.builder()
                 .session(session)
-                .totalAssistanceAmount(BigDecimal.ZERO)
-                .totalAssistanceCount(0)
+                .totalAssistanceAmount(assistanceService.getTotalAssistanceAmountForSession(sessionId))
+                .totalAssistanceCount(assistanceService.countTotalAssistanceForSession(sessionId))
+                .agapeAmount(totalDebit)
+                .totalTransactions(transactionRepository.countBySessionId(sessionId))
+                .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
+                .mutuelleCash(mutuelleacc.getTotalRenfoulement().add(mutuelleacc.getTotalRegistrationAmount().add(mutuelleacc.getSolidarityAmount())))
+                .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();
 
         session.setHistory(history);
-        sessionRepository.save(session);
-
-
-        List<AccountMember> allActiveAccounts = accountService.getAllMemberAccountsWithActive(true);
-        BigDecimal amountAgapesPerMember = session.getAgapeAmountPerMember();
-        BigDecimal totalToDebit = amountAgapesPerMember.multiply(BigDecimal.valueOf(allActiveAccounts.size()));
-
-        accountService.removeToMutuelleCaisse(totalToDebit);
-        Transaction transaction = Transaction.builder()
-                .transactionType(TransactionType.AGAPE)
-                .amount(totalToDebit)
-                .description("Agapes :")
-                .session(session)
-                .build();
-        transactionRepository.save(transaction);
-
     }
 
+    public SessionResponseDTO toResponseDTO(Session s) {
+        return SessionResponseDTO.builder()
+                .id(s.getId())
+                .name(s.getName())
+                .solidarityAmount(s.getSolidarityAmount())
+                .agapeAmountPerMember(s.getAgapeAmountPerMember())
+                .startDate(s.getStartDate())
+                .endDate(s.getEndDate())
+                .status(s.getStatus())                    // ← important
+                .exerciceId(s.getExercice().getId())
+                .exerciceName(s.getExercice().getName())
+                .createdAt(s.getCreatedAt())
+                .updatedAt(s.getUpdatedAt())
+                .build();
+    }
 }

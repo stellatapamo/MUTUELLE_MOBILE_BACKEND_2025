@@ -24,7 +24,7 @@ public class ContributionController {
     private final SessionRepository sessionRepository;
 
     // ========================================================================================
-    // PAYER LES AGAPE OU L'INSCRIPTION (partiellement ou totalement)
+    // PAYER  L'INSCRIPTION (partiellement ou totalement)
     // ========================================================================================
     @PostMapping("/pay")
     @Operation(summary = "Payer une contribution (agapes ou inscription ou renfoulement )")
