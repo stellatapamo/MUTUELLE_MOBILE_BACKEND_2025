@@ -48,8 +48,17 @@ public class ExerciceService {
         LocalDateTime start = exercice.getStartDate();
         LocalDateTime end = exercice.getEndDate();
 
-        if (end != null && start.isAfter(end)) {
-            throw new IllegalArgumentException("Date de début doit être ≤ date de fin");
+        if (end != null) {
+            if (start.isAfter(end)) {
+                throw new IllegalArgumentException("Date de début doit être ≤ date de fin");
+            }
+
+            if (start.toLocalDate().equals(end.toLocalDate())) {
+                throw new IllegalArgumentException(
+                        "L'exercice doit couvrir au moins deux jours différents " +
+                                "(date de début et date de fin ne peuvent pas être le même jour)"
+                );
+            }
         }
 
         // Chevauchement avec un autre exercice

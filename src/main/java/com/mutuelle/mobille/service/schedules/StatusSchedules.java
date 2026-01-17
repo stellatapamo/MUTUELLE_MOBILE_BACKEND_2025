@@ -43,8 +43,8 @@ public class StatusSchedules {
         log.debug("Début synchronisation statuts - {}", currentTime);
 
         try {
-            synchronizeSessions(currentTime);
             synchronizeExercices(currentTime);
+            synchronizeSessions(currentTime);
         } catch (Exception e) {
             log.error("Erreur critique lors de la synchronisation des statuts", e);
             // Option : envoyer alerte (email/slack) ici si très grave
