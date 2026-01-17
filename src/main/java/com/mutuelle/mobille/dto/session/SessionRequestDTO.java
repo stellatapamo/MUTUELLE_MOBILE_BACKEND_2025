@@ -28,6 +28,4 @@ public class SessionRequestDTO {
 
     @NotNull(message = "L'ID de l'exercice est obligatoire")
     private Long exerciceId;
-
-    private boolean inProgress = true; // par défaut true
 }

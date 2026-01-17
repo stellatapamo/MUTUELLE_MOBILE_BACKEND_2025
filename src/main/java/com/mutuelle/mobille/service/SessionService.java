@@ -66,7 +66,7 @@ public class SessionService {
         }
 
         // Pas de chevauchement avec d'autres sessions (tous statuts confondus)
-        boolean overlap = exerciceRepository.existsOverlapping(
+        boolean overlap = sessionRepository.existsOverlapping(
                 start,
                 end != null ? end : LocalDateTime.MAX,
                 excludeId != null ? excludeId : null
