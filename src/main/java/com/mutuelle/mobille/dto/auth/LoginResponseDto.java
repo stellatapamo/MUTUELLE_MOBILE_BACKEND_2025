@@ -17,6 +17,7 @@ public class LoginResponseDto {
     private Long userRefId;
     private String accessToken;
     private String refreshToken;
+    private String email;
 
     // Profils typés (un seul sera non-null)
     private Object profile;

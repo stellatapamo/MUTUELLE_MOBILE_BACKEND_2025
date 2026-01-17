@@ -71,6 +71,7 @@ public class AuthService {
                 .role(authUser.getRole())
                 .userRefId(authUser.getUserRefId())
                 .accessToken(accessToken)
+                .email(authUser.getEmail())
                 .refreshToken(refreshTokenValue)
                 .profile(profile)
                 .build();
