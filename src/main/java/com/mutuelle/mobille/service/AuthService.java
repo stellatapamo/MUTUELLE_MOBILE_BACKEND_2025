@@ -36,9 +36,9 @@ public class AuthService {
 
     public LoginResponseDto login(String email, String password) {
         AuthUser authUser = authUserRepo.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Identifiants invalides"));
+                .orElse(null);
 
-        if (!passwordEncoder.matches(password, authUser.getPasswordHash())) {
+        if (authUser == null || !passwordEncoder.matches(password, authUser.getPasswordHash())) {
             throw new BadCredentialsException("Identifiants invalides");
         }
 

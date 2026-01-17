@@ -10,7 +10,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -22,9 +27,20 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Connexion de l'utilisateur")
-    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) { 
-        LoginResponseDto loginData = authService.login(request.getEmail(), request.getPassword());
-        return ResponseEntity.ok(ApiResponseDto.ok(loginData, "Connexion réussie"));
+    public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+
+        try {
+            LoginResponseDto loginData = authService.login(
+                    request.getEmail(),
+                    request.getPassword()
+            );
+            return ResponseEntity.ok(ApiResponseDto.ok(loginData, "Connexion réussie"));
+
+        } catch (BadCredentialsException | UsernameNotFoundException e) {
+            return ResponseEntity.ok(ApiResponseDto.errorCustom("Email ou mot de passe incorrect", 400));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponseDto.errorCustom("Email ou mot de passe incorrect", 400));
+        }
     }
 
     @PostMapping("/refresh")

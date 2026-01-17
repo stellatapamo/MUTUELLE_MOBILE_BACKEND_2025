@@ -131,4 +131,12 @@ public class ApiResponseDto<T> {
                 .code(500)
                 .build();
     }
+
+    public static <T> ApiResponseDto<T> errorCustom(String message, Integer code) {
+        return ApiResponseDto.<T>builder()
+                .success(false)
+                .message(message)
+                .code(code)
+                .build();
+    }
 }
