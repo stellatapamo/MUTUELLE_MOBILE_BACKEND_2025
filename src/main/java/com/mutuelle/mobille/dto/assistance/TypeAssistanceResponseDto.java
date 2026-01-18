@@ -9,5 +9,6 @@ import java.math.BigDecimal;
 public record TypeAssistanceResponseDto(
         Long id,
         String name,
-        BigDecimal amount
+        BigDecimal amount,
+        String description
 ) {}

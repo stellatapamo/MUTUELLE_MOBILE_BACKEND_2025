@@ -120,7 +120,8 @@ public class AssistanceService {
         return new TypeAssistanceResponseDto(
                 type.getId(),
                 type.getName(),
-                type.getAmount()
+                type.getAmount(),
+                type.getDescription()
         );
     }
 

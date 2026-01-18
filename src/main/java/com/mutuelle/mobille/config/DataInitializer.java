@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.enums.Role;
 import com.mutuelle.mobille.models.Admin;
+import com.mutuelle.mobille.models.TypeAssistance;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.AdminRepository;
 import com.mutuelle.mobille.repository.AuthUserRepository;
 import com.mutuelle.mobille.repository.MemberRepository;
+import com.mutuelle.mobille.repository.TypeAssistanceRepository;
 import com.mutuelle.mobille.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -34,12 +37,14 @@ public class DataInitializer implements CommandLineRunner {
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
     private final ResourceLoader resourceLoader;
+    private final TypeAssistanceRepository typeAssistanceRepository;
 
     @Override
     public void run(String... args) {
         createSuperAdminIfNotExists();
         createDefaultAdminIfNotExists();
         initializeMembersIfNeeded();
+        initializeTypeAssistancesIfNeeded();
     }
 
     @Transactional // Très important pour que les deux saves soient dans la même transaction
@@ -126,6 +131,47 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Initialisation des 60 membres terminée.");
         } catch (Exception e) {
             log.error("Erreur lors du chargement du fichier initial-members.json", e);
+        }
+    }
+
+    private void initializeTypeAssistancesIfNeeded() {
+        if (typeAssistanceRepository.count() > 0) {
+            log.info("Au moins un type d'assistance existe déjà ({}). Initialisation ignorée.",
+                    typeAssistanceRepository.count());
+            return;
+        }
+
+        log.info("Aucun type d'assistance trouvé. Chargement depuis type-assistances.json...");
+
+        try (InputStream inputStream = resourceLoader
+                .getResource("classpath:data/types_assistances.json")
+                .getInputStream()) {
+
+            // On lit directement la liste de TypeAssistance (pas besoin de DTO ici)
+            List<TypeAssistance> assistances = objectMapper.readValue(
+                    inputStream,
+                    new TypeReference<List<TypeAssistance>>() {}
+            );
+
+            int count = 0;
+            for (TypeAssistance type : assistances) {
+                // Sécurité supplémentaire : éviter les doublons par nom
+                if (typeAssistanceRepository.existsByNameIgnoreCase(type.getName())) {
+                    log.warn("Type d'assistance déjà existant (skipped) : {}", type.getName());
+                    continue;
+                }
+
+                // On force les bonnes valeurs au cas où le JSON serait approximatif
+                type.setAmount(type.getAmount() != null ? type.getAmount() : BigDecimal.ZERO);
+
+                typeAssistanceRepository.save(type);
+                count++;
+            }
+
+            log.info("Initialisation terminée : {} types d'assistance créés.", count);
+
+        } catch (Exception e) {
+            log.error("Erreur lors du chargement de type-assistances.json", e);
         }
     }
 }
