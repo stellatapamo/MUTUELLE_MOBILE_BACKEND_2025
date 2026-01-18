@@ -135,7 +135,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeTypeAssistancesIfNeeded() {
-        if (typeAssistanceRepository.count() > 0) {
+        if (typeAssistanceRepository.count() > 7) {
             log.info("Au moins un type d'assistance existe déjà ({}). Initialisation ignorée.",
                     typeAssistanceRepository.count());
             return;
