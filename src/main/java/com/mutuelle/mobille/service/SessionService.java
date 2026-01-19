@@ -3,6 +3,7 @@ package com.mutuelle.mobille.service;
 import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
 import com.mutuelle.mobille.enums.StatusSession;
+import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.models.Exercice;
 import com.mutuelle.mobille.models.Session;
@@ -273,12 +274,32 @@ public class SessionService {
         BigDecimal perMember = session.getAgapeAmountPerMember();
         BigDecimal totalDebit = perMember.multiply(BigDecimal.valueOf(active.size()));
 
+        BigDecimal currentSolidarityBalance = mutuelleacc.getSolidarityAmount();
+
+        if (currentSolidarityBalance.compareTo(totalDebit) < 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Impossible de débiter les agapes pour la session '%s' : " +
+                                    "caisse solidarité insuffisante.\n" +
+                                    "→ Montant requis : %s\n" +
+                                    "→ Solde actuel  : %s\n" +
+                                    "→ Écart         : %s\n" +
+                            session.getName(),
+                            totalDebit,
+                            currentSolidarityBalance,
+                            totalDebit.subtract(currentSolidarityBalance)
+                    )
+            );
+        }
+
         accountService.removeToSolidarityMutuelleCaisse(totalDebit);
 
         Transaction tx = Transaction.builder()
                 .transactionType(TransactionType.AGAPE)
                 .amount(totalDebit)
                 .description("Agapes session " + session.getName())
+                .transactionDirection(TransactionDirection.DEBIT)
+                .accountMember(null)
                 .session(session)
                 .build();
         transactionRepository.save(tx);
@@ -307,7 +328,7 @@ public class SessionService {
                 .agapeAmountPerMember(s.getAgapeAmountPerMember())
                 .startDate(s.getStartDate())
                 .endDate(s.getEndDate())
-                .status(s.getStatus())                    // ← important
+                .status(s.getStatus())
                 .exerciceId(s.getExercice().getId())
                 .exerciceName(s.getExercice().getName())
                 .createdAt(s.getCreatedAt())

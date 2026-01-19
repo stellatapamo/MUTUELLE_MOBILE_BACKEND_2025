@@ -37,7 +37,7 @@ public class Transaction {
 
     // === Relation avec accounts_member : ManyToOne ===
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "accounts_member_id", nullable = false)
+    @JoinColumn(name = "accounts_member_id", nullable = true)
     private AccountMember accountMember;
 
     // === Relation avec Session : ManyToOne ===
