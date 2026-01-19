@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.service;
 
-import com.mutuelle.mobille.dto.NotificationRequestDto;
+import com.mutuelle.mobille.dto.notifications.NotificationRequestDto;
 import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;

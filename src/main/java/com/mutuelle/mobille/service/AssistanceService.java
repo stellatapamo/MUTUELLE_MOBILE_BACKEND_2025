@@ -98,10 +98,6 @@ public class AssistanceService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        // Créditer éventuellement le compte du membre ? (selon votre logique métier)
-        // Si l'assistance verse de l'argent au membre, il faut créditer son compte ici.
-        // Exemple possible (à adapter) :
-        // member.getAccountMember().setBalance(member.getAccountMember().getBalance().add(requiredAmount));
 
         // Créer l'assistance
         Assistance assistance = Assistance.builder()

@@ -1,6 +1,7 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.auth.LoginResponseDto;
+import com.mutuelle.mobille.dto.member.MemberResponseDTO;
 import com.mutuelle.mobille.mapper.AdminMapper;
 import com.mutuelle.mobille.mapper.MemberMapper;
 import com.mutuelle.mobille.models.Admin;
@@ -9,6 +10,7 @@ import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.models.auth.RefreshToken;
 import com.mutuelle.mobille.repository.*;
 import com.mutuelle.mobille.utils.JwtUtils;
+import com.mutuelle.mobille.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -16,9 +18,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -120,4 +124,10 @@ public class AuthService {
             refreshTokenRepo.saveAll(activeTokens);
         }
     }
+
+    public Optional<AuthUser> getCurrentUser() {
+        Long currentMemberId = SecurityUtil.getCurrentUserRefId();
+        return authUserRepo.findByUserRefId(currentMemberId);
+    }
+
 }

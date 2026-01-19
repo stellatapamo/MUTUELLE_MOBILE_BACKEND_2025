@@ -1,8 +1,5 @@
 package com.mutuelle.mobille;
 
-import com.mutuelle.mobille.dto.NotificationRequestDto;
-import com.mutuelle.mobille.enums.NotificationChannel;
-import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.service.notifications.EmailService;
 import com.mutuelle.mobille.service.notifications.NotificationService;
 import jakarta.annotation.PostConstruct;
@@ -14,9 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

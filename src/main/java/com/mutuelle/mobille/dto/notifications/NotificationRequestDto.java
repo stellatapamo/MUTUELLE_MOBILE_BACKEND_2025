@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.dto;
+package com.mutuelle.mobille.dto.notifications;
 
 import com.mutuelle.mobille.enums.NotificationChannel;
 import com.mutuelle.mobille.enums.TemplateMailsName;

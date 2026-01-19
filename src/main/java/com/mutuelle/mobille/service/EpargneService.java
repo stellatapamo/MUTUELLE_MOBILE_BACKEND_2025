@@ -24,13 +24,13 @@ public class EpargneService {
     private final SessionService sessionService;
 
     @Transactional
-    public Transaction processEpargne(Long memberId, Long sessionId, BigDecimal amount, TransactionDirection direction) {
+    public Transaction processEpargne(Long memberId, BigDecimal amount, TransactionDirection direction) {
 
         AccountMember memberAccount = accountService.getMemberAccount(memberId);
 
         Optional<Session> currentSessionOpt = sessionService.findCurrentSession();
         if (currentSessionOpt.isEmpty()) {
-            throw new IllegalStateException("Session not found");
+            throw new IllegalStateException("Pas de Session en cours");
         }
         Session currentSession = currentSessionOpt.get();
 

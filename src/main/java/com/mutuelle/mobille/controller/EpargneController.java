@@ -1,27 +1,20 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
-import com.mutuelle.mobille.dto.transaction.epargne.TransactionEpargneDto;
-import com.mutuelle.mobille.enums.TransactionDirection;
-import com.mutuelle.mobille.mapper.transactionEpargne.DtoMapper;
-import com.mutuelle.mobille.models.Member;
-import com.mutuelle.mobille.models.Session;
+import com.mutuelle.mobille.dto.epargne.EpargneRequestDto;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.repository.MemberRepository;
 import com.mutuelle.mobille.repository.SessionRepository;
 import com.mutuelle.mobille.service.EpargneService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.mutuelle.mobille.service.SessionService;
 
-import java.math.BigDecimal;
-import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/epargne")
@@ -31,70 +24,37 @@ public class EpargneController {
 
     private final EpargneService epargneService;
     private final MemberRepository memberRepository;
-    private final SessionRepository sessionRepository;
 
     // ========================================================================================
     // 1) CREER UNE TRANSACTION D'EPARGNE
     // ========================================================================================
+
     @PostMapping
-    @Operation(
-            summary = "Créer une transaction d'épargne",
-            description = "Permet de créer une transaction d'épargne (CREDIT ou DEBIT) pour un membre."
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Transaction créée avec succès",
-            content = @Content(schema = @Schema(implementation = Transaction.class))
-    )
-    @ApiResponse(responseCode = "400", description = "Paramètres invalides")
-    public ResponseEntity<ApiResponseDto<TransactionEpargneDto>> transactionEpargne(
-            @Parameter(description = "ID du membre concerné", example = "1")
-            @RequestParam Long memberId,
-
-            @Parameter(description = "ID de la session", example = "3")
-            @RequestParam Long sessionId,
-
-            @Parameter(description = "Montant de l'épargne", example = "5000")
-            @RequestParam BigDecimal amount,
-
-            @Parameter(description = "Direction de la transaction : CREDIT ou DEBIT", example = "CREDIT")
-            @RequestParam String transactionDirection
-    ) {
-
-        // Vérification membre
-        if (!memberRepository.existsById(memberId)) {
+    @Operation( summary = "Faire une épargne ou retirer",
+            description = "Permet de créer une transaction d'épargne pour un membre dans une session donnée.")
+    public ResponseEntity<ApiResponseDto<Transaction>> epargne(@Valid @RequestBody EpargneRequestDto requestDto) {
+        // 1. Vérification existence membre
+        if (!memberRepository.existsById(requestDto.getMemberId())) {
             return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("Le membre avec l'id " + memberId + " n'existe pas")
+                    ApiResponseDto.error("Le membre avec l'id " + requestDto.getMemberId() + " n'existe pas")
             );
         }
 
-        // Vérification session
-        if (!sessionRepository.existsById(sessionId)) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("La session avec l'id " + sessionId + " n'existe pas")
-            );
-        }
+//        // 2. Vérification existence session
+//        if (!sessionRepository.existsById(requestDto.getSessionId())) {
+//            return ResponseEntity.badRequest().body(
+//                    ApiResponseDto.error("La session avec l'id " + requestDto.getSessionId() + " n'existe pas")
+//            );
+//        }
 
-        // Vérification direction
-        TransactionDirection direction;
-        try {
-            direction = TransactionDirection.valueOf(transactionDirection.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponseDto.error("TransactionDirection invalide : utilisez CREDIT ou DEBIT")
-            );
-        }
 
-        Transaction transaction =
-                epargneService.processEpargne(memberId, sessionId, amount, direction);
-
-        TransactionEpargneDto dto = DtoMapper.toTransactionDto(transaction);
-
-        return ResponseEntity.ok(
-                ApiResponseDto.ok(dto, "Transaction d'épargne effectuée avec succès")
+        Transaction transaction = epargneService.processEpargne(
+                requestDto.getMemberId(),
+                requestDto.getAmount(),
+                requestDto.getTransactionDirection()
         );
 
-
+        return ResponseEntity.ok(ApiResponseDto.ok(transaction, "Epargne reussie avec succès"));
     }
 
 

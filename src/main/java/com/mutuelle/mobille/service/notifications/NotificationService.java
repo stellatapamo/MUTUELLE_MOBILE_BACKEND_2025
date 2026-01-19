@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.service.notifications;
 
-import com.mutuelle.mobille.dto.NotificationRequestDto;
+import com.mutuelle.mobille.dto.notifications.NotificationRequestDto;
 import com.mutuelle.mobille.enums.NotificationChannel;
 import com.mutuelle.mobille.enums.TemplateMailsName;
 import lombok.RequiredArgsConstructor;
