@@ -14,11 +14,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AccountMemberDTO {
     private Long id;
+    private Long memberId;
     private BigDecimal savingAmount;
     private BigDecimal unpaidRegistrationAmount;
     private BigDecimal solidarityAmount;
     private BigDecimal borrowAmount;
     private BigDecimal unpaidRenfoulement;
+    private LocalDateTime lastInterestDate;
+    private BigDecimal unpaidSolidarityAmount ;
     private boolean isActive;
 
     private LocalDateTime createdAt;
