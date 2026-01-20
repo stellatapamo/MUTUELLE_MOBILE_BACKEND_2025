@@ -102,10 +102,10 @@ public class AssistanceController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Créer une nouvelle demande d'assistance")
-    public ResponseEntity<ApiResponseDto<Assistance>> createAssistance(
+    public ResponseEntity<ApiResponseDto<AssistanceResponseDto>> createAssistance(
             @Valid @RequestBody CreateAssistanceDto request) {
 
-        Assistance created = assistanceService.createAssistance(request);
+        AssistanceResponseDto created = assistanceService.createAssistance(request);
         return ResponseEntity.ok(ApiResponseDto.ok(created, "Demande d'assistance créée avec succès"));
     }
 }

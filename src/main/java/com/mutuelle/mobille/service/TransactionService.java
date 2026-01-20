@@ -38,7 +38,7 @@ public class TransactionService {
                 type, direction, sessionId, accountMemberId, fromDate, toDate, pageable
         );
 
-        return page.map(transactionMapper::toResponseDTO);
+        return page.map(TransactionMapper::toResponseDTO);
     }
 
     /**

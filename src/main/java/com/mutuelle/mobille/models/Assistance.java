@@ -21,7 +21,7 @@ public class Assistance {
     private String description;
 
     // === Relation avec TypeAssistance : OneToOne bidirectionnelle ===
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "type_assistance_id", nullable = false)
     private TypeAssistance typeAssistance;
 

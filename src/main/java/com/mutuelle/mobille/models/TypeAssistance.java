@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "type_assistances")
@@ -26,9 +28,8 @@ public class TypeAssistance {
     @Column(name = "amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal amount = BigDecimal.ZERO;
 
-    // Côté inverse de la relation OneToOne (non propriétaire)
-    @OneToOne(mappedBy = "typeAssistance", fetch = FetchType.LAZY)
-    private Assistance assistance;
+    @OneToMany(mappedBy = "typeAssistance", fetch = FetchType.LAZY)
+    private List<Assistance> assistances = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

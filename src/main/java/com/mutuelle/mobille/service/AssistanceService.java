@@ -1,7 +1,9 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.assistance.*;
+import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.mapper.AssistanceMapper;
 import com.mutuelle.mobille.mapper.TransactionMapper;
 import com.mutuelle.mobille.models.*;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
@@ -30,7 +32,7 @@ public class AssistanceService {
     private final MemberRepository memberRepository;
     private final AccountService accountService;
     private final AccountMutuelleRepository accountMutuelleRepository;
-    private final TransactionMapper transactionMapper;
+    private final AssistanceMapper assistanceMapper;
 
     // Récupérer tous les types d'assistance
     @Transactional(readOnly = true)
@@ -66,7 +68,7 @@ public class AssistanceService {
     }
 
     // Créer une assistance
-    public Assistance createAssistance(CreateAssistanceDto dto) {
+    public AssistanceResponseDto createAssistance(CreateAssistanceDto dto) {
         // Récupération des entités nécessaires
         AccountMutuelle globalAccount = accountService.getMutuelleGlobalAccount();
 
@@ -95,11 +97,13 @@ public class AssistanceService {
         // Créer la transaction associée (type ASSISTANCE)
         Transaction transaction = Transaction.builder()
                 .transactionType(TransactionType.ASSISTANCE)
+                .transactionDirection(TransactionDirection.DEBIT)
                 .amount(requiredAmount)
                 .description("Demande d'assistance : " + typeAssistance.getName())
                 .accountMember(member.getAccountMember())
                 .session(session)
                 .build();
+
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
@@ -109,22 +113,13 @@ public class AssistanceService {
                 .description(dto.description())
                 .typeAssistance(typeAssistance)
                 .transaction(savedTransaction)
+                .amountMove(requiredAmount)
                 .member(member)
                 .session(session)
                 .build();
-
-        return assistanceRepository.save(assistance);
+       return assistanceMapper.toResponseDto(assistanceRepository.save(assistance));
     }
 
-    // Méthode utilitaire pour mapper TypeAssistance → DTO
-    private TypeAssistanceResponseDto mapToTypeAssistanceResponseDto(TypeAssistance type) {
-        return new TypeAssistanceResponseDto(
-                type.getId(),
-                type.getName(),
-                type.getAmount(),
-                type.getDescription()
-        );
-    }
 
     /**
      * Calcule le montant total des assistances validées/accordées pour une session donnée.
@@ -173,30 +168,16 @@ public class AssistanceService {
                 pageable
         );
 
-        return assistances.map(this::mapToAssistanceResponseDto);
+        return  assistances.map(a->assistanceMapper.toResponseDto(a));
     }
 
-    private AssistanceResponseDto mapToAssistanceResponseDto(Assistance a) {
-        return AssistanceResponseDto.builder()
-                .id(a.getId())
-                .description(a.getDescription())
-
-                .typeAssistanceId(a.getTypeAssistance().getId())
-                .typeAssistanceName(a.getTypeAssistance().getName())
-                .typeAssistanceAmount(a.getTypeAssistance().getAmount())
-
-                .memberId(a.getMember().getId())
-                .memberFullName(a.getMember().getFirstname()+ " " + a.getMember().getLastname())
-
-                .sessionId(a.getSession().getId())
-                .sessionName(a.getSession().getName())
-
-                .transaction(transactionMapper.toResponseDTO(a.getTransaction()))
-
-                .amountMove(a.getAmountMove())
-                .createdAt(a.getCreatedAt())
-                .updatedAt(a.getUpdatedAt())
-                .build();
+    // Méthode utilitaire pour mapper TypeAssistance → DTO
+    private TypeAssistanceResponseDto mapToTypeAssistanceResponseDto(TypeAssistance type) {
+        return new TypeAssistanceResponseDto(
+                type.getId(),
+                type.getName(),
+                type.getAmount(),
+                type.getDescription()
+        );
     }
-
 }
