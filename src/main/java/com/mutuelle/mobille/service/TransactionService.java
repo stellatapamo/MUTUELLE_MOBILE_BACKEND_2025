@@ -3,6 +3,7 @@ package com.mutuelle.mobille.service;
 import com.mutuelle.mobille.dto.transaction.TransactionResponseDTO;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.mapper.TransactionMapper;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
 
     /**
      * LISTE DES TRANSACTIONS AVEC FILTRES
@@ -36,20 +38,7 @@ public class TransactionService {
                 type, direction, sessionId, accountMemberId, fromDate, toDate, pageable
         );
 
-        return page.map(tx -> new TransactionResponseDTO(
-                tx.getId(),
-                tx.getAmount(),
-                tx.getTransactionType(),
-                tx.getTransactionDirection(),
-                tx.getAccountMember().getId(),
-                tx.getAccountMember().getMember() != null
-                        ? tx.getAccountMember().getMember().getFirstname() + " " +
-                        tx.getAccountMember().getMember().getLastname()
-                        : null,
-                tx.getSession().getId(),
-                tx.getCreatedAt(),
-                tx.getUpdatedAt()
-        ));
+        return page.map(transactionMapper::toResponseDTO);
     }
 
     /**

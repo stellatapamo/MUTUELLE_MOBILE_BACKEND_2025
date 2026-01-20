@@ -1,9 +1,14 @@
 package com.mutuelle.mobille.repository;
 
 import com.mutuelle.mobille.models.Assistance;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,4 +28,21 @@ public interface AssistanceRepository extends JpaRepository<Assistance, Long> {
 
     //   Nombre d'assistances pour une session
     Long countBySessionId(Long sessionId);
+
+    @Query("""
+        SELECT a FROM Assistance a
+        WHERE (:typeAssistanceId IS NULL OR a.typeAssistance.id = :typeAssistanceId)
+          AND (:memberId IS NULL OR a.member.id = :memberId)
+          AND (:sessionId IS NULL OR a.session.id = :sessionId)
+          AND (:fromDate IS NULL OR a.createdAt >= :fromDate)
+          AND (:toDate IS NULL OR a.createdAt <= :toDate)
+        """)
+    Page<Assistance> findAllFiltered(
+            @Param("typeAssistanceId") Long typeAssistanceId,
+            @Param("memberId") Long memberId,
+            @Param("sessionId") Long sessionId,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable
+    );
 }

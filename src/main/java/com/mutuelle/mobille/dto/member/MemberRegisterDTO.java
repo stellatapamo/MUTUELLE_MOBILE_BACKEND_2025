@@ -26,8 +26,9 @@ public class MemberRegisterDTO {
 
     @NotNull(message = "Le téléphone est obligatoire")
     @NotBlank(message = "Le téléphone ne peut pas être vide")
-    @Pattern(regexp = "^(\\+?228)?[ -]?[0-9]{8}$",
-            message = "Numéro de téléphone togolais invalide (ex: 90123456 ou +22890123456)")
+    @Pattern(regexp = "^(\\+237|0)[6-9][0-9]{8}$",
+            message = "Format de téléphone invalide (ex: 0698765432 ou +237691234567)")
+    @Size(max = 15)
     private String phone;
 
     @NotNull(message = "L'email est obligatoire")

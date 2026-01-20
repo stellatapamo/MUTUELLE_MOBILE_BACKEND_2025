@@ -27,7 +27,7 @@ public class ContributionController {
     // PAYER  L'INSCRIPTION (partiellement ou totalement)
     // ========================================================================================
     @PostMapping("/pay")
-    @Operation(summary = "Payer une contribution (agapes ou inscription ou renfoulement )")
+    @Operation(summary = "Payer une contribution ( inscription ou renfoulement )")
     public ResponseEntity<ApiResponseDto<ContributionPaymentResponseDto>> payContribution(
             @Valid @RequestBody ContributionPaymentRequestDto request
     ) {

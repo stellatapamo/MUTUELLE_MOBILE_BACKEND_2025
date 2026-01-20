@@ -2,15 +2,19 @@ package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.assistance.*;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.mapper.TransactionMapper;
 import com.mutuelle.mobille.models.*;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +30,7 @@ public class AssistanceService {
     private final MemberRepository memberRepository;
     private final AccountService accountService;
     private final AccountMutuelleRepository accountMutuelleRepository;
+    private final TransactionMapper transactionMapper;
 
     // Récupérer tous les types d'assistance
     @Transactional(readOnly = true)
@@ -149,6 +154,49 @@ public class AssistanceService {
     // Somme totale des montants d'assistances global
     public BigDecimal sumAllAssistanceAmounts() {
         return transactionRepository.sumAmountByType(TransactionType.ASSISTANCE);
+    }
+
+    public Page<AssistanceResponseDto> getAssistancesFiltered(
+            Long typeAssistanceId,
+            Long memberId,
+            Long sessionId,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable) {
+
+        Page<Assistance> assistances = assistanceRepository.findAllFiltered(
+                typeAssistanceId,
+                memberId,
+                sessionId,
+                fromDate,
+                toDate,
+                pageable
+        );
+
+        return assistances.map(this::mapToAssistanceResponseDto);
+    }
+
+    private AssistanceResponseDto mapToAssistanceResponseDto(Assistance a) {
+        return AssistanceResponseDto.builder()
+                .id(a.getId())
+                .description(a.getDescription())
+
+                .typeAssistanceId(a.getTypeAssistance().getId())
+                .typeAssistanceName(a.getTypeAssistance().getName())
+                .typeAssistanceAmount(a.getTypeAssistance().getAmount())
+
+                .memberId(a.getMember().getId())
+                .memberFullName(a.getMember().getFirstname()+ " " + a.getMember().getLastname())
+
+                .sessionId(a.getSession().getId())
+                .sessionName(a.getSession().getName())
+
+                .transaction(transactionMapper.toResponseDTO(a.getTransaction()))
+
+                .amountMove(a.getAmountMove())
+                .createdAt(a.getCreatedAt())
+                .updatedAt(a.getUpdatedAt())
+                .build();
     }
 
 }
