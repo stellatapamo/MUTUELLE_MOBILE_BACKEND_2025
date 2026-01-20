@@ -79,13 +79,10 @@ public class PushNotificationService {
         }
 
         List<PushToken> tokens = pushTokenRepository.findByUser(user);
-        if (tokens.isEmpty()) {
-            log.info("Aucun token push enregistré pour {}", req.getEmail());
-            return;
-        }
+        if (tokens.isEmpty()) return;
 
-        // Préparation du batch Expo
         List<Map<String, Object>> messages = new ArrayList<>();
+
         for (PushToken pt : tokens) {
             Map<String, Object> msg = new HashMap<>();
             msg.put("to", pt.getToken());
@@ -94,32 +91,57 @@ public class PushNotificationService {
             if (req.getVariables() != null && !req.getVariables().isEmpty()) {
                 msg.put("data", req.getVariables());
             }
-            // Optionnel : sound, priority, badge, etc.
+
+            // Ajout très fortement recommandé pour iOS (meilleure délivrabilité)
+            msg.put("priority", "high");           // ou "default"
+            msg.put("sound", "default");           // ou nom de son custom
+            // msg.put("_displayInForeground", true); // utile en dev
+
             messages.add(msg);
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // ────────────────────────────────────────────────────────────────
+        // MODIFICATION IMPORTANTE : on segmente fortement sur iOS
+        // ────────────────────────────────────────────────────────────────
+        final int MAX_PER_REQUEST_IOS = 1;   // 1 = le plus sûr   —  2~5 = acceptable selon les retours
+        // Tu peux aussi faire 1 si tokens.size() > 1, et batch normal sur Android
 
-        HttpEntity<List<Map<String, Object>>> entity = new HttpEntity<>(messages, headers);
+        List<List<Map<String, Object>>> chunks = new ArrayList<>();
+        for (int i = 0; i < messages.size(); i += MAX_PER_REQUEST_IOS) {
+            int end = Math.min(i + MAX_PER_REQUEST_IOS, messages.size());
+            chunks.add(messages.subList(i, end));
+        }
 
-        try {
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    EXPO_PUSH_URL, HttpMethod.POST, entity, Map.class);
+        for (List<Map<String, Object>> chunk : chunks) {
+            if (chunk.isEmpty()) continue;
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Object dataObj = response.getBody().get("data");
-                if (dataObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> results = (List<Map<String, Object>>) dataObj;
-                    handlePushResults(results, tokens);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<List<Map<String, Object>>> entity = new HttpEntity<>(chunk, headers);
+
+            try {
+                ResponseEntity<Map> response = restTemplate.exchange(
+                        EXPO_PUSH_URL, HttpMethod.POST, entity, Map.class);
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    Object dataObj = response.getBody().get("data");
+                    if (dataObj instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> results = (List<Map<String, Object>>) dataObj;
+                        handlePushResults(results, tokens.subList(
+                                chunks.indexOf(chunk) * MAX_PER_REQUEST_IOS,
+                                Math.min((chunks.indexOf(chunk) + 1) * MAX_PER_REQUEST_IOS, tokens.size())
+                        ));
+                    }
+                } else {
+                    log.error("Expo erreur HTTP {} → {}", response.getStatusCode(), response.getBody());
                 }
-            } else {
-                log.error("Expo API erreur HTTP {} - {}", response.getStatusCode(), response.getBody());
+            } catch (Exception e) {
+                log.error("Erreur appel Expo", e);
             }
 
-        } catch (Exception e) {
-            log.error("Erreur lors de l'appel Expo push", e);
+            // Petite pause pour ne pas être trop agressif (optionnel mais conseillé)
+            try { Thread.sleep(300); } catch (InterruptedException ignored) {}
         }
     }
 

@@ -21,6 +21,7 @@ import java.util.List;
 public class AccountController {
 
     private final AccountService accountService;
+    private final AccountMemberMapper accountMemberMapper;
 
     // ───────────────────────────────────────────────────────────────
     // Comptes des membres
@@ -32,7 +33,7 @@ public class AccountController {
         List<AccountMember> accounts = accountService.getAllMemberAccounts();
 
         List<AccountMemberDTO> dtos = accounts.stream()
-                .map(AccountMemberMapper::toAccountMemberDto)
+                .map(accountMemberMapper::toAccountMemberDto)
                 .toList();
 
         return ResponseEntity.ok(
@@ -46,7 +47,7 @@ public class AccountController {
             @PathVariable Long id
     ) {
         AccountMemberDTO accountDto =
-                AccountMemberMapper.toAccountMemberDto(
+                accountMemberMapper.toAccountMemberDto(
                         accountService.getMemberAccountById(id)
                 );
 
@@ -59,7 +60,7 @@ public class AccountController {
     @Operation(summary = "Récupérer le compte d'un membre à partir de son ID membre")
     public ResponseEntity<ApiResponseDto<AccountMemberDTO>> getMemberAccountByMemberId(@PathVariable Long memberId) {
         AccountMemberDTO accountDto =
-                AccountMemberMapper.toAccountMemberDto(
+                accountMemberMapper.toAccountMemberDto(
                         accountService.getMemberAccountByMemberId(memberId)
                 );
         return ResponseEntity.ok(
