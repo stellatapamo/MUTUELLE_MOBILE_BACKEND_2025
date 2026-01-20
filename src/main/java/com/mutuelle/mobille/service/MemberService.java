@@ -132,6 +132,7 @@ public class MemberService {
         Role role = authUser != null ? authUser.getRole() : null;
 
         return new MemberResponseDTO(
+                authUser.getId(),
                 member.getId(),
                 member.getFirstname(),
                 member.getLastname(),

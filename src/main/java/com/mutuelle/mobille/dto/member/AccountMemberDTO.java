@@ -22,6 +22,7 @@ public class AccountMemberDTO {
     private BigDecimal unpaidRenfoulement;
     private LocalDateTime lastInterestDate;
     private BigDecimal unpaidSolidarityAmount ;
+    private BigDecimal maxBorrow;
     private boolean isActive;
 
     private LocalDateTime createdAt;

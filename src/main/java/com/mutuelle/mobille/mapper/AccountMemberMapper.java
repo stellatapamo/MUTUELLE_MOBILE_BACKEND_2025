@@ -3,7 +3,7 @@ package com.mutuelle.mobille.mapper;
 import com.mutuelle.mobille.dto.member.AccountMemberDTO;
 import com.mutuelle.mobille.models.account.AccountMember;
 
-public class DtoMapper {
+public class AccountMemberMapper {
 
     public static AccountMemberDTO toAccountMemberDto(AccountMember account) {
         if (account == null) return null;

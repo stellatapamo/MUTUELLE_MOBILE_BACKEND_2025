@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL) // N'inclut que les champs non-null
 public class LoginResponseDto {
+    private Long authId;
     private Role role;
     private Long userRefId;
     private String accessToken;

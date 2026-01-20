@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record MemberResponseDTO(
-
+        Long authId,
         Long id,
         String firstname,
         String lastname,

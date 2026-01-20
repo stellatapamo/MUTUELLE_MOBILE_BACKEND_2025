@@ -1,9 +1,8 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
-import com.mutuelle.mobille.dto.account.AccountMemberResponseDTO;
 import com.mutuelle.mobille.dto.member.AccountMemberDTO;
-import com.mutuelle.mobille.mapper.DtoMapper;
+import com.mutuelle.mobille.mapper.AccountMemberMapper;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.service.AccountService;
@@ -33,7 +32,7 @@ public class AccountController {
         List<AccountMember> accounts = accountService.getAllMemberAccounts();
 
         List<AccountMemberDTO> dtos = accounts.stream()
-                .map(DtoMapper::toAccountMemberDto)
+                .map(AccountMemberMapper::toAccountMemberDto)
                 .toList();
 
         return ResponseEntity.ok(
@@ -47,7 +46,7 @@ public class AccountController {
             @PathVariable Long id
     ) {
         AccountMemberDTO accountDto =
-                DtoMapper.toAccountMemberDto(
+                AccountMemberMapper.toAccountMemberDto(
                         accountService.getMemberAccountById(id)
                 );
 
@@ -60,7 +59,7 @@ public class AccountController {
     @Operation(summary = "Récupérer le compte d'un membre à partir de son ID membre")
     public ResponseEntity<ApiResponseDto<AccountMemberDTO>> getMemberAccountByMemberId(@PathVariable Long memberId) {
         AccountMemberDTO accountDto =
-                DtoMapper.toAccountMemberDto(
+                AccountMemberMapper.toAccountMemberDto(
                         accountService.getMemberAccountByMemberId(memberId)
                 );
         return ResponseEntity.ok(
