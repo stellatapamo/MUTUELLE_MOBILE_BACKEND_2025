@@ -6,7 +6,8 @@ public enum TemplateMailsName {
     PLAFOND_DEPASSE_MEMBER("alerte-plafond-depasse-membre"),
     SESSION_STARTED("session-start"),
     SESSION_ENDED("alerte-end"),
-    SOLIDARITY_ADDED("solidarity-add");
+    SOLIDARITY_ADDED("solidarity-add"),
+    ASSISTANCE_GRANTED("alerte-plafond-depasse-admin");
 
     private final String value;
 

@@ -3,8 +3,10 @@ package com.mutuelle.mobille.service.notifications;
 import com.mutuelle.mobille.dto.notifications.NotificationRequestDto;
 import com.mutuelle.mobille.enums.NotificationChannel;
 import com.mutuelle.mobille.enums.TemplateMailsName;
+import com.mutuelle.mobille.models.Assistance;
 import com.mutuelle.mobille.models.Member;
 import com.mutuelle.mobille.models.Session;
+import com.mutuelle.mobille.models.TypeAssistance;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.AuthUserRepository;
@@ -189,5 +191,40 @@ public class SessionNotificationHelper {
         } catch (Exception e) {
             log.error("ÉCHEC ENVOI ALERTE ADMIN CRITIQUE ! {} → {}", title, e.getMessage());
         }
+    }
+
+    public void notifyAssistanceCreated(Assistance assistance) {
+        Member member = assistance.getMember();
+        TypeAssistance type = assistance.getTypeAssistance();
+        Session session = assistance.getSession();
+
+        String title = "Assistance accordée : " + type.getName();
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("memberName", member.getFirstname() != null ? member.getLastname() : "Cher membre");
+        variables.put("assistanceType", type.getName());
+        variables.put("amount", assistance.getAmountMove());
+        variables.put("sessionName", session.getName());
+        variables.put("date", assistance.getCreatedAt());
+        variables.put("currency", "XAF"); // ou ta devise
+
+        String fallbackMessage = String.format(
+                "Vous avez bénéficié d'une assistance de %s (%s) pour la session %s.",
+                assistance.getAmountMove(),
+                type.getName(),
+                session.getName()
+        );
+
+        // On notifie uniquement le membre concerné
+        this.notifyMembers(
+                List.of(member),
+                title,
+                TemplateMailsName.ASSISTANCE_GRANTED,
+                variables,
+                fallbackMessage
+        );
+
+//        log.info("Notification assistance envoyée au membre {} pour le type {}",
+//                member.getId(), type.getName());
     }
 }

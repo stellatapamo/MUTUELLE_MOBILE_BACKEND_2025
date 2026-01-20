@@ -18,7 +18,6 @@ public class AssistanceResponseDto {
     private Long typeAssistanceId;
     private String typeAssistanceName;
     private BigDecimal typeAssistanceAmount;
-    private String memberName;
 
     private Long memberId;
     private String memberFullName;

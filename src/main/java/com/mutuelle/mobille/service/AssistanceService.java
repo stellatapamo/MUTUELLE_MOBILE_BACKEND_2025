@@ -1,6 +1,7 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.assistance.*;
+import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.mapper.AssistanceMapper;
@@ -8,6 +9,7 @@ import com.mutuelle.mobille.mapper.TransactionMapper;
 import com.mutuelle.mobille.models.*;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.repository.*;
+import com.mutuelle.mobille.service.notifications.SessionNotificationHelper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +37,7 @@ public class AssistanceService {
     private final AccountService accountService;
     private final AccountMutuelleRepository accountMutuelleRepository;
     private final AssistanceMapper assistanceMapper;
+    private final SessionNotificationHelper notificationHelper;
 
     // Récupérer tous les types d'assistance
     @Transactional(readOnly = true)
@@ -117,7 +122,12 @@ public class AssistanceService {
                 .member(member)
                 .session(session)
                 .build();
-       return assistanceMapper.toResponseDto(assistanceRepository.save(assistance));
+        Assistance savedAssistance = assistanceRepository.save(assistance);
+
+        //
+        notificationHelper.notifyAssistanceCreated(savedAssistance);
+
+        return assistanceMapper.toResponseDto(savedAssistance);
     }
 
 
@@ -171,7 +181,6 @@ public class AssistanceService {
         return  assistances.map(a->assistanceMapper.toResponseDto(a));
     }
 
-    // Méthode utilitaire pour mapper TypeAssistance → DTO
     private TypeAssistanceResponseDto mapToTypeAssistanceResponseDto(TypeAssistance type) {
         return new TypeAssistanceResponseDto(
                 type.getId(),
@@ -180,4 +189,6 @@ public class AssistanceService {
                 type.getDescription()
         );
     }
+
+
 }
