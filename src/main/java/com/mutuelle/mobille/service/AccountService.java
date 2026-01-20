@@ -22,8 +22,9 @@
     @RequiredArgsConstructor
     public class AccountService {
 
-        private final AccountMutuelleRepository globalRepo;      // Compte global
-        private final AccountMemberRepository memberRepo;        // Comptes membres
+        private final AccountMutuelleRepository globalRepo;
+        private final AccountMemberRepository memberRepo;
+        private final AuthService authService;
 
         @PostConstruct
         @Transactional

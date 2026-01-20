@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.service.notifications;
+package com.mutuelle.mobille.service.notifications.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;

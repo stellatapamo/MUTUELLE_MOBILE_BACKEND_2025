@@ -9,7 +9,7 @@ import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.auth.AuthUser;
 import com.mutuelle.mobille.repository.TransactionRepository;
-import com.mutuelle.mobille.service.notifications.NotificationService;
+import com.mutuelle.mobille.service.notifications.config.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

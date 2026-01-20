@@ -1,7 +1,7 @@
 package com.mutuelle.mobille;
 
-import com.mutuelle.mobille.service.notifications.EmailService;
-import com.mutuelle.mobille.service.notifications.NotificationService;
+import com.mutuelle.mobille.service.notifications.config.EmailService;
+import com.mutuelle.mobille.service.notifications.config.NotificationService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -51,7 +51,7 @@ public class MutuelleMobilleApplication {
 //					.title("Démarrage Backend Mutuelle")
 //					.templateName(TemplateMailsName.WELCOME) // Nom du fichier : email/welcome.html
 //					.variables(testVars)
-//					.channels(Set.of(NotificationChannel.EMAIL))
+//					.channels(Set.of(NotificationChannel.EMAIL,NotificationChannel.PUSH))
 //					.message("Ceci est le message de fallback si le template échoue.")
 //					.build();
 //

@@ -1,10 +1,9 @@
 package com.mutuelle.mobille.service;
 
+import com.mutuelle.mobille.dto.notifications.NotificationRequestDto;
 import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
-import com.mutuelle.mobille.enums.StatusSession;
-import com.mutuelle.mobille.enums.TransactionDirection;
-import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.enums.*;
 import com.mutuelle.mobille.models.Exercice;
 import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.models.SessionHistory;
@@ -12,6 +11,7 @@ import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.repository.*;
+import com.mutuelle.mobille.service.notifications.SessionNotificationHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +33,7 @@ public class SessionService {
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final AssistanceService assistanceService;
+    private final SessionNotificationHelper notificationHelper;
 
 
 //    private final Clock clock;  // ← à injecter (configurable pour les tests)
@@ -230,6 +230,7 @@ public class SessionService {
             session.setStatus(StatusSession.IN_PROGRESS);
             sessionRepository.save(session);
             applySolidarityToAllMembers(session);
+            notificationHelper.notifySessionStarted(session);
         }
     }
 
@@ -239,9 +240,28 @@ public class SessionService {
 
         LocalDateTime n = now();
         if (session.getEndDate() != null && session.getEndDate().isBefore(n)) {
-            session.setStatus(StatusSession.COMPLETED);
-            sessionRepository.save(session);
-            onSessionEnded(session);
+//            session.setStatus(StatusSession.COMPLETED);
+//            sessionRepository.save(session);
+//            onSessionEnded(session);
+            try {
+                session.setStatus(StatusSession.COMPLETED);
+                onSessionEnded(session);
+
+                // Notification de fin de session
+                notificationHelper.notifySessionEnded(session);
+
+            } catch (IllegalArgumentException e) {
+                session.setStatus(StatusSession.IN_PROGRESS);
+                sessionRepository.save(session);
+
+                notificationHelper.notifyAdminCritical(
+                        "Échec clôture session " + session.getName(),
+                        "Impossible de clôturer - caisse solidarité insuffisante",
+                        e
+                );
+
+                throw e; // on laisse remonter l'exception
+            }
         }
     }
 
@@ -261,6 +281,8 @@ public class SessionService {
             m.setUnpaidSolidarityAmount(unpaid.add(session.getSolidarityAmount()));
             accountService.saveMemberAccount(m);
         }
+
+//        notificationHelper.notifySolidarityApplied(session);
     }
 
     @Transactional
@@ -335,4 +357,6 @@ public class SessionService {
                 .updatedAt(s.getUpdatedAt())
                 .build();
     }
+
+
 }
