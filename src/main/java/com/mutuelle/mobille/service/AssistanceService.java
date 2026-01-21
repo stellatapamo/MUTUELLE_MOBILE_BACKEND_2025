@@ -170,7 +170,7 @@ public class AssistanceService {
             Pageable pageable) {
 
         LocalDateTime debut = fromDate != null ? fromDate : LocalDateTime.of(2000, 1, 1, 0, 0, 0);
-        LocalDateTime fin   = toDate   != null ? toDate   : LocalDateTime.now().plusYears(10);  // ou .of(2099,12,31,23,59,59)
+        LocalDateTime fin   = toDate   != null ? toDate   : LocalDateTime.now().plusYears(10);
 
         Page<Assistance> assistances = assistanceRepository.findAllFiltered(
                 typeAssistanceId,
