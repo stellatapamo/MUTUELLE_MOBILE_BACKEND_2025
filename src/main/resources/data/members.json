@@ -86,14 +86,14 @@
   {
     "firstname": "Brice",
     "lastname": "Ekobo",
-    "phone": "92345679",
+    "phone": "",
     "email": "brice.ekobo@mutuelle.com",
     "password": "brice#123"
   },
   {
     "firstname": "Rémy",
     "lastname": "Elime Etoua",
-    "phone": "93456780",
+    "phone": "",
     "email": "remy.elimeetoua@mutuelle.com",
     "password": "remy#123"
   },
@@ -114,7 +114,7 @@
   {
     "firstname": "Abraham",
     "lastname": "Kammogne",
-    "phone": "96789013",
+    "phone": "",
     "email": "abraham.kammogne@mutuelle.com",
     "password": "abraham#123"
   },
@@ -219,7 +219,7 @@
   {
     "firstname": "Lucien",
     "lastname": "Mevaa",
-    "phone": "91234570",
+    "phone": "",
     "email": "lucien.mevaa@mutuelle.com",
     "password": "lucien#123"
   },

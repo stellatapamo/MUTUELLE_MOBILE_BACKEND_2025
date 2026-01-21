@@ -44,7 +44,6 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Rafraîchir le token d'accès")
     public ResponseEntity<ApiResponseDto<TokenResponseDto>> refresh(@Valid @RequestBody RefreshRequestDto request) {
         String newAccessToken = authService.refresh(request.getRefreshToken());

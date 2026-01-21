@@ -42,9 +42,9 @@ public class MemberService {
     // INSCRIPTION MEMBRE → Crée Member + Account + AuthUser (comme le superadmin)
     // ===========================================================================
     @Transactional
-    public MemberResponseDTO registerMember(MemberRegisterDTO dto) {
+    public MemberResponseDTO  registerMember(MemberRegisterDTO dto) {
         MutuelleConfig config = mutuelleConfigService.getCurrentConfig();
-        if (memberRepository.existsByPhone(dto.getPhone())) {
+        if (dto.getPhone() != "" && memberRepository.existsByPhone(dto.getPhone())) {
             throw new IllegalArgumentException("Ce numéro de téléphone est déjà utilisé");
         }
         if (authUserRepository.existsByEmail(dto.getEmail())) {
