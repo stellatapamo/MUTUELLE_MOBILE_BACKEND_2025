@@ -2,6 +2,7 @@ package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
 import com.mutuelle.mobille.dto.epargne.EpargneRequestDto;
+import com.mutuelle.mobille.dto.transaction.TransactionResponseDTO;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.repository.MemberRepository;
 import com.mutuelle.mobille.repository.SessionRepository;
@@ -32,7 +33,7 @@ public class EpargneController {
     @PostMapping
     @Operation( summary = "Faire une épargne ou retirer",
             description = "Permet de créer une transaction d'épargne pour un membre dans une session donnée.")
-    public ResponseEntity<ApiResponseDto<Transaction>> epargne(@Valid @RequestBody EpargneRequestDto requestDto) {
+    public ResponseEntity<ApiResponseDto<TransactionResponseDTO>> epargne(@Valid @RequestBody EpargneRequestDto requestDto) {
         // 1. Vérification existence membre
         if (!memberRepository.existsById(requestDto.getMemberId())) {
             return ResponseEntity.badRequest().body(
@@ -48,7 +49,7 @@ public class EpargneController {
 //        }
 
 
-        Transaction transaction = epargneService.processEpargne(
+        TransactionResponseDTO transaction = epargneService.processEpargne(
                 requestDto.getMemberId(),
                 requestDto.getAmount(),
                 requestDto.getTransactionDirection()

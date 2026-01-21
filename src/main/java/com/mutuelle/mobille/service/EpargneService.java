@@ -1,7 +1,9 @@
 package com.mutuelle.mobille.service;
 
+import com.mutuelle.mobille.dto.transaction.TransactionResponseDTO;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.mapper.TransactionMapper;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.Session;
@@ -24,7 +26,7 @@ public class EpargneService {
     private final SessionService sessionService;
 
     @Transactional
-    public Transaction processEpargne(Long memberId, BigDecimal amount, TransactionDirection direction) {
+    public TransactionResponseDTO processEpargne(Long memberId, BigDecimal amount, TransactionDirection direction) {
 
         AccountMember memberAccount = accountService.getMemberAccount(memberId);
 
@@ -50,7 +52,7 @@ public class EpargneService {
                 .transactionDirection(direction)
                 .build();
 
-        return transactionRepository.save(transaction);
+        return TransactionMapper.toResponseDTO(transactionRepository.save(transaction));
     }
 
 
