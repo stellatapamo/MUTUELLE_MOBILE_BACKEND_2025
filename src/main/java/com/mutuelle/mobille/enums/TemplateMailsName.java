@@ -12,7 +12,7 @@ public enum TemplateMailsName {
     private final String value;
 
     TemplateMailsName(String value) {
-        this.value = value;
+        this.value = value.toLowerCase();;
     }
 
     public String getValue() {
