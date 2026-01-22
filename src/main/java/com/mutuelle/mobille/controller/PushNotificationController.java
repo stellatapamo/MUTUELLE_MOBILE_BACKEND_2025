@@ -12,6 +12,8 @@ import com.mutuelle.mobille.service.notifications.config.PushNotificationService
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,50 +52,45 @@ public class PushNotificationController {
     @PostMapping("/test/mail")
     @Operation(summary = "Envoyer une notification mail de TEST")
     public ResponseEntity<ApiResponseDto<Void>> testMail(
-            @Valid @RequestBody Map<String, String> payload) {
+            @Valid @RequestBody TestMailRequest req) {
 
         try {
-            // Extraction des champs (pas de DTO → on récupère via Map)
-            String email  = payload.get("email");
-            String subject = payload.get("subject");   // corrigé : plus de "subjet"
-            String body   = payload.get("body");
+            Map<String, Object> vars = new HashMap<>();
+            vars.put("userName", "Test User");
+            vars.put("currentTime", LocalDateTime.now().toString());
+            // tu peux ajouter d'autres variables si besoin
+            // vars.put("customMessage", req.getBody());
 
-            // Validation manuelle rapide (puisque @Valid ne fonctionne pas bien sur Map brut)
-            if (email == null || email.trim().isEmpty() ||
-                    subject == null || subject.trim().isEmpty() ||
-                    body == null || body.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(ApiResponseDto.error("Les champs email, subject et body sont obligatoires"));
-            }
-
-            // Préparation des variables pour Thymeleaf
-            Map<String, Object> thymeleafVars = new HashMap<>();
-            thymeleafVars.put("userName", "Test User");
-            thymeleafVars.put("currentTime", LocalDateTime.now().toString());
-            thymeleafVars.put("messageCustom", body);  // on passe le body dans le template si besoin
-
-            // Construction de la notification
-            NotificationRequestDto request = NotificationRequestDto.builder()
-                    .email(email)
-                    .title(subject)
-                    .templateName(TemplateMailsName.WELCOME)   // ou un autre template
-                    .variables(thymeleafVars)
-                    .channels(Set.of(NotificationChannel.EMAIL))  // on enlève le PUSH
-                    .message(body)  // fallback si le template plante
+            NotificationRequestDto notification = NotificationRequestDto.builder()
+                    .email(req.email())           // ← on prend l'email reçu
+                    .title(req.subject())
+                    .templateName(TemplateMailsName.WELCOME)
+                    .variables(vars)
+                    .channels(Set.of(NotificationChannel.EMAIL))  // ← uniquement email, pas de push
+                    .message(req.body())          // fallback si template plante
                     .build();
 
-            notificationService.sendNotification(request);
+            notificationService.sendNotification(notification);
 
-            String successMsg = "Email de test envoyé avec succès à : " + email;
-            return ResponseEntity.ok(ApiResponseDto.ok(null, successMsg));
+            String message = "Email de test envoyé avec succès à : " + req.email();
+
+            return ResponseEntity.ok(
+                    ApiResponseDto.ok(null, message)
+            );
 
         } catch (Exception e) {
-            // À remplacer par ton logger (Slf4j, Logback, etc.)
-            System.err.println("Échec envoi email test : " + e.getMessage());
-            e.printStackTrace();
+            // log l'erreur pour debug
+            // logger.error("Échec envoi email test", e);  ← décommente si tu as un logger
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponseDto.error("Erreur lors de l'envoi : " + e.getMessage()));
         }
     }
+
+    record TestMailRequest(
+            @Email @NotBlank String email,
+            @NotBlank String subject,
+            @NotBlank String body
+    ) {}
 }
