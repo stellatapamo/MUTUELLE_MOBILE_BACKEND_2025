@@ -64,7 +64,7 @@ public class PushNotificationController {
             NotificationRequestDto notification = NotificationRequestDto.builder()
                     .email(req.email())           // ← on prend l'email reçu
                     .title(req.subject())
-                    .templateName(TemplateMailsName.WELCOME)
+                    .templateName(TemplateMailsName.PLAFOND_DEPASSE_ADMIN)
                     .variables(vars)
                     .channels(Set.of(NotificationChannel.EMAIL))  // ← uniquement email, pas de push
                     .message(req.body())          // fallback si template plante

@@ -100,7 +100,7 @@ public class DataInitializer implements CommandLineRunner {
     // Nouvelle méthode pour les membres
     private void initializeMembersIfNeeded() {
         // Vérification rapide : si des membres existent déjà, on skippe tout
-        if (memberRepository.count() > 60) {
+        if (memberRepository.count() > 50) {
             log.info("Des membres existent déjà en base ({}). Initialisation des 60 membres ignorée.",
                     memberRepository.count());
             return;
