@@ -80,10 +80,11 @@ public class EmpruntService {
         Transaction trans = transactionRepository.save(
                 Transaction.builder()
                         .accountMember(emprunteur)
-                        .amount(montant.subtract(interet))
+                        .amount(montant)
                         .transactionType(TransactionType.EMPRUNT)
                         .transactionDirection(TransactionDirection.DEBIT)
                         .session(currentSession)
+                        .description("Emprunt de : "+emprunteur.getMember().getLastname())
                         .build()
         );
 

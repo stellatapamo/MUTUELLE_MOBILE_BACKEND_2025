@@ -13,10 +13,6 @@ public class ExerciceRequestDTO {
     @Size(max = 100)
     private String name;
 
-    @NotNull(message = "Le montant de l'agape est obligatoire; montant par membre")
-    @DecimalMin(value = "0.0", inclusive = false)
-    private BigDecimal agapeAmount;
-
     @NotNull(message = "La date de début est obligatoire")
     private LocalDateTime startDate;
 

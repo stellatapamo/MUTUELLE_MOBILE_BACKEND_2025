@@ -350,4 +350,43 @@ public class MemberService {
         return  authUserRepository.findByUserRefId(member.getId());
     }
 
+    @Transactional
+    public MemberResponseDTO toggleMemberStatus(Long memberId, boolean active) {
+
+        Member member = memberRepository.findByIdWithAccount(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Membre non trouvé avec l'ID : " + memberId));
+
+        AccountMember account = member.getAccountMember();
+        if (account == null) {
+            throw new IllegalStateException("Compte associé introuvable pour ce membre");
+        }
+
+        // Mise à jour des deux entités (cohérence)
+        boolean wasActive = member.isActive();
+
+        member.setActive(active);
+        account.setActive(active);
+
+        // Option : si tu veux empêcher la désactivation d'un membre qui a un solde positif / dette / etc.
+        // if (!active && account.getSavingAmount().compareTo(BigDecimal.ZERO) > 0) {
+        //     throw new IllegalStateException("Impossible de désactiver : solde d'épargne positif");
+        // }
+
+        // Mise à jour de la date
+        member.setUpdatedAt(LocalDateTime.now());
+
+        // Sauvegarde (cascade devrait fonctionner si bien configuré)
+        memberRepository.save(member);
+
+        // Si tu veux être explicite sur le compte :
+        // accountRepository.save(account);  ← si tu as un AccountMemberRepository
+
+        // Logique additionnelle possible :
+        // - bloquer futures transactions si !active
+        // - envoyer notification email/SMS
+        // - créer une entrée d'audit
+
+        return toResponseDTO(member);
+    }
+
 }

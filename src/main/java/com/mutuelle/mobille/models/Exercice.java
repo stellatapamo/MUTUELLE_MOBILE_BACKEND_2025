@@ -25,10 +25,6 @@ public class Exercice {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "agape_amount", precision = 12, scale = 2, nullable = false)
-    private BigDecimal agapeAmount = BigDecimal.ZERO;
-
-
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private StatusExercice status = StatusExercice.PLANNED;

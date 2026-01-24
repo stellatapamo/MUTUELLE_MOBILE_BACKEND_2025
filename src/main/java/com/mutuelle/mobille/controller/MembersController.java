@@ -4,6 +4,7 @@ import com.mutuelle.mobille.dto.ApiResponseDto;
 import com.mutuelle.mobille.dto.auth.*;
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
+import com.mutuelle.mobille.dto.member.MemberStatusUpdateDTO;
 import com.mutuelle.mobille.dto.member.MemberUpdateDTO;
 import com.mutuelle.mobille.service.AuthService;
 import com.mutuelle.mobille.service.MemberService;
@@ -140,5 +141,27 @@ public class MembersController {
     public ResponseEntity<ApiResponseDto<MemberResponseDTO>> getMemberById(@PathVariable Long id) {
         MemberResponseDTO member = memberService.getMemberById(id);
         return ResponseEntity.ok(ApiResponseDto.ok(member, "Membre trouvé"));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Activer ou désactiver un membre",
+            description = "Change le statut actif/inactif du membre et de son compte associé. " +
+                    "Seul un administrateur peut effectuer cette action."
+    )
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> toggleMemberStatus(
+            @PathVariable Long id,
+            @RequestBody @Valid MemberStatusUpdateDTO statusDto) {
+
+        MemberResponseDTO updatedMember = memberService.toggleMemberStatus(id, statusDto.getActive());
+
+        String message = statusDto.getActive()
+                ? "Membre activé avec succès"
+                : "Membre désactivé avec succès";
+
+        return ResponseEntity.ok(
+                ApiResponseDto.ok(updatedMember, message)
+        );
     }
 }

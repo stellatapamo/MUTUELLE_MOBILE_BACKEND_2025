@@ -108,7 +108,6 @@ public class ExerciceService {
     public ExerciceResponseDTO createExercice(ExerciceRequestDTO request) {
         Exercice exercice = Exercice.builder()
                 .name(request.getName())
-                .agapeAmount(request.getAgapeAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status(StatusExercice.PLANNED)
@@ -132,7 +131,6 @@ public class ExerciceService {
 
         // Mise à jour des champs modifiables
         if (request.getName() != null) exercice.setName(request.getName());
-        if (request.getAgapeAmount() != null) exercice.setAgapeAmount(request.getAgapeAmount());
 
         // Gestion stricte des dates
         if (currentStatus == StatusExercice.IN_PROGRESS) {
@@ -286,7 +284,6 @@ public class ExerciceService {
         return ExerciceResponseDTO.builder()
                 .id(ex.getId())
                 .name(ex.getName())
-                .agapeAmount(ex.getAgapeAmount())
                 .startDate(ex.getStartDate())
                 .endDate(ex.getEndDate())
                 .status(ex.getStatus())
