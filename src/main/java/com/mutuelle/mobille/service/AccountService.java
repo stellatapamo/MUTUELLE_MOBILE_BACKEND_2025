@@ -264,7 +264,8 @@
             memberAccount.setLastInterestDate(now);
 
             memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().add(amount));
-            globalAccount.setSavingAmount(globalAccount.getSavingAmount().subtract(amount)); // prêt sorti
+            globalAccount.setBorrowAmount(globalAccount.getBorrowAmount().add(amount));
+            globalAccount.setSavingAmount(globalAccount.getSavingAmount().subtract(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);
