@@ -1,6 +1,7 @@
 package com.mutuelle.mobille.models.account;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,18 +19,19 @@ public class AccountMutuelle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "saving_amount", precision = 12, scale = 2)
     private BigDecimal savingAmount = BigDecimal.ZERO;
 
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "solidarity_amount", precision = 12, scale = 2)
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "borrow_amount", precision = 12, scale = 2)
-    private BigDecimal borrowAmount = BigDecimal.ZERO;
+    private BigDecimal borrowAmount = BigDecimal.ZERO; 
 
-    @Column(name = "total_registration_amount", precision = 12, scale = 2)
-    private BigDecimal totalRegistrationAmount = BigDecimal.ZERO;
-
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "total_renfoulement", precision = 12, scale = 2)
     private BigDecimal totalRenfoulement = BigDecimal.ZERO;
 

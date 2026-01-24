@@ -34,7 +34,6 @@
                         .savingAmount(BigDecimal.ZERO)
                         .solidarityAmount(BigDecimal.ZERO)
                         .borrowAmount(BigDecimal.ZERO)
-                        .totalRegistrationAmount(BigDecimal.ZERO)
                         .totalRenfoulement(BigDecimal.ZERO)
                         .isActive(true)
                         .build();
@@ -320,8 +319,8 @@
             // Réduire la dette du membre
             memberAccount.setUnpaidRegistrationAmount(unpaid.subtract(amount));
 
-            // L'argent entre dans la caisse de la mutuelle
-            globalAccount.setTotalRegistrationAmount(globalAccount.getTotalRegistrationAmount().add(amount));
+            // L'argent entre dans la caisse de la mutuelle (  )
+            globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

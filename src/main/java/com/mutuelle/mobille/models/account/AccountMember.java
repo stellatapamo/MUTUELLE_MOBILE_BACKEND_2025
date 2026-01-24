@@ -3,6 +3,7 @@ package com.mutuelle.mobille.models.account;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mutuelle.mobille.models.Member;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -22,14 +23,17 @@ public class AccountMember {
     private Long id;
 
     // Frais d'inscription impayés
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant ne peut pas être négatif")
     @Column(name = "unpaid_registration_amount", precision = 12, scale = 2)
     private BigDecimal unpaidRegistrationAmount = BigDecimal.ZERO;
 
     // Cotisation solidarité
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "solidarity_amount", precision = 12, scale = 2)
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
     // Cotisation solidarité impayée
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "unpaid_solidarity_amount", precision = 12, scale = 2)
     private BigDecimal unpaidSolidarityAmount = BigDecimal.ZERO;
 
@@ -39,6 +43,7 @@ public class AccountMember {
     private BigDecimal savingAmount = BigDecimal.ZERO;
 
     // Montant emprunté
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "borrow_amount", precision = 12, scale = 2)
     private BigDecimal borrowAmount = BigDecimal.ZERO;
 

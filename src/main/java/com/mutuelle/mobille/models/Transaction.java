@@ -36,7 +36,7 @@ public class Transaction {
     private TransactionType transactionType;
 
     // === Relation avec accounts_member : ManyToOne ===
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "accounts_member_id", nullable = true)
     private AccountMember accountMember;
 
