@@ -411,5 +411,12 @@
     "phone": "",
     "email": "nasser.yimen@mutuelle.com",
     "password": "nasser#123"
-  }
+  },
+  {
+  "firstname": "Jacques",
+  "lastname": "Mbous Ikong",
+  "phone": "",
+  "email": "jacques.mbous@mutuelle.com",
+  "password": "jacques#123"
+}
 ]

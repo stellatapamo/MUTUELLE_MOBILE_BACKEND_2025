@@ -72,14 +72,17 @@ public class SessionService {
         // Session doit être contenue dans l'exercice
         if (start.isBefore(ex.getStartDate()) ||
                 (ex.getEndDate() != null && end != null && end.isAfter(ex.getEndDate()))) {
-            throw new IllegalArgumentException("Session hors des dates de l'exercice parent");
+            throw new IllegalArgumentException(
+                    "La session doit être contenue dans l'exercice → " +
+                            "date de début ne peut pas être antérieure au début de l'exercice"
+            );
         }
 
         // Pas de chevauchement avec d'autres sessions (tous statuts confondus)
         boolean overlap = sessionRepository.existsOverlapping(
                 start,
                 end != null ? end : LocalDateTime.MAX,
-                excludeId != null ? excludeId : null
+                excludeId
         );
 
         if (overlap) {
