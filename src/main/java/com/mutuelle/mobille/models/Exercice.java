@@ -38,6 +38,9 @@ public class Exercice {
     @OneToOne(mappedBy = "exercice", cascade = CascadeType.ALL, orphanRemoval = true)
     private ExerciceHistory history;
 
+    @OneToOne(mappedBy = "exercice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Renfoulement renfoulement;
+
     // Relation inverse : un exercice a plusieurs sessions
     @OneToMany(mappedBy = "exercice", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Session> sessions = new HashSet<>();

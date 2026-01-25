@@ -1,4 +1,4 @@
-package com.mutuelle.mobille.dto;
+package com.mutuelle.mobille.dto.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

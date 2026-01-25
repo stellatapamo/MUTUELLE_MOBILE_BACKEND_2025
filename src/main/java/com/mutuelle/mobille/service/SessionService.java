@@ -338,7 +338,6 @@ public class SessionService {
                 .agapeAmount(totalDebit)
                 .totalTransactions(transactionRepository.countBySessionId(sessionId))
                 .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
-                .mutuelleCash(mutuelleacc.getTotalRenfoulement().add( mutuelleacc.getSolidarityAmount()))
                 .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();
 

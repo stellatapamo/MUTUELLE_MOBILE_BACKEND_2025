@@ -92,9 +92,9 @@
   },
   {
     "firstname": "Rémy",
-    "lastname": "Elime Etoua",
+    "lastname": "Etoua",
     "phone": "",
-    "email": "remy.elimeetoua@mutuelle.com",
+    "email": "remy.etoua@mutuelle.com",
     "password": "remy#123"
   },
   {
@@ -204,9 +204,9 @@
   },
   {
     "firstname": "Jacques",
-    "lastname": "Imbous Ikong",
+    "lastname": "Mbous Ikong",
     "phone": "",
-    "email": "jacques.imbousikong@mutuelle.com",
+    "email": "jacques.mbousikong@mutuelle.com",
     "password": "jacques#123"
   },
   {
@@ -413,10 +413,10 @@
     "password": "nasser#123"
   },
   {
-  "firstname": "Jacques",
-  "lastname": "Mbous Ikong",
-  "phone": "",
-  "email": "jacques.mbous@mutuelle.com",
-  "password": "jacques#123"
-}
+    "firstname": "Elime",
+    "lastname": "Elime",
+    "phone": "",
+    "email": "elime.elime@mutuelle.com",
+    "password": "elime#123"
+  }
 ]

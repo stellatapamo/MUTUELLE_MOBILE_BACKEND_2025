@@ -34,7 +34,6 @@
                         .savingAmount(BigDecimal.ZERO)
                         .solidarityAmount(BigDecimal.ZERO)
                         .borrowAmount(BigDecimal.ZERO)
-                        .totalRenfoulement(BigDecimal.ZERO)
                         .isActive(true)
                         .build();
                 globalRepo.save(global);
@@ -288,6 +287,7 @@
 
             memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().subtract(amount));
             globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+            globalAccount.setBorrowAmount(globalAccount.getBorrowAmount().subtract(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);
@@ -352,7 +352,7 @@
             memberAccount.setUnpaidRenfoulement(unpaid.subtract(amount));
 
             // L'argent entre dans la caisse de la mutuelle
-            globalAccount.setTotalRenfoulement(globalAccount.getTotalRenfoulement().add(amount));
+            globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

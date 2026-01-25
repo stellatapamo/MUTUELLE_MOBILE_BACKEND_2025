@@ -257,7 +257,7 @@ public class ExerciceService {
                }
         }
 
-        mutuelleCash = mutuelleCash.add(mutuelleacc.getTotalRenfoulement().add(mutuelleacc.getSolidarityAmount()));
+        mutuelleCash = mutuelleCash.add(mutuelleacc.getSolidarityAmount());
         mutuellesSavingAmount = mutuelleacc.getSavingAmount();
         mutuelleBorrowAmount = mutuelleacc.getBorrowAmount();
 

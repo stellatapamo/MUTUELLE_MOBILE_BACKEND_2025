@@ -58,5 +58,4 @@ public class EpargneController {
         return ResponseEntity.ok(ApiResponseDto.ok(transaction, "Epargne reussie avec succès"));
     }
 
-
 }

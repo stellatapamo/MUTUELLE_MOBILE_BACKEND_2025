@@ -29,11 +29,11 @@ public class AccountMutuelle {
 
     @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "borrow_amount", precision = 12, scale = 2)
-    private BigDecimal borrowAmount = BigDecimal.ZERO; 
+    private BigDecimal borrowAmount = BigDecimal.ZERO;
 
-    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
-    @Column(name = "total_renfoulement", precision = 12, scale = 2)
-    private BigDecimal totalRenfoulement = BigDecimal.ZERO;
+//    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
+//    @Column(name = "total_renfoulement", precision = 12, scale = 2)
+//    private BigDecimal totalRenfoulement = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private boolean isActive = true;
