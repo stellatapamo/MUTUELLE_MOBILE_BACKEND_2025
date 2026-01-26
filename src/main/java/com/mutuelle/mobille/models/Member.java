@@ -25,9 +25,6 @@ public class Member {
     private String lastname;
     private String phone;
 
-    @Column(name = "registration_free_to_paid")
-    private String registrationFreeToPaid;
-
     @Column(name = "avatar", nullable = true)
     private String avatar;
 

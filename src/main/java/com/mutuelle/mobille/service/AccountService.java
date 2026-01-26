@@ -119,7 +119,7 @@
             memberAccount.setSavingAmount(currentAmount.add(amount));
 
             // Mise à jour compte global (la mutuelle reçoit aussi cette épargne)
-            globalAccount.setSavingAmount(currentAmount.add(amount));
+            globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);
