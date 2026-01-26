@@ -1,7 +1,7 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
-import com.mutuelle.mobille.dto.member.AccountMemberDTO;
+import com.mutuelle.mobille.dto.account.AccountMemberDTO;
 import com.mutuelle.mobille.mapper.AccountMemberMapper;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.account.AccountMutuelle;

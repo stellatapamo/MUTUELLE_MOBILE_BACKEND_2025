@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.dto.profile;
 
-import com.mutuelle.mobille.dto.member.AccountMemberDTO;
+import com.mutuelle.mobille.dto.account.AccountMemberDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

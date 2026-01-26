@@ -1,8 +1,5 @@
     package com.mutuelle.mobille.service;
 
-    import com.mutuelle.mobille.dto.account.AccountMemberResponseDTO;
-    import com.mutuelle.mobille.dto.account.AccountMutuelleResponseDTO;
-    import com.mutuelle.mobille.models.Member;
     import com.mutuelle.mobille.models.account.AccountMember;
     import com.mutuelle.mobille.models.account.AccountMutuelle;
     import com.mutuelle.mobille.repository.AccountMemberRepository;
@@ -12,7 +9,6 @@
     import lombok.RequiredArgsConstructor;
     import org.springframework.stereotype.Service;
 
-    import java.time.LocalDate;
     import java.time.LocalDateTime;
     import java.util.List;
 
@@ -25,6 +21,7 @@
         private final AccountMutuelleRepository globalRepo;
         private final AccountMemberRepository memberRepo;
         private final AuthService authService;
+        private final AccountMemberRepository accountMemberRepository;
 
         @PostConstruct
         @Transactional

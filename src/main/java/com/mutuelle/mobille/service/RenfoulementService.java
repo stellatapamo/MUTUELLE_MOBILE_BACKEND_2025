@@ -4,26 +4,20 @@ import com.mutuelle.mobille.dto.exercice.ExerciceResponseDTO;
 import com.mutuelle.mobille.dto.renfoulement.RenfoulementHistoryItemDto;
 import com.mutuelle.mobille.dto.renfoulement.RenfoulementHistoryResponseDto;
 import com.mutuelle.mobille.dto.renfoulement.RenfoulementSimulationDto;
-import com.mutuelle.mobille.enums.TransactionDirection;
-import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.mapper.AccountMemberMapper;
 import com.mutuelle.mobille.mapper.ExerciceHistoryMapper;
 import com.mutuelle.mobille.models.*;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.repository.*;
 import com.mutuelle.mobille.util.MoneyUtil;
-import groovy.lang.Lazy;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,10 +26,11 @@ import java.util.stream.Collectors;
 public class RenfoulementService {
 
     private final MemberRepository memberRepository;
-    private final TransactionRepository transactionRepository;
     private final RenfoulementRepository renfoulementRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
     private final ExerciceService exerciceService;
+    private final AccountMemberRepository accountMemberRepository;
+    private final AccountMemberMapper accountMemberMapper;
 
 
     public RenfoulementHistoryResponseDto getGlobalRenfoulementHistory( ) {
@@ -50,8 +45,11 @@ public class RenfoulementService {
         // 3. Simulation pour l'exercice courant
         RenfoulementSimulationDto simulation = simulateCurrentRenfoulement( );
 
+        List<AccountMember> accountMembers=accountMemberRepository.findByUnpaidRenfoulementGreaterThan(BigDecimal.ZERO);
+
         return RenfoulementHistoryResponseDto.builder()
                 .pastRenfoulements(historyItems)
+                .accountMembers( accountMembers.stream().map(accountMemberMapper::toFullDto).toList())
                 .currentSimulation(simulation)
                 .build();
     }

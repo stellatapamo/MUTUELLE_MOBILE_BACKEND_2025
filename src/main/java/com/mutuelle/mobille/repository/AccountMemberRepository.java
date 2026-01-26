@@ -15,4 +15,5 @@ public interface AccountMemberRepository extends JpaRepository<AccountMember, Lo
     List<AccountMember> findByBorrowAmountGreaterThan(BigDecimal zero);
     List<AccountMember> findByLastInterestDateBefore(LocalDateTime date);
     List<AccountMember> findAllByIsActive(boolean isActive);
+    List<AccountMember> findByUnpaidRenfoulementGreaterThan(BigDecimal amount);
 }

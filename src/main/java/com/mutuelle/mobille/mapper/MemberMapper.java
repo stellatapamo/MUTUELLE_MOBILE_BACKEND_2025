@@ -1,6 +1,6 @@
 package com.mutuelle.mobille.mapper;
 
-import com.mutuelle.mobille.dto.member.AccountMemberDTO;
+import com.mutuelle.mobille.dto.account.AccountMemberDTO;
 import com.mutuelle.mobille.dto.profile.MemberProfileDTO;
 import com.mutuelle.mobille.models.Member;
 import org.springframework.stereotype.Component;
