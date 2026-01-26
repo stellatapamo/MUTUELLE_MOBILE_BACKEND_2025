@@ -302,6 +302,7 @@ public class SessionService {
         BigDecimal currentSolidarityBalance = mutuelleacc.getSolidarityAmount();
 
         if (currentSolidarityBalance.compareTo(totalDebit) < 0) {
+            System.out.println("ttttttttttt1 : "+totalDebit+ "- "+currentSolidarityBalance +"- "+perMember);
             throw new IllegalArgumentException(
                     String.format(
                             "Impossible de débiter les agapes pour la session '%s' : " +
@@ -316,7 +317,6 @@ public class SessionService {
                     )
             );
         }
-
         accountService.removeToSolidarityMutuelleCaisse(totalDebit);
 
         Transaction tx = Transaction.builder()
@@ -337,6 +337,7 @@ public class SessionService {
                 .totalAssistanceCount(assistanceService.countTotalAssistanceForSession(sessionId))
                 .agapeAmount(totalDebit)
                 .totalTransactions(transactionRepository.countBySessionId(sessionId))
+                .mutuelleCash(mutuelleacc.getSavingAmount().add(mutuelleacc.getSolidarityAmount()))
                 .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
                 .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();

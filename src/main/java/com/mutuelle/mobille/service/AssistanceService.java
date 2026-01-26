@@ -143,7 +143,7 @@ public class AssistanceService {
     }
 
     public Long countTotalAssistanceForSession(Long sessionId){
-        return  transactionRepository.countBySessionId(sessionId);
+        return  assistanceRepository.countBySessionId(sessionId);
     }
 
     // Nombre total d'assistances pour un membre donné

@@ -32,10 +32,8 @@ public class RenfoulementController {
     @GetMapping()
     @Operation(summary = "Liste des renfoulements passés globaux + simulation courant")
     public ResponseEntity<ApiResponseDto<RenfoulementHistoryResponseDto>> getGlobalRenfoulementHistory() {
-        // 1. Trouver l'exercice courant (celui qui n'est pas encore terminé)
-        ExerciceResponseDTO currentExercice = exerciceService.getCurrentExerciceDTO()
-                .orElseThrow(() -> new IllegalStateException("Aucun exercice en cours trouvé"));
-        RenfoulementHistoryResponseDto response = renfoulementService.getGlobalRenfoulementHistory(currentExercice);
+
+        RenfoulementHistoryResponseDto response = renfoulementService.getGlobalRenfoulementHistory();
         return ResponseEntity.ok(ApiResponseDto.ok(response, "Historique renfoulement global"));
     }
 }

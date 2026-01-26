@@ -40,7 +40,7 @@ public class StatusSchedules {
     @Transactional
     public void synchronizeAllStatuses() {
         LocalDateTime currentTime = now();
-        log.debug("Début synchronisation statuts - {}", currentTime);
+        System.out.println("Début synchronisation statuts - {}"+ currentTime);
 
         try {
             synchronizeSessions(currentTime);
@@ -60,6 +60,7 @@ public class StatusSchedules {
                 StatusSession.IN_PROGRESS, now);
 
         for (Session s : expired) {
+            System.out.println("dddddddddddd");
             try {
                 if (s.getStatus() != StatusSession.IN_PROGRESS) continue; // sécurité
 
@@ -100,7 +101,6 @@ public class StatusSchedules {
         // Étape 1 : TERMINER les exercices expirés (priorité)
         List<Exercice> expired = exerciceRepository.findByStatusAndEndDateLessThan(
                 StatusExercice.IN_PROGRESS, now);
-
         for (Exercice ex : expired) {
             try {
                 if (ex.getStatus() != StatusExercice.IN_PROGRESS) continue;

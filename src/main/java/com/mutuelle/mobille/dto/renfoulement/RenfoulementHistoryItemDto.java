@@ -1,6 +1,7 @@
 package com.mutuelle.mobille.dto.renfoulement;
 
 import com.mutuelle.mobille.dto.assistance.TypeAssistanceResponseDto;
+import com.mutuelle.mobille.dto.exercice.ExerciceHistoryDto;
 import com.mutuelle.mobille.dto.exercice.ExerciceResponseDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
 import com.mutuelle.mobille.dto.profile.AdminProfileDTO;
@@ -27,14 +28,10 @@ public class RenfoulementHistoryItemDto {
     private String exerciceName;
     private LocalDateTime calculatedAt;
     private BigDecimal unitAmount;
-    // Pour membre : ajouter dette perso, payé, reste
-    private BigDecimal memberDueAmount;
-    private BigDecimal memberPaidAmount;
-    private BigDecimal memberRemainingAmount;
     // Pour admin : ajouter stats globaux
     private int baseMembersCount;
     private int distributedMembersCount;
     private BigDecimal totalToDistributeAmount;
     private BigDecimal expectedTotalAmount;
-    private ExerciceHistory exerciceHistory;
+    private ExerciceHistoryDto exerciceHistory;
 }

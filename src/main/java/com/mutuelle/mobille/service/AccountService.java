@@ -352,7 +352,7 @@
             memberAccount.setUnpaidRenfoulement(unpaid.subtract(amount));
 
             // L'argent entre dans la caisse de la mutuelle
-            globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+            globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

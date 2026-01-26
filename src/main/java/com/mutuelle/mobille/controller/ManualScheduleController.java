@@ -1,6 +1,10 @@
 package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
+import com.mutuelle.mobille.enums.StatusSession;
+import com.mutuelle.mobille.models.Session;
+import com.mutuelle.mobille.repository.SessionRepository;
+import com.mutuelle.mobille.service.SessionService;
 import com.mutuelle.mobille.service.schedules.FinancialSchedules;
 import com.mutuelle.mobille.service.schedules.StatusSchedules;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import static java.time.LocalDateTime.now;
 
 @RestController
 @RequestMapping("/api/shedules")
@@ -20,6 +27,7 @@ public class ManualScheduleController {
 
     private final StatusSchedules statusSchedules;
     private final FinancialSchedules financialSchedules;
+    private final SessionRepository sessionRepository;
 
     // -------------------------------------------------------------------------
     //                  STATUTS (sessions + exercices)
@@ -47,13 +55,13 @@ public class ManualScheduleController {
     @PostMapping("/status/sessions/terminate-expired")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
-            summary = "Termine manuellement toutes les sessions expirées",
+            summary = "Termine manuellement toutes les sessions expirées sans renfoulement etc ...",
             description = "Exécute uniquement la partie 'clôture des sessions dépassées'"
     )
     public ResponseEntity<ApiResponseDto<String>> triggerTerminateExpiredSessions() {
         try {
             // On passe un fake now() très lointain pour forcer la détection de toutes les expirées
-            statusSchedules.synchronizeSessions(LocalDateTime.now().plusYears(10));
+            statusSchedules.synchronizeSessions(now().plusYears(10));
             return ResponseEntity.ok(
                     ApiResponseDto.ok("Vérification et clôture des sessions expirées terminée", "Opération manuelle effectuée")
             );
@@ -73,7 +81,7 @@ public class ManualScheduleController {
     public ResponseEntity<ApiResponseDto<String>> triggerStartPendingSessions() {
         try {
             // On force la vérification avec la date actuelle
-            statusSchedules.synchronizeSessions(LocalDateTime.now());
+            statusSchedules.synchronizeSessions(now());
             return ResponseEntity.ok(
                     ApiResponseDto.ok("Tentative de démarrage des sessions dues terminée", "Opération manuelle effectuée")
             );
