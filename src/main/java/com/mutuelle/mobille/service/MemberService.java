@@ -80,7 +80,6 @@ public class MemberService {
         authUser.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         authUser.setRole(Role.MEMBER);
         authUser.setUserRefId(member.getId());
-        authUser.setPin(dto.getPin());
 
         authUserRepository.save(authUser);
 

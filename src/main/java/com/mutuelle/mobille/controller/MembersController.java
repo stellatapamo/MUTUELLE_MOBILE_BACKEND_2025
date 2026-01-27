@@ -103,14 +103,14 @@ public class MembersController {
         );
     }
 
-    @PatchMapping("/me/pin")
-    @Operation(summary = "Changer le code PIN (4 chiffres)")
-    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> updatePin(
-            @Valid @RequestBody PinUpdateDTO dto) {
-
-        MemberResponseDTO updated = memberService.updatePin(dto);
-        return ResponseEntity.ok(ApiResponseDto.ok(updated, "PIN mis à jour avec succès"));
-    }
+//    @PatchMapping("/me/pin")
+//    @Operation(summary = "Changer le code PIN (4 chiffres)")
+//    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> updatePin(
+//            @Valid @RequestBody PinUpdateDTO dto) {
+//
+//        MemberResponseDTO updated = memberService.updatePin(dto);
+//        return ResponseEntity.ok(ApiResponseDto.ok(updated, "PIN mis à jour avec succès"));
+//    }
 
     @PatchMapping("/me/password")
     @Operation(summary = "Changer le mot de passe")

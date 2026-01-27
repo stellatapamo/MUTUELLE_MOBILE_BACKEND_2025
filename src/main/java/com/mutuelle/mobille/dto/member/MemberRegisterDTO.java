@@ -27,7 +27,7 @@ public class MemberRegisterDTO {
     @NotNull(message = "Le téléphone est obligatoire")
     @Pattern(regexp = "^(\\+2376|6)[0-9]{8}$",
             message = "Format de téléphone invalide (ex: 698765432 ou +237691234567)")
-    @Size(max = 12)
+    @Size(min = 9, max = 13)
     private String phone;
 
     @NotNull(message = "L'email est obligatoire")
@@ -39,9 +39,4 @@ public class MemberRegisterDTO {
     @NotBlank(message = "Le mot de passe ne peut pas être vide")
     @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
     private String password;
-
-    @Size(min = 4, max = 4, message = "Le PIN doit contenir exactement 4 chiffres")
-    @Pattern(regexp = "^[0-9]{4}$", message = "Le PIN doit être composé uniquement de 4 chiffres")
-    @Builder.Default
-    private String pin = "2025";
 }

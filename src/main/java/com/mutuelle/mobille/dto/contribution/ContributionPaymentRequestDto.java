@@ -13,9 +13,6 @@ public record ContributionPaymentRequestDto(
         @NotNull(message = "L'ID du membre est obligatoire")
         Long memberId,
 
-        @NotNull(message = "L'ID de la session est obligatoire")
-        Long sessionId,
-
         @NotNull(message = "Le montant est obligatoire")
         @Positive(message = "Le montant doit être positif")
         BigDecimal amount,
