@@ -58,7 +58,7 @@ public class SessionService {
 
             if (start.toLocalDate().equals(end.toLocalDate())) {
                 throw new IllegalArgumentException(
-                        "La session doit couvrir au moins deux jours différents " +
+                        "La session doit couvrir au moins deux jours " +
                                 "(date de début et date de fin ne peuvent pas être le même jour)"
                 );
             }

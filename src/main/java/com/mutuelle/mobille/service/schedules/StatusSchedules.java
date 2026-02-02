@@ -60,7 +60,6 @@ public class StatusSchedules {
                 StatusSession.IN_PROGRESS, now);
 
         for (Session s : expired) {
-            System.out.println("dddddddddddd");
             try {
                 if (s.getStatus() != StatusSession.IN_PROGRESS) continue; // sécurité
 

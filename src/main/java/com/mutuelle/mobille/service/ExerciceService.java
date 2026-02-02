@@ -60,7 +60,7 @@ public class ExerciceService {
 
             if (start.toLocalDate().equals(end.toLocalDate())) {
                 throw new IllegalArgumentException(
-                        "L'exercice doit couvrir au moins deux jours différents " +
+                        "L'exercice doit couvrir au moins deux jours " +
                                 "(date de début et date de fin ne peuvent pas être le même jour)"
                 );
             }
