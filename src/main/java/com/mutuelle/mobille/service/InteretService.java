@@ -105,6 +105,7 @@ public class InteretService {
             // Crédit sur le compte
             beneficiaire.setSavingAmount(beneficiaire.getSavingAmount().add(interetPart));
             accountService.saveMemberAccount(beneficiaire);
+            accountService.addToMutuelleCaisse(interetPart);
 
             // Transaction
             saveTransaction(beneficiaire, interetPart, "Redistribution d'intérêt", session, parentTransaction);
