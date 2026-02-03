@@ -53,6 +53,19 @@ public class SolidariteService {
                 Session session = sessionRepo.findById(sessionId)
                                 .orElseThrow(() -> new RuntimeException("Session introuvable"));
 
+                // VÉRIFICATION CRITIQUE : solde impayé suffisant ?
+                BigDecimal currentUnpaid = memberAccount.getUnpaidSolidarityAmount();
+                if (currentUnpaid == null) {
+                        throw new IllegalStateException("Montant impayé de solidarité non initialisé");
+                }
+
+                if (amount.compareTo(currentUnpaid) > 0) {
+                        throw new IllegalArgumentException(
+                                String.format("Le montant saisi (%,.2f) dépasse le solde impayé restant (%,.2f)",
+                                        amount, currentUnpaid)
+                        );
+                }
+
                 //
                 // MISE À JOUR DES COMPTES (LOGIQUE FINANCIÈRE)
                 //
