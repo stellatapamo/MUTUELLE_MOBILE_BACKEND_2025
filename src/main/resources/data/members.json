@@ -14,18 +14,12 @@
     "password": "charles#123"
   },
   {
-    "firstname": "Barnabé",
+    "firstname": "Bernabé",
     "lastname": "Batchakui",
-    "phone": "",
-    "email": "barnabe.batchakui@mutuelle.com",
-    "password": "barnabe#123"
-  },
-  {
-    "firstname": "Tibé",
-    "lastname": "Beda",
-    "phone": "",
-    "email": "tibe.beda@mutuelle.com",
-    "password": "tibe#123"
+    "phone": "677602012",
+    "email": "bernabe.batchakui@univ-yaounde1.cm",
+    "password": "bernabe#123",
+    "addresse" : "Simbock"
   },
   {
     "firstname": "Didier",
@@ -37,9 +31,10 @@
   {
     "firstname": "Jean Calvin",
     "lastname": "Bidoung",
-    "phone": "",
-    "email": "jeancalvin.bidoung@mutuelle.com",
-    "password": "jeancalvin#123"
+    "phone": "696488503",
+    "email": "bidoung@yahoo.com",
+    "password": "jeancalvin#123",
+    "addresse" : "BIYEM ASSI"
   },
   {
     "firstname": "Daniel",
@@ -100,9 +95,10 @@
   {
     "firstname": "Bridinette",
     "lastname": "Fandio",
-    "phone": "",
-    "email": "bridinette.fandio@mutuelle.com",
-    "password": "bridinette#123"
+    "phone": "678933819",
+    "email": "sbridine@yahoo.fr",
+    "password": "bridinette#123",
+    "addresse" : "Yaoundé-Etoug-Ebe"
   },
   {
     "firstname": "Fitime",
@@ -169,10 +165,11 @@
   },
   {
     "firstname": "Lucien",
-    "lastname": "Mandeng",
-    "phone": "",
-    "email": "lucien.mandeng@mutuelle.com",
-    "password": "lucien#123"
+    "lastname": "MANDENG MANDENG ",
+    "phone": "671049173",
+    "email": "mandengl@yahoo.fr",
+    "password": "lucien#123",
+    "addresse" : "YAOUNDE MONTEE JOUVENCE"
   },
   {
     "firstname": "Serge",
@@ -196,11 +193,12 @@
     "password": "theophile#123"
   },
   {
-    "firstname": "Edwin",
+    "firstname": "EDWIN NYUYSEVER",
     "lastname": "Mbinkar",
-    "phone": "",
-    "email": "edwin.mbinkar@mutuelle.com",
-    "password": "edwin#123"
+    "phone": "677469921",
+    "email": "mbinkaren@yahoo.fr",
+    "password": "edwin#123",
+    "addresse" : "Nkolbisson"
   },
   {
     "firstname": "Jacques",
@@ -225,10 +223,11 @@
   },
   {
     "firstname": "Ibrahim",
-    "lastname": "Moukouop",
-    "phone": "",
-    "email": "ibrahim.moukouop@mutuelle.com",
-    "password": "ibrahim#123"
+    "lastname": "MOUKOUOP NGUENA",
+    "phone": "699809291",
+    "email": "imoukouo@gmail.com",
+    "password": "ibrahim#123",
+    "addresse" : "Soa, Ebogo 1, lieu dit deux étages"
   },
   {
     "firstname": "Chantal",
@@ -273,11 +272,12 @@
     "password": "pauls#123"
   },
   {
-    "firstname": "Rachel",
-    "lastname": "Ngono",
-    "phone": "",
-    "email": "rachel.ngono@mutuelle.com",
-    "password": "rachel#123"
+    "firstname": "Rachel Raïssa",
+    "lastname": "NGONO MVONDO epse ANDJOCK",
+    "phone": "699653065",
+    "email": "rachel.ngono@univ-yaounde1.cm",
+    "password": "rachel#123",
+    "addresse" : "Nkoabang face Total Nlobisson"
   },
   {
     "firstname": "Guy Merlin",
@@ -295,10 +295,11 @@
   },
   {
     "firstname": "Raïssa",
-    "lastname": "Onanena G.",
-    "phone": "",
-    "email": "raissa.onanenag@mutuelle.com",
-    "password": "raissa#123"
+    "lastname": "Onanena",
+    "phone": "675239224",
+    "email": "raissa.onanena@univ-yaounde1.cm",
+    "password": "raissa#123",
+    "addresse" : "Ahala"
   },
   {
     "firstname": "Chrepin",
@@ -317,30 +318,34 @@
   {
     "firstname": "Jacques",
     "lastname": "Tagoudjeu",
-    "phone": "",
-    "email": "jacques.tagoudjeu@mutuelle.com",
-    "password": "jacques#123"
+    "phone": "699814218",
+    "email": "jtagoudjeu@gmail.com",
+    "password": "jacques#123",
+    "addresse" : "Nkolbisson-Yaoundé"
   },
   {
     "firstname": "Etienne",
-    "lastname": "Takou",
-    "phone": "",
-    "email": "etienne.takou@mutuelle.com",
-    "password": "etienne#123"
+    "lastname": "TAKOU",
+    "phone": "678582850",
+    "email": "etienne.takou@gmail.com",
+    "password": "etienne#123",
+    "addresse" : "Rue Damase"
   },
   {
     "firstname": "Hervé",
     "lastname": "Tale Kalachi",
-    "phone": "",
-    "email": "herve.talekalachi@mutuelle.com",
-    "password": "herve#123"
+    "phone": "695381750",
+    "email": "hervekalachi@gmail.com",
+    "password": "herve#123",
+    "addresse" : "Tsinga Village, Entrée Lycée"
   },
   {
     "firstname": "André",
     "lastname": "Talla",
-    "phone": "",
-    "email": "andre.talla@mutuelle.com",
-    "password": "andre#123"
+    "phone": "671216133",
+    "email": "atalla16034@gmail.com",
+    "password": "andre#123",
+    "addresse" : "Bitotol"
   },
   {
     "firstname": "Thomas",
@@ -351,10 +356,11 @@
   },
   {
     "firstname": "Emmanuel",
-    "lastname": "Tchomgo",
-    "phone": "",
-    "email": "emmanuel.tchomgo@mutuelle.com",
-    "password": "emmanuel#123"
+    "lastname": "TCHOMGO FELENOU",
+    "phone": "699805936",
+    "email": "mekempi@yahoo.fr",
+    "password": "emmanuel#123",
+    "addresse" : "Nkolbisson-Yaoundé"
   },
   {
     "firstname": "Théodore",
@@ -366,9 +372,10 @@
   {
     "firstname": "Jean Jules",
     "lastname": "Tewa",
-    "phone": "",
-    "email": "jeanjules.tewa@mutuelle.com",
-    "password": "jeanjules#123"
+    "phone": "677711369",
+    "email": "tewajules@gmail.com",
+    "password": "jeanjules#123",
+    "addresse" : "Nkolfoulou"
   },
   {
     "firstname": "Alain",
@@ -379,31 +386,35 @@
   },
   {
     "firstname": "Lauraine",
-    "lastname": "Tiogning",
-    "phone": "",
-    "email": "lauraine.tiogning@mutuelle.com",
-    "password": "lauraine#123"
+    "lastname": "Tiogning epse Djiogue",
+    "phone": "677669854",
+    "email": "lauraine.djiogue@univ-yaounde1.cm",
+    "password": "lauraine#123",
+    "addresse" : "Nkolbisson"
   },
   {
     "firstname": "Olivier",
-    "lastname": "Videme",
-    "phone": "",
-    "email": "olivier.videme@mutuelle.com",
-    "password": "olivier#123"
+    "lastname": "VIDEME BOSSOU",
+    "phone": "679921168",
+    "email": "obossou@gmail.com",
+    "password": "olivier#123",
+    "addresse" : "Yaoundé"
   },
   {
     "firstname": "Joseph",
     "lastname": "Voufo",
-    "phone": "",
-    "email": "joseph.voufo@mutuelle.com",
-    "password": "joseph#123"
+    "phone": "658184036",
+    "email": "voufojo1@gmail.com",
+    "password": "joseph#123",
+    "addresse" : "Fougerolles"
   },
   {
-    "firstname": "Valaire",
-    "lastname": "Yatat",
-    "phone": "",
-    "email": "valaire.yatat@mutuelle.com",
-    "password": "valaire#123"
+    "firstname": "Ivric Valaire",
+    "lastname": "Yatat Djeumen",
+    "phone": "675305726",
+    "email": "yatat.valaire@gmail.com",
+    "password": "valaire#123",
+    "addresse" : "NkoaBang"
   },
   {
     "firstname": "Nasser",
@@ -413,10 +424,11 @@
     "password": "nasser#123"
   },
   {
-    "firstname": "Elime",
-    "lastname": "Elime",
-    "phone": "",
-    "email": "elime.elime@mutuelle.com",
-    "password": "elime#123"
+    "firstname": "Aimé",
+    "lastname": "Elime bouboama",
+    "phone": "699892009",
+    "email": "aelime2001@yahoo.fr",
+    "password": "elime#123",
+    "addresse" : "Nkongoa par mfou"
   }
 ]
