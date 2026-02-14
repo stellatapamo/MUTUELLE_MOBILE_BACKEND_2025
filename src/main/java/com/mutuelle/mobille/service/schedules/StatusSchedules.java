@@ -43,7 +43,7 @@ public class StatusSchedules {
         System.out.println("Début synchronisation statuts - {}"+ currentTime);
 
         try {
-            synchronizeSessions(currentTime);
+            //synchronizeSessions(currentTime);
             synchronizeExercices(currentTime);
         } catch (Exception e) {
             log.error("Erreur critique lors de la synchronisation des statuts", e);
@@ -52,7 +52,7 @@ public class StatusSchedules {
 
         log.debug("Fin synchronisation statuts");
     }
-
+    /*
     public void synchronizeSessions(LocalDateTime now) {
 
         // Étape 1 : TERMINER les sessions expirées (priorité absolue)
@@ -93,7 +93,7 @@ public class StatusSchedules {
         } else {
             log.warn("Démarrage session bloqué : une session est déjà IN_PROGRESS");
         }
-    }
+    }*/
 
     private void synchronizeExercices(LocalDateTime now) {
 
@@ -132,6 +132,23 @@ public class StatusSchedules {
             }
         } else {
             log.warn("Démarrage exercice bloqué : un exercice est déjà IN_PROGRESS");
+        }
+    }
+
+    /**
+     * Vérifie toutes les heures si des sessions doivent être clôturées automatiquement
+     * après 24h d'activité
+     */
+    @Scheduled(cron = "0 0 * * * ?")  // Toutes les heures
+    // @Scheduled(fixedDelay = 3600000)  // Alternative : toutes les heures aussi
+    public void checkAndCloseSessions() {
+        log.info("Début de la vérification des sessions à clôturer automatiquement");
+
+        try {
+            sessionService.autoCloseSessionsAfter24h();
+            log.info("Vérification des sessions terminée");
+        } catch (Exception e) {
+            log.error("Erreur lors de la vérification des sessions à clôturer", e);
         }
     }
 }

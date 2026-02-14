@@ -51,7 +51,7 @@ public class ManualScheduleController {
             );
         }
     }
-
+    /*
     @PostMapping("/status/sessions/terminate-expired")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
@@ -70,8 +70,8 @@ public class ManualScheduleController {
                     ApiResponseDto.error("Échec lors de la clôture manuelle des sessions: "+ e.getMessage())
             );
         }
-    }
-
+    }*/
+    /*
     @PostMapping("/status/sessions/start-pending")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
@@ -90,7 +90,7 @@ public class ManualScheduleController {
                     ApiResponseDto.error("Échec lors du démarrage manuel des sessions: "+ e.getMessage())
             );
         }
-    }
+    }*/
 
     // -------------------------------------------------------------------------
     //                  INTÉRÊTS TRIMESTRIELS EMPRUNTS

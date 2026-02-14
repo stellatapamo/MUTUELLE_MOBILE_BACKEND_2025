@@ -1,14 +1,14 @@
 package com.mutuelle.mobille.dto.session;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
-public class SessionRequestDTO {
-
+public class UpdateSessionRequestDTO {
     @NotBlank(message = "Le nom est obligatoire")
     @Size(max = 100)
     private String name;
@@ -21,13 +21,4 @@ public class SessionRequestDTO {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal agapeAmountPerMember;
 
-    {/*
-    @NotNull(message = "La date de début est obligatoire")
-    private LocalDateTime startDate;
-
-    private LocalDateTime endDate; // optionnelle
-    */}
-
-    @NotNull(message = "L'ID de l'exercice est obligatoire")
-    private Long exerciceId;
 }

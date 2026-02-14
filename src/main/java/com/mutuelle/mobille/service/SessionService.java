@@ -3,6 +3,7 @@ package com.mutuelle.mobille.service;
 import com.mutuelle.mobille.dto.notifications.NotificationRequestDto;
 import com.mutuelle.mobille.dto.session.SessionRequestDTO;
 import com.mutuelle.mobille.dto.session.SessionResponseDTO;
+import com.mutuelle.mobille.dto.session.UpdateSessionRequestDTO;
 import com.mutuelle.mobille.enums.*;
 import com.mutuelle.mobille.models.Exercice;
 import com.mutuelle.mobille.models.Session;
@@ -13,6 +14,7 @@ import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.repository.*;
 import com.mutuelle.mobille.service.notifications.SessionNotificationHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class SessionService {
 
     private final SessionRepository sessionRepository;
@@ -46,12 +49,95 @@ public class SessionService {
     //              Validation centrale
     // ───────────────────────────────────────────────
 
+    private void validateSessionForCreation(Session session, Long excludeId) {
+        Exercice ex = session.getExercice();
+        if (ex == null) {
+            throw new IllegalArgumentException("Exercice parent obligatoire");
+        }
+
+        // Pas de validation de dates à la création car elles sont nulles
+    }
+
+    private void validateSessionForStart(Session session) {
+        // Vérifier qu'aucune autre session n'est en cours
+        Optional<Session> currentSession = findCurrentSession();
+        if (currentSession.isPresent()) {
+            throw new IllegalStateException(
+                "Impossible de démarrer la session '" + session.getName() + 
+                "' car une session est déjà en cours : '" + currentSession.get().getName() + "'"
+            );
+        }
+
+
+        // Vérifier que la session est bien au statut PLANNED
+        if (session.getStatus() != StatusSession.PLANNED) {
+            throw new IllegalStateException(
+                "Seules les sessions planifiées peuvent être démarrées. " +
+                "Statut actuel : " + session.getStatus()
+            );
+        }
+
+        // Vérifier que l'exercice est en cours
+        Exercice ex = session.getExercice();
+        if (ex.getStatus() != StatusExercice.IN_PROGRESS) {
+            throw new IllegalStateException(
+                "Impossible de démarrer une session sur un exercice " + ex.getStatus()
+            );
+        }
+
+        // Vérifier que la date de début est dans les dates de l'exercice
+        LocalDateTime now = now();
+        if (now.isBefore(ex.getStartDate()) || now.isAfter(ex.getEndDate())) {
+            throw new IllegalArgumentException(
+                "La session ne peut être démarrée que pendant la période de l'exercice.\n" +
+                "Période exercice : " + ex.getStartDate() + " → " + ex.getEndDate() + "\n" +
+                "Date actuelle : " + now
+            );
+        }
+
+
+
+        // Récupérer toutes les sessions démarrées aujourd'hui
+        List<Session> todaySessions = sessionRepository.findByStartDateBetween(
+                now.toLocalDate().atStartOfDay(),
+                now.toLocalDate().atTime(23, 59, 59)
+        );
+
+        if (!todaySessions.isEmpty()) {
+            Session existingSession = todaySessions.get(0);
+            throw new IllegalStateException(
+                    String.format(
+                            "Impossible de démarrer la session '%s' aujourd'hui. " +
+                                    "La session '%s' a déjà été démarrée à %s.",
+                            session.getName(),
+                            existingSession.getName(),
+                            existingSession.getStartDate().toLocalTime()
+                    )
+            );
+        }
+    }
+
+    private void validateSessionForClose(Session session) {
+        if (session.getStatus() != StatusSession.IN_PROGRESS) {
+            throw new IllegalStateException("Seules les sessions en cours peuvent être clôturées");
+        }
+
+        if (session.getStartDate() == null) {
+            throw new IllegalStateException("La session n'a pas de date de début valide");
+        }
+
+        LocalDateTime now = now();
+        if (now.isBefore(session.getStartDate())) {
+            throw new IllegalStateException("La session ne peut être clôturée avant sa date de début");
+        }
+    }
+    
     private void validateSession(Session session, Long excludeId) {
         LocalDateTime start = session.getStartDate();
         LocalDateTime end = session.getEndDate();
         LocalDateTime now = now();
 
-        if (end != null) {
+        {/*if (end != null) {
             if (start.isAfter(end)) {
                 throw new IllegalArgumentException("Date de début doit être ≤ date de fin");
             }
@@ -62,22 +148,23 @@ public class SessionService {
                                 "(date de début et date de fin ne peuvent pas être le même jour)"
                 );
             }
-        }
+        }*/}
 
         Exercice ex = session.getExercice();
         if (ex == null) {
             throw new IllegalArgumentException("Exercice parent obligatoire");
         }
 
-        // Session doit être contenue dans l'exercice
-        if (start.isBefore(ex.getStartDate()) ||
-                (ex.getEndDate() != null && end != null && end.isAfter(ex.getEndDate()))) {
-            throw new IllegalArgumentException(
-                    "La session doit être contenue dans l'exercice → " +
-                            "date de début ne peut pas être antérieure au début de l'exercice"
-            );
+        if (start != null) { // seulement si start est défini
+            // Session doit être contenue dans l'exercice
+            if (start.isBefore(ex.getStartDate()) || start.isAfter(ex.getEndDate()) ||
+                    (ex.getEndDate() != null && end != null && end.isAfter(ex.getEndDate()))) {
+                throw new IllegalArgumentException(
+                        "La session doit être contenue dans l'exercice → " +
+                                "date de début ne peut pas être antérieure au début de l'exercice"
+                );
+            }
         }
-
         // Pas de chevauchement avec d'autres sessions (tous statuts confondus)
         boolean overlap = sessionRepository.existsOverlapping(
                 start,
@@ -124,32 +211,54 @@ public class SessionService {
     @PreAuthorize("hasRole('ADMIN')")
     public SessionResponseDTO createSession(SessionRequestDTO dto) {
         Exercice ex = exerciceRepository.findById(dto.getExerciceId())
-                .orElseThrow(() -> new RuntimeException("Exercice non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Exercice non trouvé : " + dto.getExerciceId()));
 
         Session session = Session.builder()
                 .name(dto.getName())
                 .solidarityAmount(dto.getSolidarityAmount())
                 .agapeAmountPerMember(dto.getAgapeAmountPerMember())
-                .startDate(dto.getStartDate())
-                .endDate(dto.getEndDate())
+                .startDate(null)
+                .endDate(null)
                 .status(StatusSession.PLANNED)
                 .exercice(ex)
                 .build();
 
-        validateSession(session, null);
+        validateSessionForCreation(session, null);
         session = sessionRepository.save(session);
         return toResponseDTO(session);
     }
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public SessionResponseDTO updateSession(Long id, SessionRequestDTO dto) {
+    public SessionResponseDTO updateSession(Long id, UpdateSessionRequestDTO dto) {
         Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session non trouvée"));
+                .orElseThrow(() -> new RuntimeException("Session non trouvée : " + id));
 
         StatusSession currentStatus = session.getStatus();
+
+
         if (currentStatus == StatusSession.COMPLETED || currentStatus == StatusSession.CANCELLED) {
             throw new IllegalStateException("Modification interdite sur session terminée ou annulée");
+        }
+
+        // Interdire modification si déjà historisée
+        if (sessionHistoryRepository.existsBySessionId(id)) {
+            throw new IllegalStateException("Session déjà clôturée (historique existant)");
+        }
+
+        //  Vérifier si la session a des transactions
+        Long transactionCount = transactionRepository.countBySessionId(id);
+
+        if (transactionCount > 0) {
+            // Session avec transactions : message clair
+            throw new IllegalStateException(
+                    String.format(
+                            "Impossible de modifier la session '%s' car elle a déjà %d transaction(s). " +
+                                    "Les modifications ne sont autorisées que sur les sessions sans activité.",
+                            session.getName(),
+                            transactionCount
+                    )
+            );
         }
 
         // Mise à jour des champs modifiables
@@ -157,7 +266,12 @@ public class SessionService {
         if (dto.getSolidarityAmount() != null) session.setSolidarityAmount(dto.getSolidarityAmount());
         if (dto.getAgapeAmountPerMember() != null) session.setAgapeAmountPerMember(dto.getAgapeAmountPerMember());
 
-        // Gestion stricte des dates
+        // L'exercice ne peut pas être changé
+        /*if (dto.getExerciceId() != null && !dto.getExerciceId().equals(session.getExercice().getId())) {
+            throw new IllegalArgumentException("L'exercice d'une session ne peut pas être modifié");
+        }*/
+
+        {/*/ Gestion stricte des dates
         if (currentStatus == StatusSession.IN_PROGRESS) {
             // startDate interdit
             if (dto.getStartDate() != null && !dto.getStartDate().equals(session.getStartDate())) {
@@ -184,7 +298,8 @@ public class SessionService {
                 .endDate(dto.getEndDate() != null ? dto.getEndDate() : session.getEndDate())
                 .build();
 
-        validateSession(fakeClone, id);
+        validateSession(fakeClone, id);*/}
+
         session = sessionRepository.save(session);
         return toResponseDTO(session);
     }
@@ -193,9 +308,9 @@ public class SessionService {
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteSession(Long id) {
         Session s = sessionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session non trouvée"));
+                .orElseThrow(() -> new RuntimeException("Session non trouvée : " + id));
 
-        // Nouvelle règle : Interdire si en cours ou terminée
+        //Nouvelle règle : Interdire si en cours ou terminée
         if (s.getStatus() == StatusSession.IN_PROGRESS || s.getStatus() == StatusSession.COMPLETED) {
             throw new IllegalStateException("Impossible de supprimer une session en cours ou terminée");
         }
@@ -213,7 +328,7 @@ public class SessionService {
     // ───────────────────────────────────────────────
 
     public Optional<Session> findCurrentSession() {
-        return sessionRepository.findCurrentInProgress(LocalDateTime.now());
+        return sessionRepository.findFirstByStatus(StatusSession.IN_PROGRESS);
     }
 
     public Optional<SessionResponseDTO> getCurrentSessionDTO() {
@@ -224,7 +339,8 @@ public class SessionService {
     //              Actions importantes (appelées par scheduler)
     // ───────────────────────────────────────────────
 
-    @Transactional
+    //Demarrage automatique
+    {/*@Transactional
     public void startSessionIfDue(Session session) {
         if (session.getStatus() != StatusSession.PLANNED) return;
 
@@ -235,9 +351,32 @@ public class SessionService {
             applySolidarityToAllMembers(session);
             notificationHelper.notifySessionStarted(session);
         }
+    }*/}
+
+    //Demarrage manuel
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public SessionResponseDTO startSession(Long sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session non trouvée : " + sessionId));
+
+        validateSessionForStart(session);
+
+        session.setStartDate(LocalDateTime.now());
+        session.setStatus(StatusSession.IN_PROGRESS);
+
+        
+        session = sessionRepository.save(session);
+
+        // Appliquer la solidarité à tous les membres
+        applySolidarityToAllMembers(session);
+        // Notifier
+        notificationHelper.notifySessionStarted(session);
+        return toResponseDTO(session);
     }
 
-    @Transactional
+    //cloture automatique
+    {/*@Transactional
     public void closeSessionIfExpired(Session session) {
         if (session.getStatus() != StatusSession.IN_PROGRESS) return;
 
@@ -266,7 +405,37 @@ public class SessionService {
                 throw e; // on laisse remonter l'exception
             }
         }
+    }*/}
+
+    //Cloture manuelle
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public SessionResponseDTO closeSession(Long sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session non trouvée : " + sessionId));
+
+        validateSessionForClose(session);
+
+        session.setEndDate(LocalDateTime.now());
+        session.setStatus(StatusSession.COMPLETED);
+
+        try {
+            onSessionEnded(session); // risque d'exception caisse insuffisante
+            session = sessionRepository.save(session);
+            notificationHelper.notifySessionEnded(session);
+
+            return toResponseDTO(session);
+        } catch (IllegalArgumentException e) {
+            // Ici pas besoin de remettre IN_PROGRESS, transaction rollbackera
+            notificationHelper.notifyAdminCritical(
+                    "Échec clôture session " + session.getName(),
+                    "Impossible de clôturer - caisse solidarité insuffisante",
+                    e
+            );
+            throw e; // relance l'exception
+        }
     }
+
 
     @Transactional
     public void applySolidarityToAllMembers(Session session) {
@@ -309,7 +478,7 @@ public class SessionService {
                                     "caisse solidarité insuffisante.\n" +
                                     "→ Montant requis : %s\n" +
                                     "→ Solde actuel  : %s\n" +
-                                    "→ Écart         : %s\n" +
+                                    "→ Écart         : %s\n" ,
                             session.getName(),
                             totalDebit,
                             currentSolidarityBalance,
@@ -359,6 +528,50 @@ public class SessionService {
                 .createdAt(s.getCreatedAt())
                 .updatedAt(s.getUpdatedAt())
                 .build();
+    }
+
+
+
+    /**
+     * Clôture automatique des sessions après 24h
+     * Appelée par le scheduler
+     */
+    @Transactional
+    public void autoCloseSessionsAfter24h() {
+        LocalDateTime twentyFourHoursAgo = now().minusHours(24);
+
+        List<Session> sessionsToClose = sessionRepository.findInProgressSessionsOlderThan(twentyFourHoursAgo);
+
+        if (sessionsToClose.isEmpty()) {
+            log.info("Aucune session à clôturer automatiquement");
+            return;
+        }
+
+        for (Session session : sessionsToClose) {
+            try {
+                log.info("Tentative de clôture automatique de la session '{}' (démarrée le {})",
+                        session.getName(), session.getStartDate());
+
+                // Appel de la méthode de clôture existante
+                closeSession(session.getId());
+
+                log.info("Session '{}' clôturée automatiquement avec succès", session.getName());
+
+            } catch (IllegalArgumentException e) {
+                // Caisse insuffisante - on notifie mais on ne relance pas l'exception
+                log.error("Impossible de clôturer automatiquement la session '{}' : caisse solidarité insuffisante",
+                        session.getName());
+
+                notificationHelper.notifyAdminCritical(
+                        "Échec clôture automatique session " + session.getName(),
+                        "Impossible de clôturer après 24h - caisse solidarité insuffisante",
+                        e
+                );
+            } catch (Exception e) {
+                log.error("Erreur inattendue lors de la clôture automatique de la session '{}'",
+                        session.getName(), e);
+            }
+        }
     }
 
 

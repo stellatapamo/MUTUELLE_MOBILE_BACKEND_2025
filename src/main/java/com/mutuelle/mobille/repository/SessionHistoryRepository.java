@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SessionHistoryRepository extends JpaRepository<SessionHistory, Long> {
@@ -21,4 +22,7 @@ public interface SessionHistoryRepository extends JpaRepository<SessionHistory, 
     List<SessionHistory> findAllByExerciceId(
             @Param("exerciceId") Long exerciceId
     );
+
+    // Pour récupérer par session
+    Optional<SessionHistory> findBySessionId(Long sessionId);
 }

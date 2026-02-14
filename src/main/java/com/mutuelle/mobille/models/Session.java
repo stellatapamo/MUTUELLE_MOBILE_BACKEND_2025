@@ -31,8 +31,8 @@ public class Session {
     @Column(name = "agape_amount_per_member", precision = 12, scale = 2, nullable = false)
     private BigDecimal agapeAmountPerMember = BigDecimal.ZERO;
 
-    @Column(name = "start_date", nullable = false, updatable = false)
-    private LocalDateTime startDate;
+    @Column(name = "start_date")
+    private LocalDateTime startDate ;
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
