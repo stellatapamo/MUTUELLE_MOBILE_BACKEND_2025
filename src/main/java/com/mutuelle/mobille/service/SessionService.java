@@ -246,6 +246,15 @@ public class SessionService {
             throw new IllegalStateException("Session déjà clôturée (historique existant)");
         }
 
+        // montants positifs
+        if (dto.getSolidarityAmount() != null && dto.getSolidarityAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant de solidarité doit être strictement positif");
+        }
+
+        if (dto.getAgapeAmountPerMember() != null && dto.getAgapeAmountPerMember().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant de l'agape par membre doit être strictement positif");
+        }
+
         //  Vérifier si la session a des transactions
         Long transactionCount = transactionRepository.countBySessionId(id);
 
@@ -261,10 +270,15 @@ public class SessionService {
             );
         }
 
+        // Sauvegarder l'ancien montant avant modification
+        BigDecimal oldSolidarityAmount = session.getSolidarityAmount();
+
         // Mise à jour des champs modifiables
         if (dto.getName() != null) session.setName(dto.getName());
         if (dto.getSolidarityAmount() != null) session.setSolidarityAmount(dto.getSolidarityAmount());
         if (dto.getAgapeAmountPerMember() != null) session.setAgapeAmountPerMember(dto.getAgapeAmountPerMember());
+
+
 
         // L'exercice ne peut pas être changé
         /*if (dto.getExerciceId() != null && !dto.getExerciceId().equals(session.getExercice().getId())) {
@@ -301,6 +315,16 @@ public class SessionService {
         validateSession(fakeClone, id);*/}
 
         session = sessionRepository.save(session);
+        // Si le montant de solidarité a changé et que la session est en cours
+        if (currentStatus == StatusSession.IN_PROGRESS &&
+                dto.getSolidarityAmount() != null &&
+                dto.getSolidarityAmount().compareTo(oldSolidarityAmount) != 0) {
+
+            BigDecimal difference = dto.getSolidarityAmount().subtract(oldSolidarityAmount);
+
+            // Ajuster les unpaid de tous les membres (positif ou négatif)
+            adjustUnpaidSolidarityForAllMembers(difference);
+        }
         return toResponseDTO(session);
     }
 
@@ -455,6 +479,19 @@ public class SessionService {
         }
 
 //        notificationHelper.notifySolidarityApplied(session);
+    }
+
+    private void adjustUnpaidSolidarityForAllMembers(BigDecimal difference) {
+        List<AccountMember> activeMembers = accountService.getAllMemberAccounts().stream()
+                .filter(AccountMember::isActive)
+                .toList();
+
+        for (AccountMember m : activeMembers) {
+            BigDecimal unpaid = m.getUnpaidSolidarityAmount();
+            if (unpaid == null) unpaid = BigDecimal.ZERO;
+            m.setUnpaidSolidarityAmount(unpaid.add(difference));
+            accountService.saveMemberAccount(m);
+        }
     }
 
     @Transactional
