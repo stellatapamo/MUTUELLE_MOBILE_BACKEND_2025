@@ -87,17 +87,17 @@ public class SessionService {
 
         // Vérifier que la date de début est dans les dates de l'exercice
         LocalDateTime now = now();
-        if (now.isBefore(ex.getStartDate()) || now.isAfter(ex.getEndDate())) {
+       /* if (now.isBefore(ex.getStartDate()) || now.isAfter(ex.getEndDate())) {
             throw new IllegalArgumentException(
                 "La session ne peut être démarrée que pendant la période de l'exercice.\n" +
                 "Période exercice : " + ex.getStartDate() + " → " + ex.getEndDate() + "\n" +
                 "Date actuelle : " + now
             );
-        }
+        }*/
 
 
 
-        // Récupérer toutes les sessions démarrées aujourd'hui
+        /*/ Récupérer toutes les sessions démarrées aujourd'hui
         List<Session> todaySessions = sessionRepository.findByStartDateBetween(
                 now.toLocalDate().atStartOfDay(),
                 now.toLocalDate().atTime(23, 59, 59)
@@ -114,7 +114,7 @@ public class SessionService {
                             existingSession.getStartDate().toLocalTime()
                     )
             );
-        }
+        }*/
     }
 
     private void validateSessionForClose(Session session) {

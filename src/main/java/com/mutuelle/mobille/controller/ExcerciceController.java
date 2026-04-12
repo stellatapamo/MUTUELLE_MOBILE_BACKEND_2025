@@ -36,6 +36,14 @@ public class ExcerciceController {
         return ResponseEntity.ok(ApiResponseDto.ok(exercice, "Exercice trouvé"));
     }
 
+    @GetMapping("/current")
+    @Operation(summary = "Récupérer l'exercice en cours")
+    public ResponseEntity<ApiResponseDto<ExerciceResponseDTO>> getCurrentExercice() {
+        return exerciceService.getCurrentExerciceDTO()
+                .map(dto -> ResponseEntity.ok(ApiResponseDto.ok(dto, "Exercice en cours trouvé")))
+                .orElseThrow(() -> new IllegalStateException("Aucun exercice en cours"));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Créer un nouvel exercice (administrateurs uniquement)")
@@ -60,6 +68,22 @@ public class ExcerciceController {
     public ResponseEntity<ApiResponseDto<Void>> deleteExercice(@PathVariable Long id) {
         exerciceService.deleteExercice(id);
         return ResponseEntity.ok(ApiResponseDto.ok(null, "Exercice supprimé avec succès"));
+    }
+
+    @PostMapping("/{id}/start")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Démarrer un exercice")
+    public ResponseEntity<ApiResponseDto<ExerciceResponseDTO>> startExercice(@PathVariable Long id) {
+        ExerciceResponseDTO response = exerciceService.startExercice(id);
+        return ResponseEntity.ok(ApiResponseDto.ok(response, "Exercice démarré avec succès"));
+    }
+
+    @PostMapping("/{id}/close")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Clôturer un exercice")
+    public ResponseEntity<ApiResponseDto<ExerciceResponseDTO>> closeExercice(@PathVariable Long id) {
+        ExerciceResponseDTO response = exerciceService.closeExercice(id);
+        return ResponseEntity.ok(ApiResponseDto.ok(response, "Exercice clôturé avec succès"));
     }
 
 }

@@ -92,6 +92,47 @@ public class ExerciceService {
         }
     }
 
+    private void validateExerciceForCreation(Exercice exercice) {
+        // Pas de validation de dates à la création car elles sont nulles
+        if (exercice.getName() == null || exercice.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Le nom de l'exercice est obligatoire");
+        }
+    }
+
+    private void validateExerciceForStart(Exercice exercice) {
+        // Vérifier qu'aucun autre exercice n'est en cours
+        Optional<Exercice> currentExercice = findCurrentExercice();
+        if (currentExercice.isPresent()) {
+            throw new IllegalStateException(
+                    "Impossible de démarrer l'exercice '" + exercice.getName() +
+                            "' car un exercice est déjà en cours : '" + currentExercice.get().getName() + "'"
+            );
+        }
+
+        // Vérifier que l'exercice est bien au statut PLANNED
+        if (exercice.getStatus() != StatusExercice.PLANNED) {
+            throw new IllegalStateException(
+                    "Seuls les exercices planifiés peuvent être démarrés. " +
+                            "Statut actuel : " + exercice.getStatus()
+            );
+        }
+    }
+
+    private void validateExerciceForClose(Exercice exercice) {
+        if (exercice.getStatus() != StatusExercice.IN_PROGRESS) {
+            throw new IllegalStateException("Seuls les exercices en cours peuvent être clôturés");
+        }
+
+        if (exercice.getStartDate() == null) {
+            throw new IllegalStateException("L'exercice n'a pas de date de début valide");
+        }
+
+        LocalDateTime now = now();
+        if (now.isBefore(exercice.getStartDate())) {
+            throw new IllegalStateException("L'exercice ne peut être clôturé avant sa date de début");
+        }
+    }
+
     // ───────────────────────────────────────────────
     //              CRUD
     // ───────────────────────────────────────────────
@@ -113,12 +154,13 @@ public class ExerciceService {
     public ExerciceResponseDTO createExercice(ExerciceRequestDTO request) {
         Exercice exercice = Exercice.builder()
                 .name(request.getName())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
+                .startDate(null)
+                .endDate(null)
                 .status(StatusExercice.PLANNED)
                 .build();
 
-        validateExerciceDates(exercice, null);
+        //validateExerciceDates(exercice, null);
+        validateExerciceForCreation(exercice);
         exercice = exerciceRepository.save(exercice);
         return toResponseDTO(exercice);
     }
@@ -134,10 +176,15 @@ public class ExerciceService {
             throw new IllegalStateException("Modification interdite sur exercice terminé ou annulé");
         }
 
+        // Interdire modification si déjà historisé
+        if (exerciceHistoryRepository.existsByExerciceId(id)) {
+            throw new IllegalStateException("Exercice déjà clôturé (historique existant)");
+        }
+
         // Mise à jour des champs modifiables
         if (request.getName() != null) exercice.setName(request.getName());
 
-        // Gestion stricte des dates
+        /*/ Gestion stricte des dates
         if (currentStatus == StatusExercice.IN_PROGRESS) {
             // startDate interdit
             if (request.getStartDate() != null && !request.getStartDate().equals(exercice.getStartDate())) {
@@ -162,9 +209,9 @@ public class ExerciceService {
         Exercice fakeClone = Exercice.builder()
                 .startDate(request.getStartDate() != null ? request.getStartDate() : exercice.getStartDate())
                 .endDate(request.getEndDate() != null ? request.getEndDate() : exercice.getEndDate())
-                .build();
+                .build();*/
 
-        validateExerciceDates(fakeClone, id);
+        //validateExerciceDates(fakeClone, id);
         exercice = exerciceRepository.save(exercice);
         return toResponseDTO(exercice);
     }
@@ -194,7 +241,7 @@ public class ExerciceService {
 
     public Optional<Exercice> findCurrentExercice() {
         LocalDateTime n = now();
-        return exerciceRepository.findCurrentActiveExercice(StatusExercice.IN_PROGRESS,n);
+        return exerciceRepository.findFirstByStatus(StatusExercice.IN_PROGRESS);
     }
 
     public Optional<ExerciceResponseDTO> getCurrentExerciceDTO() {
@@ -202,7 +249,7 @@ public class ExerciceService {
     }
 
     // ───────────────────────────────────────────────
-    //              Actions (appelées par le scheduler uniquement)
+    //              Actions manuelles
     // ───────────────────────────────────────────────
 
     @Transactional
@@ -230,10 +277,48 @@ public class ExerciceService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public ExerciceResponseDTO startExercice(Long exerciceId) {
+        Exercice exercice = exerciceRepository.findById(exerciceId)
+                .orElseThrow(() -> new RuntimeException("Exercice non trouvé : " + exerciceId));
+
+        validateExerciceForStart(exercice);
+
+        exercice.setStartDate(LocalDateTime.now());
+        exercice.setStatus(StatusExercice.IN_PROGRESS);
+        exercice = exerciceRepository.save(exercice);
+
+        onExerciceStarted(exercice);
+
+        log.info("Exercice '{}' démarré manuellement le {}", exercice.getName(), exercice.getStartDate());
+
+        return toResponseDTO(exercice);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public ExerciceResponseDTO closeExercice(Long exerciceId) {
+        Exercice exercice = exerciceRepository.findById(exerciceId)
+                .orElseThrow(() -> new RuntimeException("Exercice non trouvé : " + exerciceId));
+
+        validateExerciceForClose(exercice);
+
+        exercice.setEndDate(LocalDateTime.now());
+        exercice.setStatus(StatusExercice.COMPLETED);
+        exercice = exerciceRepository.save(exercice);
+
+        onExerciceEnded(exercice);
+
+        log.info("Exercice '{}' clôturé manuellement le {}", exercice.getName(), exercice.getEndDate());
+
+        return toResponseDTO(exercice);
+    }
+
+    @Transactional
     public void onExerciceStarted(Exercice exercice) {
         // Logique métier au démarrage (notifications, initialisations, etc.)
         // Pour l'instant : trace simple
-        System.out.println("Exercice démarré : " + exercice.getName() + " (ID: " + exercice.getId() + ")");
+        log.info("Exercice démarré : {} (ID: {})", exercice.getName(), exercice.getId());
         // → Ajouter ici : envoi mail, création compteur, etc.
     }
 
@@ -280,7 +365,7 @@ public class ExerciceService {
         exercice.setHistory(history);
         exerciceRepository.save(exercice);
 
-//        renfoulement
+        //Calcul du renflouement
         this.calculateAndAssignRenfoulementForExercice(exercice);
 
     }
@@ -423,4 +508,6 @@ public class ExerciceService {
                 .updatedAt(ex.getUpdatedAt())
                 .build();
     }
+
+
 }

@@ -40,11 +40,11 @@ public class StatusSchedules {
     @Transactional
     public void synchronizeAllStatuses() {
         LocalDateTime currentTime = now();
-        System.out.println("Début synchronisation statuts - {}"+ currentTime);
+        log.info("Début synchronisation statuts - {}", currentTime);
 
         try {
             //synchronizeSessions(currentTime);
-            synchronizeExercices(currentTime);
+            //synchronizeExercices(currentTime);
         } catch (Exception e) {
             log.error("Erreur critique lors de la synchronisation des statuts", e);
             // Option : envoyer alerte (email/slack) ici si très grave
@@ -95,7 +95,7 @@ public class StatusSchedules {
         }
     }*/
 
-    private void synchronizeExercices(LocalDateTime now) {
+    /*private void synchronizeExercices(LocalDateTime now) {
 
         // Étape 1 : TERMINER les exercices expirés (priorité)
         List<Exercice> expired = exerciceRepository.findByStatusAndEndDateLessThan(
@@ -133,7 +133,7 @@ public class StatusSchedules {
         } else {
             log.warn("Démarrage exercice bloqué : un exercice est déjà IN_PROGRESS");
         }
-    }
+    }*/
 
     /**
      * Vérifie toutes les heures si des sessions doivent être clôturées automatiquement
