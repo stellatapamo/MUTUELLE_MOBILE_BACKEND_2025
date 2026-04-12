@@ -13,9 +13,9 @@ public class UpdateSessionRequestDTO {
     @Size(max = 100)
     private String name;
 
-    @NotNull(message = "Le montant de solidarité est obligatoire")
+    /*@NotNull(message = "Le montant de solidarité est obligatoire")
     @DecimalMin(value = "0.0", inclusive = false)
-    private BigDecimal solidarityAmount;
+    private BigDecimal solidarityAmount;*/
 
     @NotNull(message = "Le montant de l'agape est obligatoire")
     @DecimalMin(value = "0.0", inclusive = false)

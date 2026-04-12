@@ -25,8 +25,8 @@ public class Session {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "solidarity_amount", precision = 12, scale = 2, nullable = false)
-    private BigDecimal solidarityAmount = BigDecimal.ZERO;
+    /*@Column(name = "solidarity_amount", precision = 12, scale = 2, nullable = false)
+    private BigDecimal solidarityAmount = BigDecimal.ZERO;*/
 
     @Column(name = "agape_amount_per_member", precision = 12, scale = 2, nullable = false)
     private BigDecimal agapeAmountPerMember = BigDecimal.ZERO;

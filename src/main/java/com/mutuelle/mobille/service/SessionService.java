@@ -118,18 +118,18 @@ public class SessionService {
     }
 
     private void validateSessionForClose(Session session) {
-        if (session.getStatus() != StatusSession.IN_PROGRESS) {
-            throw new IllegalStateException("Seules les sessions en cours peuvent être clôturées");
-        }
-
         if (session.getStartDate() == null) {
             throw new IllegalStateException("La session n'a pas de date de début valide");
         }
 
-        LocalDateTime now = now();
-        if (now.isBefore(session.getStartDate())) {
-            throw new IllegalStateException("La session ne peut être clôturée avant sa date de début");
+        if (session.getStatus() != StatusSession.IN_PROGRESS) {
+            throw new IllegalStateException("Seules les sessions en cours peuvent être clôturées");
         }
+
+        //LocalDateTime now = now();
+        //if (now.isBefore(session.getStartDate())) {
+          //  throw new IllegalStateException("La session ne peut être clôturée avant sa date de début");
+        //}
     }
     
     private void validateSession(Session session, Long excludeId) {
@@ -215,7 +215,7 @@ public class SessionService {
 
         Session session = Session.builder()
                 .name(dto.getName())
-                .solidarityAmount(dto.getSolidarityAmount())
+                //.solidarityAmount(dto.getSolidarityAmount())
                 .agapeAmountPerMember(dto.getAgapeAmountPerMember())
                 .startDate(null)
                 .endDate(null)
@@ -246,10 +246,10 @@ public class SessionService {
             throw new IllegalStateException("Session déjà clôturée (historique existant)");
         }
 
-        // montants positifs
+        /*/ montants positifs
         if (dto.getSolidarityAmount() != null && dto.getSolidarityAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le montant de solidarité doit être strictement positif");
-        }
+        }*/
 
         if (dto.getAgapeAmountPerMember() != null && dto.getAgapeAmountPerMember().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le montant de l'agape par membre doit être strictement positif");
@@ -271,11 +271,11 @@ public class SessionService {
         }
 
         // Sauvegarder l'ancien montant avant modification
-        BigDecimal oldSolidarityAmount = session.getSolidarityAmount();
+       // BigDecimal oldSolidarityAmount = session.getSolidarityAmount();
 
         // Mise à jour des champs modifiables
         if (dto.getName() != null) session.setName(dto.getName());
-        if (dto.getSolidarityAmount() != null) session.setSolidarityAmount(dto.getSolidarityAmount());
+        //if (dto.getSolidarityAmount() != null) session.setSolidarityAmount(dto.getSolidarityAmount());
         if (dto.getAgapeAmountPerMember() != null) session.setAgapeAmountPerMember(dto.getAgapeAmountPerMember());
 
 
@@ -316,7 +316,7 @@ public class SessionService {
 
         session = sessionRepository.save(session);
         // Si le montant de solidarité a changé et que la session est en cours
-        if (currentStatus == StatusSession.IN_PROGRESS &&
+        /*if (currentStatus == StatusSession.IN_PROGRESS &&
                 dto.getSolidarityAmount() != null &&
                 dto.getSolidarityAmount().compareTo(oldSolidarityAmount) != 0) {
 
@@ -324,7 +324,7 @@ public class SessionService {
 
             // Ajuster les unpaid de tous les membres (positif ou négatif)
             adjustUnpaidSolidarityForAllMembers(difference);
-        }
+        }*/
         return toResponseDTO(session);
     }
 
@@ -335,13 +335,27 @@ public class SessionService {
                 .orElseThrow(() -> new RuntimeException("Session non trouvée : " + id));
 
         //Nouvelle règle : Interdire si en cours ou terminée
-        if (s.getStatus() == StatusSession.IN_PROGRESS || s.getStatus() == StatusSession.COMPLETED) {
-            throw new IllegalStateException("Impossible de supprimer une session en cours ou terminée");
+        if ( s.getStatus() == StatusSession.COMPLETED) {
+            throw new IllegalStateException("Impossible de supprimer une session terminée");
         }
 
         // Sécurité supplémentaire existante (historique)
         if (sessionHistoryRepository.existsBySessionId(id)) {
             throw new IllegalStateException("Impossible de supprimer une session historisée");
+        }
+        //  Vérifier si la session a des transactions
+        Long transactionCount = transactionRepository.countBySessionId(id);
+
+        if (transactionCount > 0) {
+            // Session avec transactions : message clair
+            throw new IllegalStateException(
+                    String.format(
+                            "Impossible de supprimer la session '%s' car elle a déjà %d transaction(s). " +
+                                    "Les suppressions de sessions ne sont autorisées que sur les sessions sans activité.",
+                            s.getName(),
+                            transactionCount
+                    )
+            );
         }
 
         sessionRepository.delete(s);
@@ -364,7 +378,7 @@ public class SessionService {
     // ───────────────────────────────────────────────
 
     //Demarrage automatique
-    {/*@Transactional
+    /*@Transactional
     public void startSessionIfDue(Session session) {
         if (session.getStatus() != StatusSession.PLANNED) return;
 
@@ -375,7 +389,7 @@ public class SessionService {
             applySolidarityToAllMembers(session);
             notificationHelper.notifySessionStarted(session);
         }
-    }*/}
+    }*/
 
     //Demarrage manuel
     @Transactional
@@ -393,7 +407,7 @@ public class SessionService {
         session = sessionRepository.save(session);
 
         // Appliquer la solidarité à tous les membres
-        applySolidarityToAllMembers(session);
+       // applySolidarityToAllMembers(session);
         // Notifier
         notificationHelper.notifySessionStarted(session);
         return toResponseDTO(session);
@@ -461,7 +475,7 @@ public class SessionService {
     }
 
 
-    @Transactional
+   /* @Transactional
     public void applySolidarityToAllMembers(Session session) {
         if (session.getSolidarityAmount() == null || session.getSolidarityAmount().compareTo(BigDecimal.ZERO) <= 0) {
             return;
@@ -480,7 +494,7 @@ public class SessionService {
 
 //        notificationHelper.notifySolidarityApplied(session);
     }
-
+    @Transactional
     private void adjustUnpaidSolidarityForAllMembers(BigDecimal difference) {
         List<AccountMember> activeMembers = accountService.getAllMemberAccounts().stream()
                 .filter(AccountMember::isActive)
@@ -492,7 +506,7 @@ public class SessionService {
             m.setUnpaidSolidarityAmount(unpaid.add(difference));
             accountService.saveMemberAccount(m);
         }
-    }
+    }*/
 
     @Transactional
     public void onSessionEnded(Session session) {
@@ -555,7 +569,7 @@ public class SessionService {
         return SessionResponseDTO.builder()
                 .id(s.getId())
                 .name(s.getName())
-                .solidarityAmount(s.getSolidarityAmount())
+                //.solidarityAmount(s.getSolidarityAmount())
                 .agapeAmountPerMember(s.getAgapeAmountPerMember())
                 .startDate(s.getStartDate())
                 .endDate(s.getEndDate())
