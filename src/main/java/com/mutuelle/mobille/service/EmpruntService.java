@@ -88,7 +88,7 @@ public class EmpruntService {
                         .build()
         );
 
-        interetService.redistribuerInteret(emprunteur.getId(), interet,trans,currentSession);
+        //interetService.redistribuerInteret(emprunteur.getId(), interet,trans,currentSession);
     }
 
     @Transactional

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -37,6 +38,7 @@ public class SessionService {
     private final AccountService accountService;
     private final AssistanceService assistanceService;
     private final SessionNotificationHelper notificationHelper;
+    private final InteretService interetService;
 
 
 //    private final Clock clock;  // ← à injecter (configurable pour les tests)
@@ -53,6 +55,15 @@ public class SessionService {
         Exercice ex = session.getExercice();
         if (ex == null) {
             throw new IllegalArgumentException("Exercice parent obligatoire");
+        }
+        boolean isExerciceValid = ex.getStatus() == StatusExercice.PLANNED ||
+                ex.getStatus() == StatusExercice.IN_PROGRESS;
+
+        if (!isExerciceValid) {
+            throw new IllegalStateException(
+                    "Impossible de créer une session sur un exercice " + ex.getStatus() +
+                            ". L'exercice doit être planifié ou en cours."
+            );
         }
 
         // Pas de validation de dates à la création car elles sont nulles
@@ -255,7 +266,7 @@ public class SessionService {
             throw new IllegalArgumentException("Le montant de l'agape par membre doit être strictement positif");
         }
 
-        //  Vérifier si la session a des transactions
+        /*/  Vérifier si la session a des transactions
         Long transactionCount = transactionRepository.countBySessionId(id);
 
         if (transactionCount > 0) {
@@ -268,7 +279,7 @@ public class SessionService {
                             transactionCount
                     )
             );
-        }
+        }*/
 
         // Sauvegarder l'ancien montant avant modification
        // BigDecimal oldSolidarityAmount = session.getSolidarityAmount();
@@ -511,6 +522,9 @@ public class SessionService {
     @Transactional
     public void onSessionEnded(Session session) {
         if (session.getHistory() != null) return;
+
+        processAllInterestsForClosingSession(session);
+
         AccountMutuelle mutuelleacc=accountService.getMutuelleGlobalAccount();
         Long sessionId=session.getId();
 
@@ -623,6 +637,47 @@ public class SessionService {
                         session.getName(), e);
             }
         }
+    }
+
+    @Transactional
+    public void processAllInterestsForClosingSession(Session session) {
+        log.info("Traitement des intérêts pour la clôture de la session '{}'", session.getName());
+
+        // 1️⃣ Récupérer les emprunteurs
+        List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
+
+        if (emprunteurs.isEmpty()) {
+            log.info("Aucun emprunteur → pas d'intérêts à traiter");
+            return;
+        }
+
+        for (AccountMember emprunteur : emprunteurs) {
+            // 2️⃣ Récupérer les transactions d'emprunt de cette session
+            List<Transaction> empruntsSession = transactionRepository
+                    .findFiltered(
+                            TransactionType.EMPRUNT,  // type
+                            null,                      // direction
+                            session.getId(),           // sessionId
+                            emprunteur.getId(),        // accountMemberId
+                            null,                      // fromDate
+                            null,                      // toDate
+                            Pageable.unpaged()         // pageable (tous les résultats)
+                    ).getContent();
+
+            // 3️⃣ Pour chaque emprunt de la session, redistribuer les intérêts
+            for (Transaction emprunt : empruntsSession) {
+                BigDecimal interet = interetService.calculerInteret(emprunt.getAmount());
+
+                interetService.redistribuerInteret(
+                        emprunteur.getId(),
+                        interet,
+                        emprunt,  // La transaction parent
+                        session
+                );
+            }
+        }
+
+        log.info("Traitement des intérêts terminé pour la session '{}'", session.getName());
     }
 
 
