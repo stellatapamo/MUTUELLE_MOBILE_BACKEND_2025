@@ -47,14 +47,23 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     /**
      * Sessions qui devraient démarrer maintenant ou dans le passé
      * (PLANNED + startDate ≤ now)
+     /
+    @Query("""
+        SELECT s FROM Session s
+        WHERE s.status = 'PLANNED'
+        ORDER BY s.startDate ASC
+    """)
+    List<Session> findSessionsDueToStart(@Param("now") LocalDateTime now);*/
+
+    /**
+     * Sessions planifiées (sans condition de date)
      */
     @Query("""
         SELECT s FROM Session s
         WHERE s.status = 'PLANNED'
-          AND s.startDate <= :now
-        ORDER BY s.startDate ASC
+        ORDER BY s.createdAt ASC
     """)
-    List<Session> findSessionsDueToStart(@Param("now") LocalDateTime now);
+    List<Session> findAllPlannedSessions();
 
     /**
      * Sessions qui sont en cours mais dont la date de fin est dépassée
@@ -112,6 +121,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     Optional<Session> findFirstByStatus(StatusSession status);
     List<Session> findByStatusAndStartDateLessThanEqual(StatusSession status, LocalDateTime date);
     List<Session> findByStatusAndEndDateLessThan(StatusSession status, LocalDateTime date);
+    List<Session> findByStatus(StatusSession status);
 
     // ───────────────────────────────────────────────
     //              Requêtes utiles existantes / conservées
@@ -124,4 +134,22 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     // Pour lister les sessions planifiées ou terminées d'un exercice
     List<Session> findByExerciceIdAndStatusIn(Long exerciceId, List<StatusSession> statuses);
 
+    @Query("""
+        SELECT COUNT(s) > 0 FROM Session s
+        WHERE s.status = 'IN_PROGRESS'
+          AND (:excludeId IS NULL OR s.id != :excludeId)
+    """)
+    boolean existsOtherInProgress(@Param("excludeId") Long excludeId);
+
+    //Recherche des sessions creees durant un intervale de temps
+    List<Session> findByStartDateBetween(LocalDateTime start, LocalDateTime end);
+
+
+    // Pour retrouver une session encore ouverte 24h apres son demarrage
+    @Query("""
+        SELECT s FROM Session s
+        WHERE s.status = 'IN_PROGRESS'
+          AND s.startDate <= :twentyFourHoursAgo
+    """)
+    List<Session> findInProgressSessionsOlderThan(@Param("twentyFourHoursAgo") LocalDateTime twentyFourHoursAgo);
 }

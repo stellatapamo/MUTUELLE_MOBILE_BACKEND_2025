@@ -1,6 +1,7 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.assistance.*;
+import com.mutuelle.mobille.enums.StatusSession;
 import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
@@ -85,6 +86,16 @@ public class AssistanceService {
 
         Session session = sessionRepository.findById(dto.sessionId())
                 .orElseThrow(() -> new EntityNotFoundException("Session non trouvée avec l'ID : " + dto.sessionId()));
+
+        //  La session doit être EN COURS
+        if (session.getStatus() != StatusSession.IN_PROGRESS) {
+            throw new IllegalStateException(
+                    String.format("Impossible de payer la solidarité : la session '%s' n'est pas en cours. (Statut actuel: %s)",
+                            session.getName(),
+                            session.getStatus()
+                    )
+            );
+        }
 
         BigDecimal requiredAmount = typeAssistance.getAmount();
 

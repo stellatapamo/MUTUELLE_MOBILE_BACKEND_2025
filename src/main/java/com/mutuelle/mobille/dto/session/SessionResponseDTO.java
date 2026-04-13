@@ -13,7 +13,7 @@ public class SessionResponseDTO {
 
     private Long id;
     private String name;
-    private BigDecimal solidarityAmount;
+    //private BigDecimal solidarityAmount;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private BigDecimal agapeAmountPerMember;

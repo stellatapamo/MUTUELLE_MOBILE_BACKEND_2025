@@ -29,7 +29,7 @@ public class Exercice {
     @Enumerated(EnumType.STRING)
     private StatusExercice status = StatusExercice.PLANNED;
 
-    @Column(name = "start_date", nullable = false, updatable = false)
+    @Column(name = "start_date")
     private LocalDateTime startDate;
 
     @Column(name = "end_date")

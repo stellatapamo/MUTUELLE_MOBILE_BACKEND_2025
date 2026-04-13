@@ -128,7 +128,7 @@ public class SessionNotificationHelper {
         vars.put("sessionName", session.getName());
         vars.put("startDate", session.getStartDate());
         vars.put("endDate", session.getEndDate() != null ? session.getEndDate() : "Non définie");
-        vars.put("solidarityAmount", session.getSolidarityAmount());
+        //vars.put("solidarityAmount", session.getSolidarityAmount());
         vars.put("agapeAmount", session.getAgapeAmountPerMember());
 
         notifyAllActiveMembers(
@@ -154,10 +154,10 @@ public class SessionNotificationHelper {
         );
     }
 
-    public void notifySolidarityApplied(Session session) {
+    /*public void notifySolidarityApplied(Session session) {
         Map<String, Object> vars = new HashMap<>();
         vars.put("sessionName", session.getName());
-        vars.put("solidarityAmount", session.getSolidarityAmount());
+        //vars.put("solidarityAmount", session.getSolidarityAmount());
         vars.put("currency", "XAF");
 
         notifyAllActiveMembers(
@@ -166,7 +166,7 @@ public class SessionNotificationHelper {
                 vars,
                 "Le montant de solidarité a été ajouté à votre compte pour la session " + session.getName()
         );
-    }
+    }*/
 
     // -------------------------------------------------------------------------
     //  Alertes critiques administrateurs

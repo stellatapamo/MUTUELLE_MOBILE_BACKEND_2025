@@ -1,5 +1,6 @@
 package com.mutuelle.mobille.service;
 
+import com.mutuelle.mobille.enums.StatusSession;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.models.Session;
@@ -52,6 +53,16 @@ public class SolidariteService {
 
                 Session session = sessionRepo.findById(sessionId)
                                 .orElseThrow(() -> new RuntimeException("Session introuvable"));
+
+                //  La session doit être EN COURS
+                if (session.getStatus() != StatusSession.IN_PROGRESS) {
+                        throw new IllegalStateException(
+                                String.format("Impossible de payer la solidarité : la session '%s' n'est pas en cours. (Statut actuel: %s)",
+                                        session.getName(),
+                                        session.getStatus()
+                                )
+                        );
+                }
 
                 // VÉRIFICATION CRITIQUE : solde impayé suffisant ?
                 BigDecimal currentUnpaid = memberAccount.getUnpaidSolidarityAmount();

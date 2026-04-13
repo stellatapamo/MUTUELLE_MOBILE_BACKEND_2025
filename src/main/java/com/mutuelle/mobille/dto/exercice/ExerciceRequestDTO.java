@@ -13,8 +13,8 @@ public class ExerciceRequestDTO {
     @Size(max = 100)
     private String name;
 
-    @NotNull(message = "La date de début est obligatoire")
+   /* @NotNull(message = "La date de début est obligatoire")
     private LocalDateTime startDate;
 
-    private LocalDateTime endDate; // optionnelle (peut être null si exercice en cours)
+    private LocalDateTime endDate; // optionnelle (peut être null si exercice en cours)*/
 }
