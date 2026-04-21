@@ -22,6 +22,10 @@ public class MutuelleConfig {
     @Column(name = "registration_fee_amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal registrationFeeAmount = new BigDecimal("25000.00");
 
+    // Solidarity fee (one-time contribution per member, payable in installments)
+    @Column(name = "solidarity_fee_amount", nullable = false, precision = 14, scale = 2)
+    private BigDecimal solidarityFeeAmount = new BigDecimal("150000.00");
+
     // Loan interest rate (annual percentage)
     @Column(name = "loan_interest_rate_percent", nullable = false, precision = 5, scale = 2)
     private BigDecimal loanInterestRatePercent = new BigDecimal("3.00");

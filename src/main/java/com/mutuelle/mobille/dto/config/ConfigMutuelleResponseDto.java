@@ -16,6 +16,8 @@ public class ConfigMutuelleResponseDto {
 
     private BigDecimal registrationFeeAmount;
 
+    private BigDecimal solidarityFeeAmount;
+
     private BigDecimal loanInterestRatePercent;
 
     private LocalDateTime updatedAt;
@@ -25,6 +27,7 @@ public class ConfigMutuelleResponseDto {
     public ConfigMutuelleResponseDto(com.mutuelle.mobille.models.MutuelleConfig config) {
         this.id = config.getId();
         this.registrationFeeAmount = config.getRegistrationFeeAmount();
+        this.solidarityFeeAmount = config.getSolidarityFeeAmount();
         this.loanInterestRatePercent = config.getLoanInterestRatePercent();
         this.updatedAt = config.getUpdatedAt();
         this.updatedBy = config.getUpdatedBy();

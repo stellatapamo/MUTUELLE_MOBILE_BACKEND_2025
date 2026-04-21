@@ -23,6 +23,7 @@ public class MutuelleConfigService {
         if (configRepository.count() == 0) {
             MutuelleConfig defaultConfig = MutuelleConfig.builder()
                     .registrationFeeAmount(new BigDecimal("150000.00"))
+                    .solidarityFeeAmount(new BigDecimal("150000.00"))
                     .loanInterestRatePercent(new BigDecimal("3.00"))
                     .updatedBy("system")
                     .build();
@@ -41,6 +42,7 @@ public class MutuelleConfigService {
     public MutuelleConfig updateConfig(MutuelleConfig updatedConfig, String updatedBy) {
         MutuelleConfig config = getCurrentConfig();
         config.setRegistrationFeeAmount(updatedConfig.getRegistrationFeeAmount());
+        config.setSolidarityFeeAmount(updatedConfig.getSolidarityFeeAmount());
         config.setLoanInterestRatePercent(updatedConfig.getLoanInterestRatePercent());
         config.setUpdatedBy(updatedBy);
         // updatedAt est géré automatiquement par @PreUpdate
