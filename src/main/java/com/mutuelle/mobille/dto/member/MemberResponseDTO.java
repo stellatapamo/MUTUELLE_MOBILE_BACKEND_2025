@@ -21,6 +21,7 @@ public record MemberResponseDTO(
 
         // Données financières du compte
         BigDecimal unpaidRegistrationAmount,  // frais d'inscription impayés
+        BigDecimal baseRegistrationAmount,  // frais d'inscription impayés
         BigDecimal solidarityAmount,          // cotisation solidarité due
         BigDecimal borrowAmount,              // montant emprunté
         BigDecimal unpaidRenfoulement,        // renflouement impayé

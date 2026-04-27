@@ -26,6 +26,7 @@ public class AccountMemberMapper {
                 .id(account.getId())
                 .savingAmount(account.getSavingAmount())
                 .unpaidRegistrationAmount(account.getUnpaidRegistrationAmount())
+                .baseRegistrationAmount(account.getBaseRegistrationAmount())
                 .solidarityAmount(account.getSolidarityAmount())
                 .unpaidSolidarityAmount(account.getUnpaidSolidarityAmount())
                 .memberId(account.getMember().getId())

@@ -54,6 +54,7 @@ public class MemberService {
         // 1. Création du compte financier
         AccountMember accountMember = AccountMember.builder()
                 .unpaidRegistrationAmount(config.getRegistrationFeeAmount())
+                .baseRegistrationAmount(config.getRegistrationFeeAmount())
                 .savingAmount(BigDecimal.ZERO)
                 .solidarityAmount(BigDecimal.ZERO)
                 .borrowAmount(BigDecimal.ZERO)
@@ -141,6 +142,7 @@ public class MemberService {
                 role,
                 member.isActive(),
                 accountMember.getUnpaidRegistrationAmount(),
+                accountMember.getBaseRegistrationAmount(),
                 accountMember.getSolidarityAmount(),
                 accountMember.getBorrowAmount(),
                 accountMember.getUnpaidRenfoulement(),

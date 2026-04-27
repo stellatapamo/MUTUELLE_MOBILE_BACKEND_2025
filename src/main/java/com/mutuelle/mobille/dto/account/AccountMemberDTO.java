@@ -17,6 +17,7 @@ public class AccountMemberDTO {
     private Long memberId;
     private BigDecimal savingAmount;
     private BigDecimal unpaidRegistrationAmount;
+    private BigDecimal baseRegistrationAmount;
     private BigDecimal solidarityAmount;
     private BigDecimal borrowAmount;
     private BigDecimal unpaidRenfoulement;

@@ -5,6 +5,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 public enum Role {
     SUPER_ADMIN("SUPER_ADMIN"),
     ADMIN("ADMIN"),
+    PRESIDENT("PRESIDENT"),
+    TRESORIER("TRESORIER"),
     MEMBER("MEMBER");
 
     private final String value;

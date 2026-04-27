@@ -43,6 +43,8 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         createSuperAdminIfNotExists();
         createDefaultAdminIfNotExists();
+        createDefaultPresidentIfNotExists();
+        createDefaultTresorierIfNotExists();
         initializeMembersIfNeeded();
         initializeTypeAssistancesIfNeeded();
     }
@@ -95,6 +97,56 @@ public class DataInitializer implements CommandLineRunner {
         authUserRepository.save(authUser);
 
         System.out.println("Admin classique créé avec succès : " + email + " (mot de passe : admin123)");
+    }
+
+    // Ajoute ces deux méthodes dans la classe DataInitializer
+
+    @Transactional
+    private void createDefaultPresidentIfNotExists() {
+        String email = "president@mutuelle.com";
+
+        if (authUserRepository.existsByEmail(email)) {
+            return;
+        }
+
+        Admin president = new Admin();           // Tu utilises toujours la classe Admin ?
+        president.setFullName("Président de la Mutuelle");
+        president.setIsActive(true);
+        president = adminRepository.saveAndFlush(president);
+
+        AuthUser authUser = new AuthUser();
+        authUser.setEmail(email);
+        authUser.setPasswordHash(passwordEncoder.encode("admin123"));
+        authUser.setRole(Role.PRESIDENT);
+        authUser.setUserRefId(president.getId());
+
+        authUserRepository.save(authUser);
+
+        System.out.println("Président créé avec succès : " + email + " (mot de passe : admin123)");
+    }
+
+    @Transactional
+    private void createDefaultTresorierIfNotExists() {
+        String email = "tresorier@mutuelle.com";
+
+        if (authUserRepository.existsByEmail(email)) {
+            return;
+        }
+
+        Admin tresorier = new Admin();
+        tresorier.setFullName("Trésorier de la Mutuelle");
+        tresorier.setIsActive(true);
+        tresorier = adminRepository.saveAndFlush(tresorier);
+
+        AuthUser authUser = new AuthUser();
+        authUser.setEmail(email);
+        authUser.setPasswordHash(passwordEncoder.encode("admin123"));
+        authUser.setRole(Role.TRESORIER);
+        authUser.setUserRefId(tresorier.getId());
+
+        authUserRepository.save(authUser);
+
+        System.out.println("Trésorier créé avec succès : " + email + " (mot de passe : admin123)");
     }
 
     // Nouvelle méthode pour les membres

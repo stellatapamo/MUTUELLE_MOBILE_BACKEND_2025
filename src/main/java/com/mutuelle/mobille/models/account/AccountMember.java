@@ -27,6 +27,11 @@ public class AccountMember {
     @Column(name = "unpaid_registration_amount", precision = 12, scale = 2)
     private BigDecimal unpaidRegistrationAmount = BigDecimal.ZERO;
 
+    // Frais d'inscription de base
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant de base ne peut pas être négatif")
+    @Column(name = "base_registration_amount", precision = 12, scale = 2)
+    private BigDecimal baseRegistrationAmount = BigDecimal.ZERO;
+
     // Cotisation solidarité
     @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "solidarity_amount", precision = 12, scale = 2)

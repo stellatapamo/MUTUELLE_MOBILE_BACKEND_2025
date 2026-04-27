@@ -71,7 +71,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
 
                         // ADMIN + SUPER_ADMIN (grâce à la hiérarchie)
-                        .requestMatchers("/api/admin/**","/api/config/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**","/api/config/**").hasAnyRole("ADMIN", "PRESIDENT", "TRESORIER")
 
                         // MEMBER + ADMIN + SUPER_ADMIN
                         .requestMatchers("/api/members/me", "/api/members/me/**").hasRole("MEMBER")
