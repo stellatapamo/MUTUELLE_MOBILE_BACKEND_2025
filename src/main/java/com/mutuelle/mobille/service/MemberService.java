@@ -59,7 +59,7 @@ public class MemberService {
                 .solidarityAmount(BigDecimal.ZERO)
                 .borrowAmount(BigDecimal.ZERO)
                 .unpaidRenfoulement(BigDecimal.ZERO)
-                .unpaidSolidarityAmount(BigDecimal.ZERO)
+                .unpaidSolidarityAmount(config.getSolidarityFeeAmount())
                 .isActive(true)
                 .build();
 

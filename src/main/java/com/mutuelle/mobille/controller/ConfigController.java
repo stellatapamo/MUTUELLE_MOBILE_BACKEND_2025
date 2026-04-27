@@ -65,16 +65,15 @@ public class ConfigController {
             hasChanges = true;
         }
 
+        if (request.getSolidarityFeeAmount() != null) {
+            current.setSolidarityFeeAmount(request.getSolidarityFeeAmount());
+            hasChanges = true;
+        }
+
         if (request.getLoanInterestRatePercent() != null) {
             current.setLoanInterestRatePercent(request.getLoanInterestRatePercent());
             hasChanges = true;
         }
-
-        // Ajoute ici tous les autres champs possibles de la même façon
-        // if (request.getSomeOtherField() != null) {
-        //     current.setSomeOtherField(request.getSomeOtherField());
-        //     hasChanges = true;
-        // }
 
         if (!hasChanges) {
             // Option A : renvoyer 200 OK sans rien faire
