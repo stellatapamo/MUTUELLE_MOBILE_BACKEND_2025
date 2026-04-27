@@ -185,7 +185,7 @@
             memberAccount.setUnpaidRegistrationAmount(currentUnpaid.subtract(amount));
 
             // La mutuelle reçoit l'argent payé → augmente son épargne globale
-            globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
+            globalAccount.setRegistrationAmount(globalAccount.getRegistrationAmount().add(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

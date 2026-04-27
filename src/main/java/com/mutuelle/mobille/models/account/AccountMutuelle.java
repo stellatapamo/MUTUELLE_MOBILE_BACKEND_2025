@@ -28,6 +28,10 @@ public class AccountMutuelle {
     private BigDecimal solidarityAmount = BigDecimal.ZERO;
 
     @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
+    @Column(name = "registration_amount", precision = 12, scale = 2)
+    private BigDecimal registrationAmount = BigDecimal.ZERO;
+
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant  ne peut pas être négatif")
     @Column(name = "borrow_amount", precision = 12, scale = 2)
     private BigDecimal borrowAmount = BigDecimal.ZERO;
 
