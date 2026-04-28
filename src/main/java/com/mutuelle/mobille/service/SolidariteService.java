@@ -97,7 +97,7 @@ public class SolidariteService {
                 globalRepo.save(globalAccount);
 
                 // ─────────────────────────────────────────────
-                // 2️CRÉATION DE LA TRANSACTION (TRAÇABILITÉ)
+                // 2. CRÉATION DE LA TRANSACTION (TRAÇABILITÉ)
                 // ─────────────────────────────────────────────
                 // La transaction permet de conserver l'historique
                 // des paiements de solidarité par membre et par session.

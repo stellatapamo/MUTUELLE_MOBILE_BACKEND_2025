@@ -39,6 +39,7 @@ public class ExerciceService {
     private final MemberRepository memberRepository;
     private final TransactionRepository transactionRepository;
     private final RenfoulementRepository renfoulementRepository;
+    private final BilanService bilanService;
 
 
     private LocalDateTime now() {
@@ -325,49 +326,95 @@ public class ExerciceService {
     @Transactional
     public void onExerciceEnded(Exercice exercice) {
         if (exercice.getHistory() != null) return;
-        AccountMutuelle mutuelleacc=accountService.getMutuelleGlobalAccount();
 
+        AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
         List<Session> sessions = sessionRepository.findByExerciceId(exercice.getId());
 
-        BigDecimal totalAssistanceAmount = BigDecimal.ZERO;
-        Long totalAssistanceCount = 0L;
-        BigDecimal totalAgapeAmount = BigDecimal.ZERO;
-        BigDecimal mutuelleCash = BigDecimal.ZERO;
-        Long totalTransactions = 0L;
-        BigDecimal mutuellesSavingAmount = BigDecimal.ZERO;
-        BigDecimal mutuelleBorrowAmount = BigDecimal.ZERO;
+        // ── Agrégation depuis les SessionHistory ──────────────────────────────
+        BigDecimal totalAssistanceAmount      = BigDecimal.ZERO;
+        Long       totalAssistanceCount       = 0L;
+        BigDecimal totalAgapeAmount           = BigDecimal.ZERO;
+        Long       totalTransactions          = 0L;
+        BigDecimal totalSolidarityCollected   = BigDecimal.ZERO;
+        BigDecimal totalEpargneDeposited      = BigDecimal.ZERO;
+        BigDecimal totalEpargneWithdrawn      = BigDecimal.ZERO;
+        BigDecimal totalEmpruntAmount         = BigDecimal.ZERO;
+        BigDecimal totalRemboursementAmount   = BigDecimal.ZERO;
+        BigDecimal totalInteretAmount         = BigDecimal.ZERO;
+        BigDecimal totalRenfoulementCollected = BigDecimal.ZERO;
+        BigDecimal totalRegistrationCollected = BigDecimal.ZERO;
 
         for (Session session : sessions) {
-            if (session.getHistory() != null) {
-                SessionHistory hist = session.getHistory();
-                totalAssistanceAmount = totalAssistanceAmount.add(hist.getTotalAssistanceAmount() != null ? hist.getTotalAssistanceAmount() : BigDecimal.ZERO);
-                totalAssistanceCount += hist.getTotalAssistanceCount() != null ? hist.getTotalAssistanceCount() : 0L;
-                totalAgapeAmount = totalAgapeAmount.add(hist.getAgapeAmount() != null ? hist.getAgapeAmount() : BigDecimal.ZERO);
-                totalTransactions += hist.getTotalTransactions() != null ? hist.getTotalTransactions() : 0L;
-               }
+            SessionHistory hist = session.getHistory();
+            if (hist != null) {
+                totalAssistanceAmount      = totalAssistanceAmount.add(orZero(hist.getTotalAssistanceAmount()));
+                totalAssistanceCount       += orZeroL(hist.getTotalAssistanceCount());
+                totalAgapeAmount           = totalAgapeAmount.add(orZero(hist.getAgapeAmount()));
+                totalTransactions          += orZeroL(hist.getTotalTransactions());
+                totalSolidarityCollected   = totalSolidarityCollected.add(orZero(hist.getTotalSolidarityCollected()));
+                totalEpargneDeposited      = totalEpargneDeposited.add(orZero(hist.getTotalEpargneDeposited()));
+                totalEpargneWithdrawn      = totalEpargneWithdrawn.add(orZero(hist.getTotalEpargneWithdrawn()));
+                totalEmpruntAmount         = totalEmpruntAmount.add(orZero(hist.getTotalEmpruntAmount()));
+                totalRemboursementAmount   = totalRemboursementAmount.add(orZero(hist.getTotalRemboursementAmount()));
+                totalInteretAmount         = totalInteretAmount.add(orZero(hist.getTotalInteretAmount()));
+                totalRenfoulementCollected = totalRenfoulementCollected.add(orZero(hist.getTotalRenfoulementCollected()));
+                totalRegistrationCollected = totalRegistrationCollected.add(orZero(hist.getTotalRegistrationCollected()));
+            }
         }
 
-        mutuelleCash = mutuelleCash.add(mutuelleacc.getSolidarityAmount());
-        mutuellesSavingAmount = mutuelleacc.getSavingAmount();
-        mutuelleBorrowAmount = mutuelleacc.getBorrowAmount();
+        long activeMembersCount = accountService.getAllMemberAccountsWithActive(true).size();
 
         ExerciceHistory history = ExerciceHistory.builder()
                 .exercice(exercice)
                 .totalAssistanceAmount(totalAssistanceAmount)
                 .totalAssistanceCount(totalAssistanceCount)
                 .totalAgapeAmount(totalAgapeAmount)
-                .mutuelleCash(mutuelleCash)
                 .totalTransactions(totalTransactions)
-                .mutuellesSavingAmount(mutuellesSavingAmount)
-                .mutuelleBorrowAmount(mutuelleBorrowAmount)
+                .totalSolidarityCollected(totalSolidarityCollected)
+                .totalEpargneDeposited(totalEpargneDeposited)
+                .totalEpargneWithdrawn(totalEpargneWithdrawn)
+                .totalEmpruntAmount(totalEmpruntAmount)
+                .totalRemboursementAmount(totalRemboursementAmount)
+                .totalInteretAmount(totalInteretAmount)
+                .totalRenfoulementCollected(totalRenfoulementCollected)
+                .totalRegistrationCollected(totalRegistrationCollected)
+                .sessionsCount(sessions.size())
+                .activeMembersCount(activeMembersCount)
+                .mutuelleCash(mutuelleacc.getSavingAmount().add(mutuelleacc.getSolidarityAmount()).add(mutuelleacc.getRegistrationAmount()))
+                .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
+                .mutuelleSolidarityAmount(mutuelleacc.getSolidarityAmount())
+                .mutuelleRegistrationAmount(mutuelleacc.getRegistrationAmount())
+                .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();
 
         exercice.setHistory(history);
         exerciceRepository.save(exercice);
 
-        //Calcul du renflouement
+        // ── Calcul du renfoulement ─────────────────────────────────────────────
         this.calculateAndAssignRenfoulementForExercice(exercice);
 
+        // ── Mise à jour ExerciceHistory avec données renfoulement ─────────────
+        BigDecimal renfoulementUnitaire = BigDecimal.ZERO;
+        var renfoulementOpt = renfoulementRepository.findByExerciceId(exercice.getId());
+        if (renfoulementOpt.isPresent()) {
+            var r = renfoulementOpt.get();
+            renfoulementUnitaire = r.getUnitAmount() != null ? r.getUnitAmount() : BigDecimal.ZERO;
+            history.setTotalRenfoulementDistributed(r.getExpectedTotalAmount() != null ? r.getExpectedTotalAmount() : BigDecimal.ZERO);
+            history.setRenfoulementUnitAmount(renfoulementUnitaire);
+            exerciceHistoryRepository.save(history);
+        }
+
+        // ── Création des bilans membres par exercice ──────────────────────────
+        List<Member> activeMembers = memberRepository.findByIsActiveTrue();
+        bilanService.createMemberExerciceBilans(exercice, activeMembers, sessions, renfoulementUnitaire);
+    }
+
+    private BigDecimal orZero(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
+    }
+
+    private long orZeroL(Long v) {
+        return v != null ? v : 0L;
     }
 
 

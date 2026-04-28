@@ -11,28 +11,52 @@ import java.time.LocalDateTime;
 @Builder
 public class ExerciceHistoryDto {
 
+    // ── Identifiants ──────────────────────────────────────────────────────────
     private Long id;
-
-    // Informations sur l'exercice concerné
     private Long exerciceId;
     private String exerciceName;
     private LocalDateTime exerciceStartDate;
     private LocalDateTime exerciceEndDate;
-    private StatusExercice exerciceStatus;    
+    private StatusExercice exerciceStatus;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    // Statistiques et montants issus de l'exercice
+    // ── Assistances ───────────────────────────────────────────────────────────
     private BigDecimal totalAssistanceAmount;
     private Long totalAssistanceCount;
 
+    // ── Agapes ────────────────────────────────────────────────────────────────
     private BigDecimal totalAgapeAmount;
 
-    private BigDecimal mutuelleCash;           // solde de solidarité mutuelle
-    private BigDecimal mutuellesSavingAmount;  // épargne mutuelle
-    private BigDecimal mutuelleBorrowAmount;   // emprunt mutuelle
+    // ── Solidarité collectée ──────────────────────────────────────────────────
+    private BigDecimal totalSolidarityCollected;
 
+    // ── Épargne ───────────────────────────────────────────────────────────────
+    private BigDecimal totalEpargneDeposited;
+    private BigDecimal totalEpargneWithdrawn;
+
+    // ── Emprunts & remboursements ─────────────────────────────────────────────
+    private BigDecimal totalEmpruntAmount;
+    private BigDecimal totalRemboursementAmount;
+    private BigDecimal totalInteretAmount;
+
+    // ── Renfoulement ──────────────────────────────────────────────────────────
+    private BigDecimal totalRenfoulementDistributed;
+    private BigDecimal renfoulementUnitAmount;
+    private BigDecimal totalRenfoulementCollected;
+
+    // ── Inscription ───────────────────────────────────────────────────────────
+    private BigDecimal totalRegistrationCollected;
+
+    // ── Snapshot trésorerie mutuelle ──────────────────────────────────────────
+    private BigDecimal mutuelleCash;
+    private BigDecimal mutuellesSavingAmount;
+    private BigDecimal mutuelleSolidarityAmount;
+    private BigDecimal mutuelleRegistrationAmount;
+    private BigDecimal mutuelleBorrowAmount;
+
+    // ── Compteurs ─────────────────────────────────────────────────────────────
     private Long totalTransactions;
-
-    // Métadonnées de création
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Integer sessionsCount;
+    private Long activeMembersCount;
 }

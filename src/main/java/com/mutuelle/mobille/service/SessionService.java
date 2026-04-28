@@ -39,6 +39,7 @@ public class SessionService {
     private final AssistanceService assistanceService;
     private final SessionNotificationHelper notificationHelper;
     private final InteretService interetService;
+    private final BilanService bilanService;
 
 
 //    private final Clock clock;  // ← à injecter (configurable pour les tests)
@@ -525,37 +526,39 @@ public class SessionService {
 
         processAllInterestsForClosingSession(session);
 
-        AccountMutuelle mutuelleacc=accountService.getMutuelleGlobalAccount();
-        Long sessionId=session.getId();
+        AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
+        Long sessionId = session.getId();
 
-        // Débit agapes
-        List<AccountMember> active = accountService.getAllMemberAccountsWithActive(true);
-        BigDecimal perMember = session.getAgapeAmountPerMember();
-        BigDecimal totalDebit = perMember.multiply(BigDecimal.valueOf(active.size()));
+        // Débit des agapes - Montant total (sans multiplication par nombre de membres)
+        BigDecimal agapeAmount = session.getAgapeAmountPerMember();
 
         BigDecimal currentRegistrationBalance = mutuelleacc.getRegistrationAmount();
 
-        if (currentRegistrationBalance.compareTo(totalDebit) < 0) {
-            System.out.println("ttttttttttt1 : "+totalDebit+ "- "+currentRegistrationBalance +"- "+perMember);
+        if (currentRegistrationBalance.compareTo(agapeAmount) < 0) {
+            System.out.println("ttttttttttt1 : " + agapeAmount + " - " + currentRegistrationBalance);
+
             throw new IllegalArgumentException(
                     String.format(
                             "Impossible de débiter les agapes pour la session '%s' : " +
                                     "caisse inscription insuffisante.\n" +
                                     "→ Montant requis : %s\n" +
                                     "→ Solde actuel  : %s\n" +
-                                    "→ Écart         : %s\n" ,
+                                    "→ Écart         : %s\n",
                             session.getName(),
-                            totalDebit,
+                            agapeAmount,
                             currentRegistrationBalance,
-                            totalDebit.subtract(currentRegistrationBalance)
+                            agapeAmount.subtract(currentRegistrationBalance)
                     )
             );
         }
-        accountService.removeToRegistrationMutuelleCaisse(totalDebit);
 
+        // Débit de la caisse d'inscription
+        accountService.removeToRegistrationMutuelleCaisse(agapeAmount);
+
+        // Enregistrement de la transaction
         Transaction tx = Transaction.builder()
                 .transactionType(TransactionType.AGAPE)
-                .amount(totalDebit)
+                .amount(agapeAmount)
                 .description("Agapes session " + session.getName())
                 .transactionDirection(TransactionDirection.DEBIT)
                 .accountMember(null)
@@ -565,13 +568,16 @@ public class SessionService {
 
         sessionRepository.save(session);
 
+        // Création de l'historique de session
         SessionHistory history = SessionHistory.builder()
                 .session(session)
                 .totalAssistanceAmount(assistanceService.getTotalAssistanceAmountForSession(sessionId))
                 .totalAssistanceCount(assistanceService.countTotalAssistanceForSession(sessionId))
-                .agapeAmount(totalDebit)
+                .agapeAmount(agapeAmount)                    // Montant total des agapes
                 .totalTransactions(transactionRepository.countBySessionId(sessionId))
-                .mutuelleCash(mutuelleacc.getSavingAmount().add(mutuelleacc.getSolidarityAmount()).add(mutuelleacc.getRegistrationAmount()))
+                .mutuelleCash(mutuelleacc.getSavingAmount()
+                        .add(mutuelleacc.getSolidarityAmount())
+                        .add(mutuelleacc.getRegistrationAmount()))
                 .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
                 .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();
