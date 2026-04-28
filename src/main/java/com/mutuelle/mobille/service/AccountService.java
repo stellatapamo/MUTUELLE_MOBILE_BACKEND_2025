@@ -238,6 +238,20 @@
         }
 
         /**
+         * retirer un montant à la caisse de la mutuelle
+         */
+        @Transactional
+        public void removeToRegistrationMutuelleCaisse(BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                return;
+            }
+
+            AccountMutuelle global = getMutuelleGlobalAccount();
+            global.setRegistrationAmount(global.getRegistrationAmount().subtract(amount));
+            globalRepo.save(global);
+        }
+
+        /**
          * Un membre emprunte de l'argent à la mutuelle
          */
         @Transactional
@@ -316,8 +330,8 @@
             // Réduire la dette du membre
             memberAccount.setUnpaidRegistrationAmount(unpaid.subtract(amount));
 
-            // L'argent entre dans la caisse de la mutuelle (  )
-            globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(amount));
+            // L'argent entre dans la caisse inscription de la mutuelle (  )
+            globalAccount.setRegistrationAmount(globalAccount.getRegistrationAmount().add(amount));
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

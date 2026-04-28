@@ -533,25 +533,25 @@ public class SessionService {
         BigDecimal perMember = session.getAgapeAmountPerMember();
         BigDecimal totalDebit = perMember.multiply(BigDecimal.valueOf(active.size()));
 
-        BigDecimal currentSolidarityBalance = mutuelleacc.getSolidarityAmount();
+        BigDecimal currentRegistrationBalance = mutuelleacc.getRegistrationAmount();
 
-        if (currentSolidarityBalance.compareTo(totalDebit) < 0) {
-            System.out.println("ttttttttttt1 : "+totalDebit+ "- "+currentSolidarityBalance +"- "+perMember);
+        if (currentRegistrationBalance.compareTo(totalDebit) < 0) {
+            System.out.println("ttttttttttt1 : "+totalDebit+ "- "+currentRegistrationBalance +"- "+perMember);
             throw new IllegalArgumentException(
                     String.format(
                             "Impossible de débiter les agapes pour la session '%s' : " +
-                                    "caisse solidarité insuffisante.\n" +
+                                    "caisse inscription insuffisante.\n" +
                                     "→ Montant requis : %s\n" +
                                     "→ Solde actuel  : %s\n" +
                                     "→ Écart         : %s\n" ,
                             session.getName(),
                             totalDebit,
-                            currentSolidarityBalance,
-                            totalDebit.subtract(currentSolidarityBalance)
+                            currentRegistrationBalance,
+                            totalDebit.subtract(currentRegistrationBalance)
                     )
             );
         }
-        accountService.removeToSolidarityMutuelleCaisse(totalDebit);
+        accountService.removeToRegistrationMutuelleCaisse(totalDebit);
 
         Transaction tx = Transaction.builder()
                 .transactionType(TransactionType.AGAPE)
@@ -571,7 +571,7 @@ public class SessionService {
                 .totalAssistanceCount(assistanceService.countTotalAssistanceForSession(sessionId))
                 .agapeAmount(totalDebit)
                 .totalTransactions(transactionRepository.countBySessionId(sessionId))
-                .mutuelleCash(mutuelleacc.getSavingAmount().add(mutuelleacc.getSolidarityAmount()))
+                .mutuelleCash(mutuelleacc.getSavingAmount().add(mutuelleacc.getSolidarityAmount()).add(mutuelleacc.getRegistrationAmount()))
                 .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
                 .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();
