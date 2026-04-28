@@ -536,6 +536,8 @@ public class ExerciceService {
                 .unitAmount(renfoulementUnitaire)
                 .exercice(exercice)
                 .expectedTotalAmount(totalAttribue)
+                .agapeAmount(totalAgapes)
+                .renfoulementCollectedForInscription(BigDecimal.ZERO)
                 .build();
 
         renfoulementRepository.save(renfoulement);

@@ -55,7 +55,10 @@ public class ContributionService {
 
         switch (type) {
             case INSCRIPTION -> accountService.payFeeInscriptionAmount(memberId, amount);
-            case RENFOULEMENT -> accountService.payRenfoulementAmount(memberId, amount);
+            case RENFOULEMENT -> {
+                Long exerciceId = currentSession.getExercice().getId();
+                accountService.payRenfoulementAmount(memberId, amount, exerciceId);
+            }
             default -> throw new IllegalArgumentException("Type non supporté");
         }
 

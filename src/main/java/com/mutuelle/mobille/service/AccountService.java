@@ -1,9 +1,11 @@
     package com.mutuelle.mobille.service;
 
+    import com.mutuelle.mobille.models.Renfoulement;
     import com.mutuelle.mobille.models.account.AccountMember;
     import com.mutuelle.mobille.models.account.AccountMutuelle;
     import com.mutuelle.mobille.repository.AccountMemberRepository;
     import com.mutuelle.mobille.repository.AccountMutuelleRepository;
+    import com.mutuelle.mobille.repository.RenfoulementRepository;
     import jakarta.annotation.PostConstruct;
     import jakarta.transaction.Transactional;
     import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@
         private final AccountMemberRepository memberRepo;
         private final AuthService authService;
         private final AccountMemberRepository accountMemberRepository;
+        private final RenfoulementRepository renfoulementRepository;
 
         @PostConstruct
         @Transactional
@@ -338,10 +341,12 @@
         }
 
         /**
-         * Paiement du renfoulement par un membre (partiel ou total)
+         * Paiement du renfoulement par un membre avec ventilation automatique :
+         * - jusqu'au seuil agape de l'exercice → Caisse Inscription
+         * - au-delà → Caisse Solidarité
          */
         @Transactional
-        public void payRenfoulementAmount(Long memberId, BigDecimal amount) {
+        public void payRenfoulementAmount(Long memberId, BigDecimal amount, Long exerciceId) {
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Le montant payé doit être positif");
             }
@@ -362,8 +367,46 @@
             // Réduire la dette du membre
             memberAccount.setUnpaidRenfoulement(unpaid.subtract(amount));
 
-            // L'argent entre dans la caisse de la mutuelle
-            globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(amount));
+            // Charger le Renfoulement de l'exercice (source de vérité pour la ventilation)
+            Renfoulement renfoulement = renfoulementRepository.findByExerciceId(exerciceId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Aucun renfoulement trouvé pour l'exercice ID : " + exerciceId));
+
+            // Seuil = total des agapes de l'exercice (stocké dans Renfoulement à la clôture)
+            BigDecimal seuilAgape = renfoulement.getAgapeAmount();
+
+            // Montant déjà versé en Caisse Inscription pour cet exercice
+            BigDecimal dejaCollecte = renfoulement.getRenfoulementCollectedForInscription();
+
+            // Capacité restante dans Caisse Inscription avant d'atteindre le seuil agape
+            BigDecimal capaciteInscription = seuilAgape.subtract(dejaCollecte).max(BigDecimal.ZERO);
+
+            BigDecimal partInscription;
+            BigDecimal partSolidarite;
+
+            if (capaciteInscription.compareTo(BigDecimal.ZERO) == 0) {
+                // Seuil agape déjà atteint → tout va en Caisse Solidarité
+                partInscription = BigDecimal.ZERO;
+                partSolidarite = amount;
+            } else if (amount.compareTo(capaciteInscription) <= 0) {
+                // Tout le paiement tient dans la capacité inscription restante
+                partInscription = amount;
+                partSolidarite = BigDecimal.ZERO;
+            } else {
+                // Paiement hybride : partie en Inscription pour atteindre le seuil, reste en Solidarité
+                partInscription = capaciteInscription;
+                partSolidarite = amount.subtract(capaciteInscription);
+            }
+
+            if (partInscription.compareTo(BigDecimal.ZERO) > 0) {
+                globalAccount.setRegistrationAmount(globalAccount.getRegistrationAmount().add(partInscription));
+                renfoulement.setRenfoulementCollectedForInscription(dejaCollecte.add(partInscription));
+            }
+            if (partSolidarite.compareTo(BigDecimal.ZERO) > 0) {
+                globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(partSolidarite));
+            }
+
+            renfoulementRepository.save(renfoulement);
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "renfoulements")
+@Table(name = "")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,6 +36,14 @@ public class Renfoulement {
 
     @Column(name = "expected_total_amount", precision = 15, scale = 2, nullable = false)
     private BigDecimal expectedTotalAmount = BigDecimal.ZERO;
+
+    // Seuil : total des agapes de l'exercice → détermine combien du renfoulement part en Caisse Inscription
+    @Column(name = "agape_amount", precision = 15, scale = 2, nullable = false)
+    private BigDecimal agapeAmount = BigDecimal.ZERO;
+
+    // Compteur mis à jour à chaque paiement : montant renfoulement déjà versé en Caisse Inscription
+    @Column(name = "renfoulement_collected_for_inscription", precision = 15, scale = 2, nullable = false)
+    private BigDecimal renfoulementCollectedForInscription = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
