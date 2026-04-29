@@ -258,7 +258,7 @@
          * Un membre emprunte de l'argent à la mutuelle
          */
         @Transactional
-        public void borrowMoney(Long memberId, BigDecimal amount) {
+        public void borrowMoney(Long memberId, BigDecimal amount, Long sessionId) {
             LocalDateTime now = LocalDateTime.now();
 
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -274,6 +274,7 @@
             }
             memberAccount.setInitialBorrowAmount(amount);
             memberAccount.setLastInterestDate(now);
+            memberAccount.setBorrowSessionId(sessionId);
 
             memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().add(amount));
             globalAccount.setBorrowAmount(globalAccount.getBorrowAmount().add(amount));
@@ -302,6 +303,11 @@
             memberAccount.setBorrowAmount(memberAccount.getBorrowAmount().subtract(amount));
             globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
             globalAccount.setBorrowAmount(globalAccount.getBorrowAmount().subtract(amount));
+
+            // Emprunt soldé → réinitialiser la session d'origine
+            if (memberAccount.getBorrowAmount().compareTo(BigDecimal.ZERO) == 0) {
+                memberAccount.setBorrowSessionId(null);
+            }
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

@@ -144,6 +144,10 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     //Recherche des sessions creees durant un intervale de temps
     List<Session> findByStartDateBetween(LocalDateTime start, LocalDateTime end);
 
+    // Nombre de sessions fermées (COMPLETED) dont la date de début est postérieure à la session d'emprunt
+    @Query("SELECT COUNT(s) FROM Session s WHERE s.status = 'COMPLETED' AND s.startDate > :afterDate")
+    long countCompletedSessionsAfter(@Param("afterDate") LocalDateTime afterDate);
+
 
     // Pour retrouver une session encore ouverte 24h apres son demarrage
     @Query("""

@@ -62,6 +62,10 @@ public class AccountMember {
     @Column(name = "unpaid_renfoulement", precision = 12, scale = 2)
     private BigDecimal unpaidRenfoulement = BigDecimal.ZERO;
 
+    // Session dans laquelle l'emprunt courant a été accordé (pour calcul pénalité)
+    @Column(name = "borrow_session_id")
+    private Long borrowSessionId;
+
     @Column(name = "is_active")
     private boolean isActive = true;
 

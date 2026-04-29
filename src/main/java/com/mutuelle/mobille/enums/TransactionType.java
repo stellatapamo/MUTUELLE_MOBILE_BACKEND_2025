@@ -9,5 +9,6 @@ public enum TransactionType {
     RENFOULEMENT,
     INTERET,
     ASSISTANCE,
-    AGAPE
+    AGAPE,
+    PENALITE
 }

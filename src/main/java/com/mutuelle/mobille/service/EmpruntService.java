@@ -1,13 +1,17 @@
 package com.mutuelle.mobille.service;
 
 import com.mutuelle.mobille.dto.notifications.NotificationRequestDto;
+import com.mutuelle.mobille.enums.StatusSession;
 import com.mutuelle.mobille.enums.TemplateMailsName;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
+import com.mutuelle.mobille.models.MutuelleConfig;
 import com.mutuelle.mobille.models.Session;
 import com.mutuelle.mobille.models.Transaction;
 import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.auth.AuthUser;
+import com.mutuelle.mobille.repository.MutuelleConfigRepository;
+import com.mutuelle.mobille.repository.SessionRepository;
 import com.mutuelle.mobille.repository.TransactionRepository;
 import com.mutuelle.mobille.service.notifications.config.NotificationService;
 import jakarta.transaction.Transactional;
@@ -15,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -32,6 +37,8 @@ public class EmpruntService {
     private final NotificationService notificationService;
     private final MemberService memberService;
     private final AdminService adminService;
+    private final MutuelleConfigRepository mutuelleConfigRepository;
+    private final SessionRepository sessionRepository;
 
     @Transactional
     public void emprunter(Long memberId, BigDecimal montant) {
@@ -75,7 +82,7 @@ public class EmpruntService {
 
         BigDecimal interet = interetService.calculerInteret(montant); // valeur de l'interet
 
-        accountService.borrowMoney(memberId, montant);
+        accountService.borrowMoney(memberId, montant, currentSession.getId());
 
         Transaction trans = transactionRepository.save(
                 Transaction.builder()
@@ -106,11 +113,33 @@ public class EmpruntService {
                 : membre.getBorrowAmount();
 
         if (borrow.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalStateException(
-                    "Aucun emprunt actif à rembourser"
-            );
+            throw new IllegalStateException("Aucun emprunt actif à rembourser");
         }
 
+        // ── Calcul de la pénalité ─────────────────────────────────────────────
+        MutuelleConfig config = mutuelleConfigRepository.findTopByOrderByUpdatedAtDesc()
+                .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
+
+        BigDecimal tauxPenalite = config.getLoanPenaltyRatePercent()
+                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
+        BigDecimal penalite = montant.multiply(tauxPenalite).setScale(2, RoundingMode.HALF_UP);
+
+        Long borrowSessionId = membre.getBorrowSessionId();
+        if (borrowSessionId != null) {
+            Session borrowSession = sessionRepository.findById(borrowSessionId)
+                    .orElseThrow(() -> new IllegalStateException("Session d'emprunt introuvable"));
+
+            long nbSessionsFermees = sessionRepository.countCompletedSessionsAfter(borrowSession.getStartDate());
+
+            int threshold = config.getLoanPenaltySessionThreshold() != null
+                    ? config.getLoanPenaltySessionThreshold() : 3;
+
+            if (nbSessionsFermees >= threshold) {
+                penalite = penalite.add(config.getLoanPenaltyFixedAmount());
+            }
+        }
+
+        // ── Remboursement capital ─────────────────────────────────────────────
         accountService.repayBorrowedAmount(memberId, montant);
 
         transactionRepository.save(
@@ -120,8 +149,25 @@ public class EmpruntService {
                         .transactionType(TransactionType.REMBOURSSEMENT)
                         .transactionDirection(TransactionDirection.CREDIT)
                         .session(currentSession)
+                        .description("Remboursement emprunt")
                         .build()
         );
+
+        // ── Pénalité ─────────────────────────────────────────────────────────
+        if (penalite.compareTo(BigDecimal.ZERO) > 0) {
+            accountService.addToMutuelleCaisse(penalite);
+
+            transactionRepository.save(
+                    Transaction.builder()
+                            .accountMember(membre)
+                            .amount(penalite)
+                            .transactionType(TransactionType.PENALITE)
+                            .transactionDirection(TransactionDirection.DEBIT)
+                            .session(currentSession)
+                            .description("Pénalité de remboursement")
+                            .build()
+            );
+        }
     }
 
     @Transactional
