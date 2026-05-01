@@ -216,10 +216,10 @@ public class BilanPdfService {
             addSectionTitle(doc, "INTÉRÊTS & ACTIVITÉ");
             PdfPTable activite = buildTwoColumnTable();
             addRow(activite, "Intérêts calculés",       dto.getTotalInteretAmount(),    false, false);
-            addRow(activite, "Nb assistances",          BigDecimal.valueOf(dto.getTotalAssistanceCount()), false, false);
-            addRow(activite, "Nb cotisations solidarité", BigDecimal.valueOf(dto.getTotalSolidarityCount()), false, false);
-            addRow(activite, "Nb total transactions",   BigDecimal.valueOf(dto.getTotalTransactions()), false, false);
-            addRow(activite, "Membres actifs",          BigDecimal.valueOf(dto.getActiveMembersCount()), false, false);
+            addRow(activite, "Nb assistances",          BigDecimal.valueOf(dto.getTotalAssistanceCount()), false, false, "");
+            addRow(activite, "Nb cotisations solidarité", BigDecimal.valueOf(dto.getTotalSolidarityCount()), false, false, "");
+            addRow(activite, "Nb total transactions",   BigDecimal.valueOf(dto.getTotalTransactions()), false, false, "");
+            addRow(activite, "Membres actifs",          BigDecimal.valueOf(dto.getActiveMembersCount()), false, false, "");
             doc.add(activite);
             doc.add(Chunk.NEWLINE);
 
@@ -493,6 +493,10 @@ public class BilanPdfService {
     }
 
     private void addRow(PdfPTable table, String label, BigDecimal value, boolean isHeader, boolean debit) {
+        addRow(table, label, value, isHeader, debit, "Fcfa");
+    }
+
+    private void addRow(PdfPTable table, String label, BigDecimal value, boolean isHeader, boolean debit, String unit ) {
         Font labelFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
         Color amountColor = debit ? COLOR_NEGATIVE : COLOR_POSITIVE;
         Font amountFont = FontFactory.getFont(FontFactory.HELVETICA, 9, amountColor);
@@ -503,7 +507,7 @@ public class BilanPdfService {
         labelCell.setPadding(5);
         table.addCell(labelCell);
 
-        PdfPCell valueCell = new PdfPCell(new Phrase(fmt(value) + " Fcfa", amountFont));
+        PdfPCell valueCell = new PdfPCell(new Phrase(fmt(value) + " "+unit, amountFont));
         valueCell.setBorder(Rectangle.BOTTOM);
         valueCell.setBorderColor(new Color(220, 230, 245));
         valueCell.setPadding(5);

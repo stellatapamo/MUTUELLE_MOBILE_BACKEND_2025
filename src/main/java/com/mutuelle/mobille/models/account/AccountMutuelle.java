@@ -58,4 +58,8 @@ public class AccountMutuelle {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public BigDecimal getRegistrationAmount() {
+        return registrationAmount == null ? BigDecimal.ZERO : registrationAmount;
+    }
 }

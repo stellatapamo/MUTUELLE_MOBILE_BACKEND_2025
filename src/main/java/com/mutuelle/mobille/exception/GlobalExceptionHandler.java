@@ -88,4 +88,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponseDto.error("DEBUG: " + ex.getMessage())); // Affiche l'erreur sur Swagger
     }
+
+    //  @ExceptionHandler(Exception.class)
+    // public ResponseEntity<ApiResponseDto<?>> handleGenericException(Exception ex) {
+    //     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    //             .body(ApiResponseDto.error("Une erreur interne est survenue. Veuillez réessayer plus tard."));
+    // }
 }

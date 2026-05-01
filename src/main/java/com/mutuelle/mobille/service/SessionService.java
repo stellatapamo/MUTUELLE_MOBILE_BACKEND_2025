@@ -529,14 +529,11 @@ public class SessionService {
         AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
         Long sessionId = session.getId();
 
-        // Débit des agapes - Montant total (sans multiplication par nombre de membres)
+        // Débit des agapes
         BigDecimal agapeAmount = session.getAgapeAmountPerMember();
-
         BigDecimal currentRegistrationBalance = mutuelleacc.getRegistrationAmount();
 
         if (currentRegistrationBalance.compareTo(agapeAmount) < 0) {
-            System.out.println("ttttttttttt1 : " + agapeAmount + " - " + currentRegistrationBalance);
-
             throw new IllegalArgumentException(
                     String.format(
                             "Impossible de débiter les agapes pour la session '%s' : " +
@@ -552,10 +549,8 @@ public class SessionService {
             );
         }
 
-        // Débit de la caisse d'inscription
         accountService.removeToRegistrationMutuelleCaisse(agapeAmount);
 
-        // Enregistrement de la transaction
         Transaction tx = Transaction.builder()
                 .transactionType(TransactionType.AGAPE)
                 .amount(agapeAmount)
@@ -568,21 +563,52 @@ public class SessionService {
 
         sessionRepository.save(session);
 
+        // Recharger le compte mutuelle après le débit agape
+        mutuelleacc = accountService.getMutuelleGlobalAccount();
+
+        // Agrégation des transactions de la session
+        BigDecimal totalSolidarityCollected  = transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.SOLIDARITE,     TransactionDirection.CREDIT);
+        Long       totalSolidarityCount      = transactionRepository.countBySessionAndTypeAndDirection(sessionId, TransactionType.SOLIDARITE,    TransactionDirection.CREDIT);
+        BigDecimal totalEpargneDeposited     = transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.EPARGNE,         TransactionDirection.CREDIT);
+        BigDecimal totalEpargneWithdrawn     = transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.EPARGNE,         TransactionDirection.DEBIT);
+        BigDecimal totalEmpruntAmount        = transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.EMPRUNT,         TransactionDirection.DEBIT);
+        BigDecimal totalRemboursementAmount  = transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.REMBOURSSEMENT,  TransactionDirection.CREDIT);
+        BigDecimal totalInteretAmount        = transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.INTERET,         TransactionDirection.DEBIT);
+        BigDecimal totalRenfoulementCollected= transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.RENFOULEMENT,    TransactionDirection.CREDIT);
+        BigDecimal totalRegistrationCollected= transactionRepository.sumBySessionAndTypeAndDirection(sessionId, TransactionType.INSCRIPTION,     TransactionDirection.CREDIT);
+        long activeMembersCount              = accountService.getAllMemberAccountsWithActive(true).size();
+
         // Création de l'historique de session
         SessionHistory history = SessionHistory.builder()
                 .session(session)
                 .totalAssistanceAmount(assistanceService.getTotalAssistanceAmountForSession(sessionId))
                 .totalAssistanceCount(assistanceService.countTotalAssistanceForSession(sessionId))
-                .agapeAmount(agapeAmount)                    // Montant total des agapes
+                .agapeAmount(agapeAmount)
                 .totalTransactions(transactionRepository.countBySessionId(sessionId))
+                .totalSolidarityCollected(totalSolidarityCollected)
+                .totalSolidarityCount(totalSolidarityCount)
+                .totalEpargneDeposited(totalEpargneDeposited)
+                .totalEpargneWithdrawn(totalEpargneWithdrawn)
+                .totalEmpruntAmount(totalEmpruntAmount)
+                .totalRemboursementAmount(totalRemboursementAmount)
+                .totalInteretAmount(totalInteretAmount)
+                .totalRenfoulementCollected(totalRenfoulementCollected)
+                .totalRegistrationCollected(totalRegistrationCollected)
+                .activeMembersCount(activeMembersCount)
                 .mutuelleCash(mutuelleacc.getSavingAmount()
                         .add(mutuelleacc.getSolidarityAmount())
                         .add(mutuelleacc.getRegistrationAmount()))
                 .mutuellesSavingAmount(mutuelleacc.getSavingAmount())
+                .mutuelleSolidarityAmount(mutuelleacc.getSolidarityAmount())
+                .mutuelleRegistrationAmount(mutuelleacc.getRegistrationAmount())
                 .mutuelleBorrowAmount(mutuelleacc.getBorrowAmount())
                 .build();
 
         session.setHistory(history);
+
+        // Création des bilans membres pour cette session
+        List<AccountMember> activeAccounts = accountService.getAllMemberAccountsWithActive(true);
+        bilanService.createMemberSessionBilans(session, activeAccounts);
     }
 
     public SessionResponseDTO toResponseDTO(Session s) {
