@@ -460,8 +460,9 @@ public class ExerciceService {
 
         int nbMembresAJour = comptesAJour.size();
         if (nbMembresAJour == 0) {
-            log.warn("Aucun membre à jour → impossible de calculer le renfoulement pour l'exercice {}", exercice.getId());
-            return;
+            nbMembresAJour=1;
+//            log.warn("Aucun membre à jour → impossible de calculer le renfoulement pour l'exercice {}", exercice.getId());
+//            return;
         }
 
         // 3. Montant unitaire de renfoulement (arrondi commercial vers le bas à la tranche de 25)
