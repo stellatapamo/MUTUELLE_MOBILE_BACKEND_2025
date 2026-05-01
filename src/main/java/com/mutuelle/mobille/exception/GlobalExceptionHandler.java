@@ -37,6 +37,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
         // ou .badRequest() si tu préfères 400 au lieu de 422
     }
+
     // 2. Mauvais login / mot de passe + token invalide/expiré
     @ExceptionHandler({BadCredentialsException.class, AuthenticationException.class})
     public ResponseEntity<ApiResponseDto<?>> handleAuthenticationException(Exception ex) {
@@ -81,7 +82,10 @@ public class GlobalExceptionHandler {
     // 6. Vraie erreur serveur (500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDto<?>> handleGenericException(Exception ex) {
+        // Affiche l'erreur dans les logs de Render pour vous
+        ex.printStackTrace();
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponseDto.error("Une erreur interne est survenue. Veuillez réessayer plus tard."));
+                .body(ApiResponseDto.error("DEBUG: " + ex.getMessage())); // Affiche l'erreur sur Swagger
     }
 }
