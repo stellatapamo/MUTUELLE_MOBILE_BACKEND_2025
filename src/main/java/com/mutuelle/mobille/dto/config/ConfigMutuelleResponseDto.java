@@ -3,7 +3,6 @@ package com.mutuelle.mobille.dto.config;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -13,15 +12,12 @@ import java.time.LocalDateTime;
 public class ConfigMutuelleResponseDto {
 
     private Long id;
-
     private BigDecimal registrationFeeAmount;
-
     private BigDecimal solidarityFeeAmount;
-
     private BigDecimal loanInterestRatePercent;
-
+    private BigDecimal loanPenaltyFixedAmount;
+    private Integer loanPenaltySessionThreshold;
     private LocalDateTime updatedAt;
-
     private String updatedBy;
 
     public ConfigMutuelleResponseDto(com.mutuelle.mobille.models.MutuelleConfig config) {
@@ -29,6 +25,8 @@ public class ConfigMutuelleResponseDto {
         this.registrationFeeAmount = config.getRegistrationFeeAmount();
         this.solidarityFeeAmount = config.getSolidarityFeeAmount();
         this.loanInterestRatePercent = config.getLoanInterestRatePercent();
+        this.loanPenaltyFixedAmount = config.getLoanPenaltyFixedAmount();
+        this.loanPenaltySessionThreshold = config.getLoanPenaltySessionThreshold();
         this.updatedAt = config.getUpdatedAt();
         this.updatedBy = config.getUpdatedBy();
     }

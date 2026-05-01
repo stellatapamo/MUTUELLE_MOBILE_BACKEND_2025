@@ -25,6 +25,8 @@ public class MutuelleConfigService {
                     .registrationFeeAmount(new BigDecimal("150000.00"))
                     .solidarityFeeAmount(new BigDecimal("150000.00"))
                     .loanInterestRatePercent(new BigDecimal("3.00"))
+                    .loanPenaltySessionThreshold(3)
+                    .loanPenaltyFixedAmount(new BigDecimal("150000.00"))
                     .updatedBy("system")
                     .build();
             configRepository.save(defaultConfig);

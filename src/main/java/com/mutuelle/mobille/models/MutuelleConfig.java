@@ -26,13 +26,13 @@ public class MutuelleConfig {
     @Column(name = "solidarity_fee_amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal solidarityFeeAmount = new BigDecimal("150000.00");
 
-    // Loan interest rate (annual percentage)
+    // Loan interest rate (%)
     @Column(name = "loan_interest_rate_percent", nullable = false, precision = 5, scale = 2)
     private BigDecimal loanInterestRatePercent = new BigDecimal("3.00");
 
-    // Taux de pénalité de remboursement (%)
-    @Column(name = "loan_penalty_rate_percent", nullable = false, precision = 5, scale = 2)
-    private BigDecimal loanPenaltyRatePercent = new BigDecimal("3.00");
+//    // Taux de pénalité de remboursement (%)
+//    @Column(name = "loan_penalty_rate_percent", nullable = false, precision = 5, scale = 2)
+//    private BigDecimal loanPenaltyRatePercent = new BigDecimal("3.00");
 
     // Forfait fixe de pénalité majorée (en FCFA)
     @Column(name = "loan_penalty_fixed_amount", nullable = false, precision = 14, scale = 2)

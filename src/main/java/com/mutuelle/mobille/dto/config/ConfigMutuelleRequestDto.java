@@ -2,6 +2,7 @@ package com.mutuelle.mobille.dto.config;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,4 +26,10 @@ public class ConfigMutuelleRequestDto {
     @DecimalMin(value = "0.0", inclusive = true, message = "Le taux ne peut pas être négatif")
     @Digits(integer = 3, fraction = 2, message = "Format du taux invalide (ex: 12.50 → max 3 chiffres entiers)")
     private BigDecimal loanInterestRatePercent;
+    @DecimalMin(value = "0.0", inclusive = true, message = "La pénalité fixe ne peut pas être négative")
+    @Digits(integer = 12, fraction = 2, message = "Format invalide")
+    private BigDecimal loanPenaltyFixedAmount;
+
+    @Min(value = 1, message = "Le seuil de sessions doit être d'au moins 1")
+    private Integer loanPenaltySessionThreshold;
 }

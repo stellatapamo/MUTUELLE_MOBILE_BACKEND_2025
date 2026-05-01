@@ -54,10 +54,7 @@ public class ConfigController {
     public ResponseEntity<ApiResponseDto<ConfigMutuelleResponseDto>> partialUpdateConfig(
             @Valid @RequestBody ConfigMutuelleRequestDto request ) {
 
-
         MutuelleConfig current = configService.getCurrentConfig();
-
-        // Appliquer uniquement les champs présents (non null) dans la requête
         boolean hasChanges = false;
 
         if (request.getRegistrationFeeAmount() != null) {
@@ -75,25 +72,34 @@ public class ConfigController {
             hasChanges = true;
         }
 
+        // --- Nouveaux champs ---
+        if (request.getLoanPenaltyFixedAmount() != null) {
+            current.setLoanPenaltyFixedAmount(request.getLoanPenaltyFixedAmount());
+            hasChanges = true;
+        }
+
+        if (request.getLoanPenaltySessionThreshold() != null) {
+            current.setLoanPenaltySessionThreshold(request.getLoanPenaltySessionThreshold());
+            hasChanges = true;
+        }
+
         if (!hasChanges) {
-            // Option A : renvoyer 200 OK sans rien faire
             return ResponseEntity.ok(ApiResponseDto.ok(
                     new ConfigMutuelleResponseDto(current),
                     "Aucune modification fournie → configuration inchangée"
             ));
-
-            // Option B : renvoyer 400 Bad Request (plus strict)
-            // throw new IllegalArgumentException("Aucun champ à mettre à jour");
         }
 
         AuthUser currentUser = authService.getCurrentUser()
                 .orElseThrow(() -> new IllegalStateException("Utilisateur non trouvé"));
 
+        // On passe l'objet 'current' modifié.
+        // Note: Assurez-vous que votre service.updateConfig accepte bien les nouveaux champs
         MutuelleConfig saved = configService.updateConfig(current, currentUser.getRole().getValue());
 
         return ResponseEntity.ok(ApiResponseDto.ok(
                 new ConfigMutuelleResponseDto(saved),
-                "Configuration mise à jour avec succès (mise à jour partielle)"
+                "Configuration mise à jour avec succès"
         ));
     }
 }

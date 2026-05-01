@@ -120,7 +120,7 @@ public class EmpruntService {
         MutuelleConfig config = mutuelleConfigRepository.findTopByOrderByUpdatedAtDesc()
                 .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
 
-        BigDecimal tauxPenalite = config.getLoanPenaltyRatePercent()
+        BigDecimal tauxPenalite = config.getLoanInterestRatePercent()
                 .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
         BigDecimal penalite = montant.multiply(tauxPenalite).setScale(2, RoundingMode.HALF_UP);
 
