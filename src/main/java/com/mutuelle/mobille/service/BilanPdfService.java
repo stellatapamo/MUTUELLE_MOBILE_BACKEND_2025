@@ -70,8 +70,6 @@ public class BilanPdfService {
             addRow(decaissements, "Épargne retirée",    dto.getEpargneWithdrawn(),   false, true);
             addRow(decaissements, "Emprunt contracté",  dto.getEmpruntAmount(),      false, true);
             addRow(decaissements, "Intérêts calculés",  dto.getInteretAmount(),      false, true);
-            addRow(decaissements, "Assistance reçue",   dto.getAssistanceReceived(), false, true);
-            addRow(decaissements, "agape session",  dto.getAgapeShare(),        false, true);
             addTotalRow(decaissements, "TOTAL REÇU / DÛ", dto.getTotalRecu());
             doc.add(decaissements);
             doc.add(Chunk.NEWLINE);
@@ -140,8 +138,6 @@ public class BilanPdfService {
             addRow(decaissements, "Épargne retirée (total)",       dto.getTotalEpargneWithdrawn(),   false, true);
             addRow(decaissements, "Emprunts contractés (total)",   dto.getTotalEmpruntAmount(),       false, true);
             addRow(decaissements, "Intérêts calculés (total)",     dto.getTotalInteretAmount(),       false, true);
-            addRow(decaissements, "Assistances reçues (total)",    dto.getTotalAssistanceReceived(),  false, true);
-            addRow(decaissements, "Parts agape (total sessions)",  dto.getTotalAgapeShare(),          false, true);
             addRow(decaissements, "Renfoulement distribué",        dto.getRenfoulementDistributed(),  false, true);
             addTotalRow(decaissements, "TOTAL REÇU / DÛ", dto.getTotalRecu());
             doc.add(decaissements);
@@ -339,11 +335,11 @@ public class BilanPdfService {
             Font cellFont   = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.BLACK);
             Font totalFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, Color.BLACK);
 
-            PdfPTable table = new PdfPTable(new float[]{2.5f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1.2f});
+            PdfPTable table = new PdfPTable(new float[]{2.5f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1.2f});
             table.setWidthPercentage(100);
 
             String[] headers = {"Membre", "Solidarité", "Épargne (net)", "Inscription", "Renfoul. payé",
-                    "Remboursement", "Emprunt", "Intérêts", "Assistance", "Agape", "Solde Net"};
+                    "Remboursement", "Emprunt", "Intérêts", "Assistance", "Solid. impayée", "Inscr. impayée", "Renfoul. impayé", "Solde Net"};
             for (String h : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
                 cell.setBackgroundColor(COLOR_HEADER);
@@ -359,15 +355,17 @@ public class BilanPdfService {
                 BigDecimal epargneNet = b.getTotalEpargneDeposited().subtract(b.getTotalEpargneWithdrawn());
 
                 addSummaryCell(table, b.getMemberLastname() + " " + b.getMemberFirstname(), cellFont, rowColor, Element.ALIGN_LEFT);
-                addSummaryCell(table, fmt(b.getTotalSolidaritePaid()),    cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(epargneNet),                    cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalRegistrationPaid()),  cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalRenfoulementPaid()),  cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalSolidaritePaid()),      cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(epargneNet),                      cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalRegistrationPaid()),    cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalRenfoulementPaid()),    cellFont, rowColor, Element.ALIGN_RIGHT);
                 addSummaryCell(table, fmt(b.getTotalRemboursementAmount()), cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalEmpruntAmount()),     cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalInteretAmount()),     cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalAssistanceReceived()), cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalAgapeShare()),        cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalEmpruntAmount()),       cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalInteretAmount()),       cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalAssistanceReceived()),  cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidSolidarity()),    cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidRegistration()),  cellFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidRenfoulement()),  cellFont, rowColor, Element.ALIGN_RIGHT);
                 BigDecimal net = b.getNetExercice();
                 Font netFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f,
                         net.compareTo(BigDecimal.ZERO) >= 0 ? COLOR_POSITIVE : COLOR_NEGATIVE);

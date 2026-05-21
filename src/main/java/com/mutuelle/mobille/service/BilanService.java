@@ -63,7 +63,7 @@ public class BilanService {
             BigDecimal empruntAmount       = sum(sessionId, accountMemberId, TransactionType.EMPRUNT,        TransactionDirection.DEBIT);
             BigDecimal interetAmount       = sum(sessionId, accountMemberId, TransactionType.INTERET,        TransactionDirection.DEBIT);
             BigDecimal assistanceReceived  = sum(sessionId, accountMemberId, TransactionType.ASSISTANCE,     TransactionDirection.DEBIT);
-            BigDecimal agapeShare          = orZero(session.getAgapeAmountPerMember());
+            BigDecimal agapeShare          = BigDecimal.ZERO;
 
             MemberSessionBilan bilan = MemberSessionBilan.builder()
                     .member(member)
@@ -99,9 +99,7 @@ public class BilanService {
         Long exerciceId = exercice.getId();
         int sessionsCount = sessions.size();
 
-        BigDecimal totalAgapeShareBase = sessions.stream()
-                .map(s -> orZero(s.getAgapeAmountPerMember()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalAgapeShareBase = BigDecimal.ZERO;
 
         for (Member member : activeMembers) {
             AccountMember compte = member.getAccountMember();
@@ -213,9 +211,7 @@ public class BilanService {
 
         BigDecimal totalRecu = b.getEpargneWithdrawn()
                 .add(b.getEmpruntAmount())
-                .add(b.getInteretAmount())
-                .add(b.getAssistanceReceived())
-                .add(b.getAgapeShare());
+                .add(b.getInteretAmount());
 
         return MemberSessionBilanDTO.builder()
                 .id(b.getId())
@@ -258,9 +254,7 @@ public class BilanService {
 
         BigDecimal totalRecu = b.getTotalEpargneWithdrawn()
                 .add(b.getTotalEmpruntAmount())
-                .add(b.getTotalInteretAmount())
-                .add(b.getTotalAssistanceReceived())
-                .add(b.getTotalAgapeShare());
+                .add(b.getTotalInteretAmount());
 
         return MemberExerciceBilanDTO.builder()
                 .id(b.getId())
