@@ -206,7 +206,7 @@ public class BilanPdfService {
 
             addSectionTitle(doc, "FLUX DÉCAISSÉS DURANT LA SESSION");
             PdfPTable decaisses = buildTwoColumnTable();
-            addRow(decaisses, "Assistances versées",    dto.getTotalAssistanceAmount(), false, true);
+            addRow(decaisses, "Assistances Faits",    dto.getTotalAssistanceAmount(), false, true);
             addRow(decaisses, "Agapes débitées",        dto.getAgapeAmount(),           false, true);
             addRow(decaisses, "Emprunts accordés",      dto.getTotalEmpruntAmount(),    false, true);
             addRow(decaisses, "Épargne retirée",        dto.getTotalEpargneWithdrawn(), false, true);
@@ -274,7 +274,7 @@ public class BilanPdfService {
 
             addSectionTitle(doc, "FLUX DÉCAISSÉS SUR L'EXERCICE");
             PdfPTable decaisses = buildTwoColumnTable();
-            addRow(decaisses, "Assistances versées (total)", dto.getTotalAssistanceAmount(), false, true);
+            addRow(decaisses, "Assistances Faits (total)", dto.getTotalAssistanceAmount(), false, true);
             addRow(decaisses, "Agapes débitées (total)",    dto.getTotalAgapeAmount(),       false, true);
             addRow(decaisses, "Emprunts accordés (total)",  dto.getTotalEmpruntAmount(),     false, true);
             addRow(decaisses, "Épargne retirée (total)",    dto.getTotalEpargneWithdrawn(),  false, true);

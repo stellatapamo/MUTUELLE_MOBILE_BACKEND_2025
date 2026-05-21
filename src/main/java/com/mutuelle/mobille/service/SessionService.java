@@ -675,7 +675,7 @@ public class SessionService {
     public void processAllInterestsForClosingSession(Session session) {
         log.info("Traitement des intérêts pour la clôture de la session '{}'", session.getName());
 
-        // 1️⃣ Récupérer les emprunteurs
+        //  Récupérer les emprunteurs
         List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
 
         if (emprunteurs.isEmpty()) {
@@ -684,19 +684,20 @@ public class SessionService {
         }
 
         for (AccountMember emprunteur : emprunteurs) {
-            // 2️⃣ Récupérer les transactions d'emprunt de cette session
+            //  Récupérer les transactions d'emprunt de cette session
             List<Transaction> empruntsSession = transactionRepository
                     .findFiltered(
                             TransactionType.EMPRUNT,  // type
                             null,                      // direction
                             session.getId(),           // sessionId
+                            null,                      // exerciceId
                             emprunteur.getId(),        // accountMemberId
                             null,                      // fromDate
                             null,                      // toDate
                             Pageable.unpaged()         // pageable (tous les résultats)
                     ).getContent();
 
-            // 3️⃣ Pour chaque emprunt de la session, redistribuer les intérêts
+            //  Pour chaque emprunt de la session, redistribuer les intérêts
             for (Transaction emprunt : empruntsSession) {
                 BigDecimal interet = interetService.calculerInteret(emprunt.getAmount());
 

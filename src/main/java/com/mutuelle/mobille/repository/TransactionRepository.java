@@ -32,6 +32,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             TransactionType type,
             TransactionDirection direction,
             Long sessionId,
+            Long exerciceId,
             Long accountMemberId,
             LocalDateTime fromDate,
             LocalDateTime toDate,
@@ -39,9 +40,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
         org.springframework.data.jpa.domain.Specification<Transaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isNull(root.get("parentTransaction")));
             if (type != null) predicates.add(cb.equal(root.get("transactionType"), type));
             if (direction != null) predicates.add(cb.equal(root.get("transactionDirection"), direction));
             if (sessionId != null) predicates.add(cb.equal(root.get("session").get("id"), sessionId));
+            if (exerciceId != null) predicates.add(cb.equal(root.get("session").get("exercice").get("id"), exerciceId));
             if (accountMemberId != null) predicates.add(cb.equal(root.get("accountMember").get("id"), accountMemberId));
             if (fromDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
             if (toDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));

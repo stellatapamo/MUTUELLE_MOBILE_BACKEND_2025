@@ -1,6 +1,5 @@
 package com.mutuelle.mobille.models;
 
-import com.mutuelle.mobille.enums.Role;
 import com.mutuelle.mobille.enums.TransactionDirection;
 import com.mutuelle.mobille.enums.TransactionType;
 import com.mutuelle.mobille.models.account.AccountMember;
@@ -9,6 +8,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "transactions")
@@ -49,6 +50,10 @@ public class Transaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_transaction_id", nullable = true)
     private Transaction parentTransaction;
+
+    @OneToMany(mappedBy = "parentTransaction", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Transaction> children = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

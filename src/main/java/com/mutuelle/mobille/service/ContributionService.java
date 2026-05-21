@@ -53,18 +53,19 @@ public class ContributionService {
             );
         }
 
+        AccountService.RenfoulementSplit split = null;
         switch (type) {
             case INSCRIPTION -> accountService.payFeeInscriptionAmount(memberId, amount);
             case RENFOULEMENT -> {
                 Long exerciceId = currentSession.getExercice().getId();
-                accountService.payRenfoulementAmount(memberId, amount, exerciceId);
+                split = accountService.payRenfoulementAmount(memberId, amount, exerciceId);
             }
             default -> throw new IllegalArgumentException("Type non supporté");
         }
 
         BigDecimal remaining = unpaidBefore.subtract(amount);
 
-        // Création transaction
+        // Transaction parente
         Transaction transaction = Transaction.builder()
                 .accountMember(memberAccount)
                 .session(currentSession)
@@ -75,6 +76,32 @@ public class ContributionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+
+        // Transactions enfants de ventilation (uniquement pour RENFOULEMENT)
+        if (split != null) {
+            if (split.partInscription().compareTo(BigDecimal.ZERO) > 0) {
+                transactionRepository.save(Transaction.builder()
+                        .accountMember(memberAccount)
+                        .session(currentSession)
+                        .amount(split.partInscription())
+                        .transactionType(TransactionType.RENFOULEMENT_INSCRIPTION)
+                        .transactionDirection(TransactionDirection.CREDIT)
+                        .description("Ventilation renfoulement → Caisse inscription")
+                        .parentTransaction(savedTransaction)
+                        .build());
+            }
+            if (split.partSolidarite().compareTo(BigDecimal.ZERO) > 0) {
+                transactionRepository.save(Transaction.builder()
+                        .accountMember(memberAccount)
+                        .session(currentSession)
+                        .amount(split.partSolidarite())
+                        .transactionType(TransactionType.RENFOULEMENT_SOLIDARITE)
+                        .transactionDirection(TransactionDirection.CREDIT)
+                        .description("Ventilation renfoulement → Caisse solidarité")
+                        .parentTransaction(savedTransaction)
+                        .build());
+            }
+        }
 
         return new ContributionPaymentResponseDto(
                 savedTransaction.getId(),

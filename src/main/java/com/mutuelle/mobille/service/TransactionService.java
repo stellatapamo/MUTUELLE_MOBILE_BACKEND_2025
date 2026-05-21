@@ -29,13 +29,14 @@ public class TransactionService {
             TransactionType type,
             TransactionDirection direction,
             Long sessionId,
+            Long exerciceId,
             Long accountMemberId,
             LocalDateTime fromDate,
             LocalDateTime toDate,
             Pageable pageable) {
 
         Page<Transaction> page = transactionRepository.findFiltered(
-                type, direction, sessionId, accountMemberId, fromDate, toDate, pageable
+                type, direction, sessionId, exerciceId, accountMemberId, fromDate, toDate, pageable
         );
 
         return page.map(TransactionMapper::toResponseDTO);
@@ -48,20 +49,7 @@ public class TransactionService {
         Transaction tx = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction introuvable"));
 
-        return new TransactionResponseDTO(
-                tx.getId(),
-                tx.getAmount(),
-                tx.getTransactionType(),
-                tx.getTransactionDirection(),
-                tx.getAccountMember().getId(),
-                tx.getAccountMember().getMember() != null
-                        ? tx.getAccountMember().getMember().getFirstname() + " " +
-                        tx.getAccountMember().getMember().getLastname()
-                        : null,
-                tx.getSession().getId(),
-                tx.getCreatedAt(),
-                tx.getUpdatedAt()
-        );
+        return TransactionMapper.toResponseDTO(tx);
     }
 
     // Nombre total de transactions pour un membre

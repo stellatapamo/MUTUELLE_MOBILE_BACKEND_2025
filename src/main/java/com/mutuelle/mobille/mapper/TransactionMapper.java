@@ -5,6 +5,8 @@ import com.mutuelle.mobille.dto.transaction.TransactionResponseDTO;
 import com.mutuelle.mobille.models.Transaction;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class TransactionMapper {
 
@@ -19,6 +21,10 @@ public class TransactionMapper {
                     tx.getAccountMember().getMember().getLastname();
         }
 
+        List<TransactionResponseDTO> children = tx.getChildren().stream()
+                .map(TransactionMapper::toResponseDTO)
+                .toList();
+
         return new TransactionResponseDTO(
                 tx.getId(),
                 tx.getAmount(),
@@ -28,7 +34,8 @@ public class TransactionMapper {
                 memberFullName,
                 tx.getSession() != null ? tx.getSession().getId() : null,
                 tx.getCreatedAt(),
-                tx.getUpdatedAt()
+                tx.getUpdatedAt(),
+                children
         );
     }
 }

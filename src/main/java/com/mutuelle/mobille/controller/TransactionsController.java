@@ -34,6 +34,7 @@ public class TransactionsController {
             @RequestParam(required = false) TransactionType type,
             @RequestParam(required = false) TransactionDirection direction,
             @RequestParam(required = false) Long sessionId,
+            @RequestParam(required = false) Long exerciceId,
             @RequestParam(required = false) Long accountMemberId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
@@ -48,7 +49,7 @@ public class TransactionsController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(directionSort, sortParams[0]));
 
         Page<TransactionResponseDTO> result = transactionService.getTransactionsFiltered(
-                type, direction, sessionId, accountMemberId, fromDate, toDate, pageable);
+                type, direction, sessionId, exerciceId, accountMemberId, fromDate, toDate, pageable);
 
         ApiResponseDto<List<TransactionResponseDTO>> response = ApiResponseDto.okPaged(
                 result.getContent(),

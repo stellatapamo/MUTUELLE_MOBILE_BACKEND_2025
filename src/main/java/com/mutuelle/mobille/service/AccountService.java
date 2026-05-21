@@ -352,7 +352,9 @@
          * - au-delà → Caisse Solidarité
          */
         @Transactional
-        public void payRenfoulementAmount(Long memberId, BigDecimal amount, Long exerciceId) {
+        public record RenfoulementSplit(BigDecimal partInscription, BigDecimal partSolidarite) {}
+
+        public RenfoulementSplit payRenfoulementAmount(Long memberId, BigDecimal amount, Long exerciceId) {
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Le montant payé doit être positif");
             }
@@ -416,6 +418,8 @@
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);
+
+            return new RenfoulementSplit(partInscription, partSolidarite);
         }
 
         /**
