@@ -191,7 +191,7 @@ public class ExerciceService {
             if (request.getStartDate() != null && !request.getStartDate().equals(exercice.getStartDate())) {
                 throw new IllegalArgumentException("Modification de startDate interdite sur exercice en cours");
             }
-            // endDate → prolongation uniquement
+            // endDate  prolongation uniquement
             if (request.getEndDate() != null) {
                 LocalDateTime newEnd = request.getEndDate();
                 if (newEnd.isBefore(exercice.getEndDate())) {
@@ -463,7 +463,7 @@ public class ExerciceService {
         int nbMembresAJour = comptesAJour.size();
         if (nbMembresAJour == 0) {
             nbMembresAJour=1;
-//            log.warn("Aucun membre à jour → impossible de calculer le renfoulement pour l'exercice {}", exercice.getId());
+//            log.warn("Aucun membre à jour   impossible de calculer le renfoulement pour l'exercice {}", exercice.getId());
 //            return;
         }
 
@@ -497,7 +497,8 @@ public class ExerciceService {
 
         // Session la plus récente
         Session sessionRef = sessions.stream()
-                .max(Comparator.comparing(Session::getStartDate))
+                .max(Comparator.comparing(Session::getStartDate,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
                 .orElse(null);
 
         BigDecimal totalAttribue=BigDecimal.ZERO;

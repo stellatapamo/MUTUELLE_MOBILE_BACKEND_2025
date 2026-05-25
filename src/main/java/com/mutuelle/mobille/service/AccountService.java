@@ -348,13 +348,13 @@
 
         /**
          * Paiement du renfoulement par un membre avec ventilation automatique :
-         * - jusqu'au seuil agape de l'exercice → Caisse Inscription
-         * - au-delà → Caisse Solidarité
+         * - comble d'abord les caisses inscription de tous les renfoulements (du plus ancien au plus récent)
+         * - le reste va en Caisse Solidarité
          */
         @Transactional
         public record RenfoulementSplit(BigDecimal partInscription, BigDecimal partSolidarite) {}
 
-        public RenfoulementSplit payRenfoulementAmount(Long memberId, BigDecimal amount, Long exerciceId) {
+        public RenfoulementSplit payRenfoulementAmount(Long memberId, BigDecimal amount) {
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Le montant payé doit être positif");
             }
@@ -372,49 +372,43 @@
                 throw new IllegalArgumentException("Le paiement dépasse le renfoulement dû");
             }
 
-            // Réduire la dette du membre
+            // Réduire la dette globale du membre
             memberAccount.setUnpaidRenfoulement(unpaid.subtract(amount));
 
-            // Charger le Renfoulement de l'exercice
-            Renfoulement renfoulement = renfoulementRepository.findByExerciceId(exerciceId)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Aucun renfoulement trouvé pour l'exercice ID : " + exerciceId));
+            // Parcourir tous les renfoulements du plus ancien au plus récent
+            // et combler les caisses inscription en priorité
+            List<Renfoulement> renfoulements = renfoulementRepository.findAllByOrderByCreatedAtAsc();
 
-            // Seuil = total des agapes de l'exercice (stocké dans Renfoulement à la clôture)
-            BigDecimal seuilAgape = renfoulement.getAgapeAmount();
+            BigDecimal restant = amount;
+            BigDecimal totalInscription = BigDecimal.ZERO;
 
-            // Montant déjà versé en Caisse Inscription pour cet exercice
-            BigDecimal dejaCollecte = renfoulement.getRenfoulementCollectedForInscription();
+            for (Renfoulement renfoulement : renfoulements) {
+                if (restant.compareTo(BigDecimal.ZERO) <= 0) break;
 
-            // Capacité restante dans Caisse Inscription avant d'atteindre le seuil agape
-            BigDecimal capaciteInscription = seuilAgape.subtract(dejaCollecte).max(BigDecimal.ZERO);
+                BigDecimal capacite = renfoulement.getAgapeAmount()
+                        .subtract(renfoulement.getRenfoulementCollectedForInscription())
+                        .max(BigDecimal.ZERO);
 
-            BigDecimal partInscription;
-            BigDecimal partSolidarite;
+                if (capacite.compareTo(BigDecimal.ZERO) == 0) continue;
 
-            if (capaciteInscription.compareTo(BigDecimal.ZERO) == 0) {
-                // Seuil agape déjà atteint → tout va en Caisse Solidarité
-                partInscription = BigDecimal.ZERO;
-                partSolidarite = amount;
-            } else if (amount.compareTo(capaciteInscription) <= 0) {
-                // Tout le paiement tient dans la capacité inscription restante
-                partInscription = amount;
-                partSolidarite = BigDecimal.ZERO;
-            } else {
-                // Paiement hybride : partie en Inscription pour atteindre le seuil, reste en Solidarité
-                partInscription = capaciteInscription;
-                partSolidarite = amount.subtract(capaciteInscription);
+                BigDecimal versement = restant.min(capacite);
+                renfoulement.setRenfoulementCollectedForInscription(
+                        renfoulement.getRenfoulementCollectedForInscription().add(versement));
+                renfoulementRepository.save(renfoulement);
+
+                totalInscription = totalInscription.add(versement);
+                restant = restant.subtract(versement);
             }
+
+            BigDecimal partInscription = totalInscription;
+            BigDecimal partSolidarite = restant;
 
             if (partInscription.compareTo(BigDecimal.ZERO) > 0) {
                 globalAccount.setRegistrationAmount(globalAccount.getRegistrationAmount().add(partInscription));
-                renfoulement.setRenfoulementCollectedForInscription(dejaCollecte.add(partInscription));
             }
             if (partSolidarite.compareTo(BigDecimal.ZERO) > 0) {
                 globalAccount.setSolidarityAmount(globalAccount.getSolidarityAmount().add(partSolidarite));
             }
-
-            renfoulementRepository.save(renfoulement);
 
             memberRepo.save(memberAccount);
             globalRepo.save(globalAccount);

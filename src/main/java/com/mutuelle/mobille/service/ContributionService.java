@@ -56,10 +56,7 @@ public class ContributionService {
         AccountService.RenfoulementSplit split = null;
         switch (type) {
             case INSCRIPTION -> accountService.payFeeInscriptionAmount(memberId, amount);
-            case RENFOULEMENT -> {
-                Long exerciceId = currentSession.getExercice().getId();
-                split = accountService.payRenfoulementAmount(memberId, amount, exerciceId);
-            }
+            case RENFOULEMENT -> split = accountService.payRenfoulementAmount(memberId, amount);
             default -> throw new IllegalArgumentException("Type non supporté");
         }
 
@@ -86,7 +83,7 @@ public class ContributionService {
                         .amount(split.partInscription())
                         .transactionType(TransactionType.RENFOULEMENT_INSCRIPTION)
                         .transactionDirection(TransactionDirection.CREDIT)
-                        .description("Ventilation renfoulement → Caisse inscription")
+                        .description("Ventilation renfoulement  Caisse inscription")
                         .parentTransaction(savedTransaction)
                         .build());
             }
@@ -97,7 +94,7 @@ public class ContributionService {
                         .amount(split.partSolidarite())
                         .transactionType(TransactionType.RENFOULEMENT_SOLIDARITE)
                         .transactionDirection(TransactionDirection.CREDIT)
-                        .description("Ventilation renfoulement → Caisse solidarité")
+                        .description("Ventilation renfoulement  Caisse solidarité")
                         .parentTransaction(savedTransaction)
                         .build());
             }
