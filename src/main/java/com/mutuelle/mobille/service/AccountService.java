@@ -304,7 +304,7 @@
             globalAccount.setSavingAmount(globalAccount.getSavingAmount().add(amount));
             globalAccount.setBorrowAmount(globalAccount.getBorrowAmount().subtract(amount));
 
-            // Emprunt soldé → réinitialiser la session d'origine
+            // Emprunt soldé - réinitialiser la session d'origine
             if (memberAccount.getBorrowAmount().compareTo(BigDecimal.ZERO) == 0) {
                 memberAccount.setBorrowSessionId(null);
             }

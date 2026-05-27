@@ -53,7 +53,7 @@ public class InteretService {
                 .divide(BigDecimal.valueOf(100), 8, BigDecimal.ROUND_HALF_UP);
 
         if (taux.compareTo(BigDecimal.ONE) >= 0 || taux.compareTo(BigDecimal.ZERO) <= 0) {
-            log.warn("Taux invalide ({}) → retour solde tel quel", taux);
+            log.warn("Taux invalide ({}) - retour solde tel quel", taux);
             return soldeRestant;
         }
 
@@ -80,7 +80,7 @@ public class InteretService {
         if (beneficiaires.isEmpty()) {
             log.info("Aucun bénéficiaire → tout en caisse");
             accountService.addToMutuelleCaisse(interetTotal);
-            saveCaisseTransaction(interetTotal, "Intérêt → caisse (aucun épargnant)", session, parentTransaction);
+            saveCaisseTransaction(interetTotal, "Intérêt - caisse (aucun épargnant)", session, parentTransaction);
             return;
         }
 

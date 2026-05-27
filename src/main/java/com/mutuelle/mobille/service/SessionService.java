@@ -15,6 +15,8 @@ import com.mutuelle.mobille.repository.*;
 import com.mutuelle.mobille.service.notifications.SessionNotificationHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,9 @@ public class SessionService {
     private final InteretService interetService;
     private final BilanService bilanService;
 
+    @Lazy
+    @Autowired
+    private EmpruntService empruntService;
 
 //    private final Clock clock;  // ← à injecter (configurable pour les tests)
 
@@ -525,6 +530,7 @@ public class SessionService {
         if (session.getHistory() != null) return;
 
         processAllInterestsForClosingSession(session);
+        empruntService.appliquerPenalitesEmprunteurs(session);
 
         AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
         Long sessionId = session.getId();

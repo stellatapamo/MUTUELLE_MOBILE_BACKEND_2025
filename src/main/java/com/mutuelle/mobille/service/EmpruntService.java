@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -47,7 +46,7 @@ public class EmpruntService {
         Optional<Session> currentSessionOpt = sessionService.findCurrentSession();
 
         if (currentSessionOpt.isEmpty()) {
-            throw new IllegalStateException("Impossible d'effectuer un emprunt : aucune session active en cours");
+            throw new IllegalStateException("Echec : aucune session active en cours");
         }
 
         Session currentSession = currentSessionOpt.get();
@@ -58,7 +57,7 @@ public class EmpruntService {
 
         if (saving.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalStateException(
-                    "Impossible d’effectuer un emprunt : aucune épargne enregistrée"
+                    "Echec : aucune épargne enregistrée"
             );
         }
 
@@ -68,7 +67,7 @@ public class EmpruntService {
 
         if (borrow.compareTo(BigDecimal.ZERO) > 0) {
             throw new IllegalStateException(
-                    "Impossible d’effectuer un emprunt : un emprunt est déjà en cours"
+                    "Echec : un emprunt est déjà en cours"
             );
         }
 
@@ -116,30 +115,6 @@ public class EmpruntService {
             throw new IllegalStateException("Aucun emprunt actif à rembourser");
         }
 
-        // ── Calcul de la pénalité ─────────────────────────────────────────────
-        MutuelleConfig config = mutuelleConfigRepository.findTopByOrderByUpdatedAtDesc()
-                .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
-
-        BigDecimal tauxPenalite = config.getLoanInterestRatePercent()
-                .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
-        BigDecimal penalite = montant.multiply(tauxPenalite).setScale(2, RoundingMode.HALF_UP);
-
-        Long borrowSessionId = membre.getBorrowSessionId();
-        if (borrowSessionId != null) {
-            Session borrowSession = sessionRepository.findById(borrowSessionId)
-                    .orElseThrow(() -> new IllegalStateException("Session d'emprunt introuvable"));
-
-            long nbSessionsFermees = sessionRepository.countCompletedSessionsAfter(borrowSession.getStartDate());
-
-            int threshold = config.getLoanPenaltySessionThreshold() != null
-                    ? config.getLoanPenaltySessionThreshold() : 3;
-
-            if (nbSessionsFermees >= threshold) {
-                penalite = penalite.add(config.getLoanPenaltyFixedAmount());
-            }
-        }
-
-        // ── Remboursement capital ─────────────────────────────────────────────
         accountService.repayBorrowedAmount(memberId, montant);
 
         transactionRepository.save(
@@ -152,21 +127,42 @@ public class EmpruntService {
                         .description("Remboursement emprunt")
                         .build()
         );
+    }
 
-        // ── Pénalité ─────────────────────────────────────────────────────────
-        if (penalite.compareTo(BigDecimal.ZERO) > 0) {
-            accountService.addToMutuelleCaisse(penalite);
+    @Transactional
+    public void appliquerPenalitesEmprunteurs(Session session) {
+        MutuelleConfig config = mutuelleConfigRepository.findTopByOrderByUpdatedAtDesc()
+                .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
 
-            transactionRepository.save(
+        BigDecimal penaliteFixe = config.getLoanPenaltyFixedAmount();
+        if (penaliteFixe == null || penaliteFixe.compareTo(BigDecimal.ZERO) <= 0) return;
+
+        int threshold = config.getLoanPenaltySessionThreshold() != null
+                ? config.getLoanPenaltySessionThreshold() : 3;
+
+        List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
+        for (AccountMember membre : emprunteurs) {
+            Long borrowSessionId = membre.getBorrowSessionId();
+            if (borrowSessionId == null) continue;
+
+            Session borrowSession = sessionRepository.findById(borrowSessionId).orElse(null);
+            if (borrowSession == null) continue;
+
+            long nbSessionsFermees = sessionRepository.countCompletedSessionsAfter(borrowSession.getStartDate());
+            if (nbSessionsFermees < threshold) continue;
+
+            Transaction txPenalite = transactionRepository.save(
                     Transaction.builder()
                             .accountMember(membre)
-                            .amount(penalite)
+                            .amount(penaliteFixe)
                             .transactionType(TransactionType.PENALITE)
                             .transactionDirection(TransactionDirection.DEBIT)
-                            .session(currentSession)
-                            .description("Pénalité de remboursement")
+                            .session(session)
+                            .description("Pénalité de retard de remboursement")
                             .build()
             );
+
+            interetService.redistribuerInteret(membre.getId(), penaliteFixe, txPenalite, session);
         }
     }
 
