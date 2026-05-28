@@ -93,6 +93,7 @@ public class EmpruntService {
                         .description("Emprunt de : "+emprunteur.getMember().getLastname())
                         .build()
         );
+        currentSession.setTotalInteretAmount(currentSession.getTotalInteretAmount().add(interet));
 
         //interetService.redistribuerInteret(emprunteur.getId(), interet,trans,currentSession);
     }
@@ -130,7 +131,14 @@ public class EmpruntService {
     }
 
     @Transactional
-    public void appliquerPenalitesEmprunteurs(Session session) {
+    public void calculerEtRedistribuerInteretsPenalites() {
+
+        Optional<Session> sessionOpt = sessionService.findCurrentSession();
+        if (sessionOpt.isEmpty()) {
+            return;
+        }
+        Session session = sessionOpt.get();
+
         MutuelleConfig config = mutuelleConfigRepository.findTopByOrderByUpdatedAtDesc()
                 .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
 
@@ -140,9 +148,16 @@ public class EmpruntService {
         int threshold = config.getLoanPenaltySessionThreshold() != null
                 ? config.getLoanPenaltySessionThreshold() : 3;
 
+        BigDecimal totalInterets = session.getTotalInteretAmount() != null
+                ? session.getTotalInteretAmount()
+                : BigDecimal.ZERO;
+
         List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
-        for (AccountMember membre : emprunteurs) {
-            Long borrowSessionId = membre.getBorrowSessionId();
+        if (emprunteurs.isEmpty()) return;
+
+        for (AccountMember membreAcc : emprunteurs) {
+
+            Long borrowSessionId = membreAcc.getBorrowSessionId();
             if (borrowSessionId == null) continue;
 
             Session borrowSession = sessionRepository.findById(borrowSessionId).orElse(null);
@@ -151,77 +166,25 @@ public class EmpruntService {
             long nbSessionsFermees = sessionRepository.countCompletedSessionsAfter(borrowSession.getStartDate());
             if (nbSessionsFermees < threshold) continue;
 
-            Transaction txPenalite = transactionRepository.save(
-                    Transaction.builder()
-                            .accountMember(membre)
-                            .amount(penaliteFixe)
-                            .transactionType(TransactionType.PENALITE)
-                            .transactionDirection(TransactionDirection.DEBIT)
-                            .session(session)
-                            .description("Pénalité de retard de remboursement")
-                            .build()
-            );
-
-            interetService.redistribuerInteret(membre.getId(), penaliteFixe, txPenalite, session);
-        }
-    }
-
-    @Transactional
-    public void calculerEtRedistribuerInteretsTrimestriels() {
-
-        Optional<Session> sessionOpt = sessionService.findCurrentSession();
-        if (sessionOpt.isEmpty()) {
-//            log.warn("Aucune session active → calcul intérêts trimestriels ignoré");
-            return;
-        }
-        Session session = sessionOpt.get();
-
-        List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
-        if (emprunteurs.isEmpty()) {
-            return;
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-
-        for (AccountMember membreAcc : emprunteurs) {
-
-            LocalDateTime lastInterest = membreAcc.getLastInterestDate();
-            if (lastInterest == null) {
-                // À améliorer : idéalement stocker la vraie date de premier emprunt
-                lastInterest = membreAcc.getCreatedAt() != null ? membreAcc.getCreatedAt() : now.minusMonths(3);
-            }
-
-            if (!aAtteintProchainTrimestre(lastInterest, now)) {
-                continue;
-            }
-
             BigDecimal soldeActuel = membreAcc.getBorrowAmount();
-            if (soldeActuel.compareTo(BigDecimal.ZERO) <= 0) {
-                continue;
-            }
+            if (soldeActuel == null || soldeActuel.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-            // 1. Calcul intérêts trimestriels
             BigDecimal interets = interetService.calculerInteret(soldeActuel);
-            if (interets.compareTo(BigDecimal.ZERO) <= 0) {
-                continue;
-            }
+            if (interets.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-            // 2. Calcul du montant emprunt initial "équivalent"
             BigDecimal montantEquivalent = interetService.calculMontantEmpruntEquivalent(soldeActuel);
-
-            // 3. Plafond actuel (sur l'épargne du jour)
-            BigDecimal epargneActuelle = membreAcc.getSavingAmount() != null ? membreAcc.getSavingAmount() : BigDecimal.ZERO;
+            BigDecimal epargneActuelle = membreAcc.getSavingAmount() != null
+                    ? membreAcc.getSavingAmount() : BigDecimal.ZERO;
             BigDecimal plafondActuel = borrowingCeilingService.calculerPlafond(epargneActuelle);
 
-            // 4. Décision
             if (montantEquivalent.compareTo(plafondActuel) > 0) {
 
-                Optional<AuthUser> authOpt=memberService.getAuthMember(membreAcc.getMember());
-                AuthUser AuthUser=authOpt.get();
+                Optional<AuthUser> authOpt = memberService.getAuthMember(membreAcc.getMember());
+                if (authOpt.isEmpty()) continue;
+                AuthUser authUser = authOpt.get();
 
                 BigDecimal ecart = montantEquivalent.subtract(plafondActuel);
 
-                // --- Notification MEMBRE ---
                 Map<String, Object> varsMembre = new HashMap<>();
                 varsMembre.put("memberName", membreAcc.getMember().getLastname());
                 varsMembre.put("soldeActuel", soldeActuel);
@@ -229,16 +192,15 @@ public class EmpruntService {
                 varsMembre.put("plafondActuel", plafondActuel);
 
                 notificationService.sendNotification(NotificationRequestDto.builder()
-                        .email(AuthUser.getEmail())
+                        .email(authUser.getEmail())
                         .title("Alerte : Plafond d'emprunt dépassé")
                         .templateName(TemplateMailsName.PLAFOND_DEPASSE_MEMBER)
                         .variables(varsMembre)
                         .channels(Set.of(EMAIL))
                         .build());
 
-                // --- Notification ADMIN ---
-                 Optional <AuthUser> authAdminOpt= Optional.ofNullable(adminService.getAuthAdmin());
-                 AuthUser authAdmin=authAdminOpt.get();
+                AuthUser authAdmin = adminService.getAuthAdmin();
+                if (authAdmin == null) continue;
 
                 Map<String, Object> varsAdmin = new HashMap<>();
                 varsAdmin.put("memberName", membreAcc.getMember().getLastname());
@@ -251,46 +213,89 @@ public class EmpruntService {
                 varsAdmin.put("sessionName", session.getName());
 
                 notificationService.sendNotification(NotificationRequestDto.builder()
-                        .email(authAdmin.getEmail())   // ou liste d'emails admins
+                        .email(authAdmin.getEmail())
                         .title("[ALERTE] Plafond dépassé – Membre " + membreAcc.getMember().getLastname())
                         .templateName(TemplateMailsName.PLAFOND_DEPASSE_ADMIN)
                         .variables(varsAdmin)
                         .channels(Set.of(EMAIL))
                         .build());
 
-                // log + suite (pas d'update lastInterestDate)
-//                log.warn("Plafond dépassé membre {} | solde={} | equiv={} | plafond={} | écart={}",
-//                        membreAcc.getId(), soldeActuel, montantEquivalent, plafondActuel, ecart);
-
                 continue;
             }
 
-            // 5. OK → on augmente la dette
             accountService.addBorrowAmount(membreAcc, interets);
+            accountService.addBorrowAmount(membreAcc, penaliteFixe);
+            totalInterets = totalInterets.add(interets);
+            totalInterets = totalInterets.add(penaliteFixe);
 
-            // 6. Transaction visible pour l'emprunteur
-            Transaction txInteret = transactionRepository.save(
-                    Transaction.builder()
-                            .accountMember(membreAcc)
-                            .amount(interets)
-                            .transactionType(TransactionType.INTERET)
-                            .transactionDirection(TransactionDirection.DEBIT)
-                            .session(session)
-                            .description("Intérêts trimestriels sur solde restant")
-                            .build()
-            );
+            transactionRepository.save(Transaction.builder()
+                    .accountMember(membreAcc)
+                    .amount(penaliteFixe)
+                    .transactionType(TransactionType.PENALITE)
+                    .transactionDirection(TransactionDirection.DEBIT)
+                    .session(session)
+                    .description("Pénalité de retard de remboursement")
+                    .build());
 
-            // 7. Redistribution (comme à l'emprunt initial)
-            interetService.redistribuerInteret(membreAcc.getId(), interets, txInteret, session);
-
-            // 8. Avancer la date du dernier calcul
-            LocalDateTime nextDate = lastInterest.plusMonths(3);
-            accountService.updateLastInterestDate(membreAcc.getId(), nextDate);
-
-//            log.info("Intérêts trimestriels appliqués membre {} | solde={} → {} | intérêts={} | equiv={}",
-//                    membreAcc.getId(), soldeActuel, soldeActuel.add(interets), interets, montantEquivalent);
+            transactionRepository.save(Transaction.builder()
+                    .accountMember(membreAcc)
+                    .amount(interets)
+                    .transactionType(TransactionType.INTERET)
+                    .transactionDirection(TransactionDirection.DEBIT)
+                    .session(session)
+                    .description("Intérêts trimestriels sur solde restant")
+                    .build());
         }
+
+        if (totalInterets.compareTo(BigDecimal.ZERO) <= 0) return;
+
+        Transaction totalInteretTrans = transactionRepository.save(Transaction.builder()
+                .accountMember(null)
+                .amount(totalInterets)
+                .transactionType(TransactionType.INTERET)
+                .transactionDirection(TransactionDirection.CREDIT)
+                .session(session)
+                .description("Intérêts globaux redistribués – session " + session.getName())
+                .build());
+
+        interetService.redistribuerInteret(totalInterets, totalInteretTrans, session);
     }
+//    @Transactional
+//    public void appliquerPenalitesEmprunteurs(Session session) {
+//        MutuelleConfig config = mutuelleConfigRepository.findTopByOrderByUpdatedAtDesc()
+//                .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
+//
+//        BigDecimal penaliteFixe = config.getLoanPenaltyFixedAmount();
+//        if (penaliteFixe == null || penaliteFixe.compareTo(BigDecimal.ZERO) <= 0) return;
+//
+//        int threshold = config.getLoanPenaltySessionThreshold() != null
+//                ? config.getLoanPenaltySessionThreshold() : 3;
+//
+//        List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
+//        for (AccountMember membre : emprunteurs) {
+//            Long borrowSessionId = membre.getBorrowSessionId();
+//            if (borrowSessionId == null) continue;
+//
+//            Session borrowSession = sessionRepository.findById(borrowSessionId).orElse(null);
+//            if (borrowSession == null) continue;
+//
+//            long nbSessionsFermees = sessionRepository.countCompletedSessionsAfter(borrowSession.getStartDate());
+//            if (nbSessionsFermees < threshold) continue;
+//
+//            Transaction txPenalite = transactionRepository.save(
+//                    Transaction.builder()
+//                            .accountMember(membre)
+//                            .amount(penaliteFixe)
+//                            .transactionType(TransactionType.PENALITE)
+//                            .transactionDirection(TransactionDirection.DEBIT)
+//                            .session(session)
+//                            .description("Pénalité de retard de remboursement")
+//                            .build()
+//            );
+//
+//            interetService.redistribuerInteret(  penaliteFixe, txPenalite, session);
+//        }
+//    }
 
     private boolean aAtteintProchainTrimestre(LocalDateTime derniere, LocalDateTime actuelle) {
         if (derniere == null) return true;

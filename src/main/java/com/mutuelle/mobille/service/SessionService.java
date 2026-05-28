@@ -529,8 +529,8 @@ public class SessionService {
     public void onSessionEnded(Session session) {
         if (session.getHistory() != null) return;
 
-        processAllInterestsForClosingSession(session);
-        empruntService.appliquerPenalitesEmprunteurs(session);
+        empruntService.calculerEtRedistribuerInteretsPenalites();
+//        empruntService.appliquerPenalitesEmprunteurs(session);
 
         AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
         Long sessionId = session.getId();
@@ -632,92 +632,5 @@ public class SessionService {
                 .updatedAt(s.getUpdatedAt())
                 .build();
     }
-
-
-
-    /**
-     * Clôture automatique des sessions après 24h
-     * Appelée par le scheduler
-     */
-    @Transactional
-    public void autoCloseSessionsAfter24h() {
-        LocalDateTime twentyFourHoursAgo = now().minusHours(24);
-
-        List<Session> sessionsToClose = sessionRepository.findInProgressSessionsOlderThan(twentyFourHoursAgo);
-
-        if (sessionsToClose.isEmpty()) {
-            log.info("Aucune session à clôturer automatiquement");
-            return;
-        }
-
-        for (Session session : sessionsToClose) {
-            try {
-                log.info("Tentative de clôture automatique de la session '{}' (démarrée le {})",
-                        session.getName(), session.getStartDate());
-
-                // Appel de la méthode de clôture existante
-                closeSession(session.getId());
-
-                log.info("Session '{}' clôturée automatiquement avec succès", session.getName());
-
-            } catch (IllegalArgumentException e) {
-                // Caisse insuffisante - on notifie mais on ne relance pas l'exception
-                log.error("Impossible de clôturer automatiquement la session '{}' : caisse solidarité insuffisante",
-                        session.getName());
-
-                notificationHelper.notifyAdminCritical(
-                        "Échec clôture automatique session " + session.getName(),
-                        "Impossible de clôturer après 24h - caisse solidarité insuffisante",
-                        e
-                );
-            } catch (Exception e) {
-                log.error("Erreur inattendue lors de la clôture automatique de la session '{}'",
-                        session.getName(), e);
-            }
-        }
-    }
-
-    @Transactional
-    public void processAllInterestsForClosingSession(Session session) {
-        log.info("Traitement des intérêts pour la clôture de la session '{}'", session.getName());
-
-        //  Récupérer les emprunteurs
-        List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
-
-        if (emprunteurs.isEmpty()) {
-            log.info("Aucun emprunteur → pas d'intérêts à traiter");
-            return;
-        }
-
-        for (AccountMember emprunteur : emprunteurs) {
-            //  Récupérer les transactions d'emprunt de cette session
-            List<Transaction> empruntsSession = transactionRepository
-                    .findFiltered(
-                            TransactionType.EMPRUNT,  // type
-                            null,                      // direction
-                            session.getId(),           // sessionId
-                            null,                      // exerciceId
-                            emprunteur.getId(),        // accountMemberId
-                            null,                      // fromDate
-                            null,                      // toDate
-                            Pageable.unpaged()         // pageable (tous les résultats)
-                    ).getContent();
-
-            //  Pour chaque emprunt de la session, redistribuer les intérêts
-            for (Transaction emprunt : empruntsSession) {
-                BigDecimal interet = interetService.calculerInteret(emprunt.getAmount());
-
-                interetService.redistribuerInteret(
-                        emprunteur.getId(),
-                        interet,
-                        emprunt,  // La transaction parent
-                        session
-                );
-            }
-        }
-
-        log.info("Traitement des intérêts terminé pour la session '{}'", session.getName());
-    }
-
 
 }

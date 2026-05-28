@@ -3,6 +3,7 @@ package com.mutuelle.mobille.models;
 import com.mutuelle.mobille.enums.StatusExercice;
 import com.mutuelle.mobille.enums.StatusSession;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -51,6 +52,10 @@ public class Session {
 
     @OneToOne(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     private SessionHistory history;
+
+    @DecimalMin(value = "0.00", inclusive = true, message = "Le montant ne peut pas être négatif")
+    @Column(name = "total_interet_amount", precision = 12, scale = 2)
+    private BigDecimal totalInteretAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

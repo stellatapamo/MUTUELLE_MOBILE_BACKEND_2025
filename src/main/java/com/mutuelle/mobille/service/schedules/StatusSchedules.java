@@ -36,22 +36,22 @@ public class StatusSchedules {
         return LocalDateTime.now();
     }
 
-    @Scheduled(cron = "0 30 6,12,18 * * ?")  //06h30, 12h30, 18h30
-    @Transactional
-    public void synchronizeAllStatuses() {
-        LocalDateTime currentTime = now();
-        log.info("Début synchronisation statuts - {}", currentTime);
-
-        try {
-            //synchronizeSessions(currentTime);
-            //synchronizeExercices(currentTime);
-        } catch (Exception e) {
-            log.error("Erreur critique lors de la synchronisation des statuts", e);
-            // Option : envoyer alerte (email/slack) ici si très grave
-        }
-
-        log.debug("Fin synchronisation statuts");
-    }
+//    @Scheduled(cron = "0 30 6,12,18 * * ?")  //06h30, 12h30, 18h30
+//    @Transactional
+//    public void synchronizeAllStatuses() {
+//        LocalDateTime currentTime = now();
+//        log.info("Début synchronisation statuts - {}", currentTime);
+//
+//        try {
+//            //synchronizeSessions(currentTime);
+//            //synchronizeExercices(currentTime);
+//        } catch (Exception e) {
+//            log.error("Erreur critique lors de la synchronisation des statuts", e);
+//            // Option : envoyer alerte (email/slack) ici si très grave
+//        }
+//
+//        log.debug("Fin synchronisation statuts");
+//    }
     /*
     public void synchronizeSessions(LocalDateTime now) {
 
@@ -96,7 +96,6 @@ public class StatusSchedules {
     }*/
 
     /*private void synchronizeExercices(LocalDateTime now) {
-
         // Étape 1 : TERMINER les exercices expirés (priorité)
         List<Exercice> expired = exerciceRepository.findByStatusAndEndDateLessThan(
                 StatusExercice.IN_PROGRESS, now);
@@ -139,16 +138,16 @@ public class StatusSchedules {
      * Vérifie toutes les heures si des sessions doivent être clôturées automatiquement
      * après 24h d'activité
      */
-    @Scheduled(cron = "0 0 * * * ?")  // Toutes les heures
-    // @Scheduled(fixedDelay = 3600000)  // Alternative : toutes les heures aussi
-    public void checkAndCloseSessions() {
-        log.info("Début de la vérification des sessions à clôturer automatiquement");
-
-        try {
-            sessionService.autoCloseSessionsAfter24h();
-            log.info("Vérification des sessions terminée");
-        } catch (Exception e) {
-            log.error("Erreur lors de la vérification des sessions à clôturer", e);
-        }
-    }
+//    @Scheduled(cron = "0 0 * * * ?")  // Toutes les heures
+//    // @Scheduled(fixedDelay = 3600000)  // Alternative : toutes les heures aussi
+//    public void checkAndCloseSessions() {
+//        log.info("Début de la vérification des sessions à clôturer automatiquement");
+//
+//        try {
+//            sessionService.autoCloseSessionsAfter24h();
+//            log.info("Vérification des sessions terminée");
+//        } catch (Exception e) {
+//            log.error("Erreur lors de la vérification des sessions à clôturer", e);
+//        }
+//    }
 }

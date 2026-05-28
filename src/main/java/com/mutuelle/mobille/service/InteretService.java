@@ -63,7 +63,7 @@ public class InteretService {
         return MoneyUtil.floorToNearest25(montantEquivalent);
     }
 
-    public void redistribuerInteret(Long emprunteurAccountId,
+    public void redistribuerInteret(
                                     BigDecimal interetTotal,
                                     Transaction parentTransaction,
                                     Session session) {
