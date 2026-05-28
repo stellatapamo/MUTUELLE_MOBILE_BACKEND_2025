@@ -471,11 +471,10 @@ public class SessionService {
 
         validateSessionForClose(session);
 
-        session.setEndDate(LocalDateTime.now());
-        session.setStatus(StatusSession.COMPLETED);
-
         try {
             onSessionEnded(session); // risque d'exception caisse insuffisante
+            session.setEndDate(LocalDateTime.now());
+            session.setStatus(StatusSession.COMPLETED);
             session = sessionRepository.save(session);
             notificationHelper.notifySessionEnded(session);
 
@@ -565,9 +564,7 @@ public class SessionService {
                 .accountMember(null)
                 .session(session)
                 .build();
-        transactionRepository.save(tx);
-
-        sessionRepository.save(session);
+        transactionRepository.save(tx); 
 
         // Recharger le compte mutuelle après le débit agape
         mutuelleacc = accountService.getMutuelleGlobalAccount();

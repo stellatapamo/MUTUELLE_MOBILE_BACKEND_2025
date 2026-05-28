@@ -94,6 +94,7 @@ public class EmpruntService {
                         .build()
         );
         currentSession.setTotalInteretAmount(currentSession.getTotalInteretAmount().add(interet));
+        sessionRepository.save(currentSession);
 
         //interetService.redistribuerInteret(emprunteur.getId(), interet,trans,currentSession);
     }
@@ -143,7 +144,7 @@ public class EmpruntService {
                 .orElseThrow(() -> new IllegalStateException("Configuration mutuelle introuvable"));
 
         BigDecimal penaliteFixe = config.getLoanPenaltyFixedAmount();
-        if (penaliteFixe == null || penaliteFixe.compareTo(BigDecimal.ZERO) <= 0) return;
+        boolean penaliteActive = penaliteFixe != null && penaliteFixe.compareTo(BigDecimal.ZERO) > 0;
 
         int threshold = config.getLoanPenaltySessionThreshold() != null
                 ? config.getLoanPenaltySessionThreshold() : 3;
@@ -153,7 +154,6 @@ public class EmpruntService {
                 : BigDecimal.ZERO;
 
         List<AccountMember> emprunteurs = accountService.findMembersWithBorrowGreaterThanZero();
-        if (emprunteurs.isEmpty()) return;
 
         for (AccountMember membreAcc : emprunteurs) {
 
@@ -224,18 +224,7 @@ public class EmpruntService {
             }
 
             accountService.addBorrowAmount(membreAcc, interets);
-            accountService.addBorrowAmount(membreAcc, penaliteFixe);
             totalInterets = totalInterets.add(interets);
-            totalInterets = totalInterets.add(penaliteFixe);
-
-            transactionRepository.save(Transaction.builder()
-                    .accountMember(membreAcc)
-                    .amount(penaliteFixe)
-                    .transactionType(TransactionType.PENALITE)
-                    .transactionDirection(TransactionDirection.DEBIT)
-                    .session(session)
-                    .description("Pénalité de retard de remboursement")
-                    .build());
 
             transactionRepository.save(Transaction.builder()
                     .accountMember(membreAcc)
@@ -245,6 +234,20 @@ public class EmpruntService {
                     .session(session)
                     .description("Intérêts trimestriels sur solde restant")
                     .build());
+
+            if (penaliteActive) {
+                accountService.addBorrowAmount(membreAcc, penaliteFixe);
+                totalInterets = totalInterets.add(penaliteFixe);
+
+                transactionRepository.save(Transaction.builder()
+                        .accountMember(membreAcc)
+                        .amount(penaliteFixe)
+                        .transactionType(TransactionType.PENALITE)
+                        .transactionDirection(TransactionDirection.DEBIT)
+                        .session(session)
+                        .description("Pénalité de retard de remboursement")
+                        .build());
+            }
         }
 
         if (totalInterets.compareTo(BigDecimal.ZERO) <= 0) return;
