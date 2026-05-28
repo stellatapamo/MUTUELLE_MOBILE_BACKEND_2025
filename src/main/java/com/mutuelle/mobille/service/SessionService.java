@@ -529,7 +529,6 @@ public class SessionService {
         if (session.getHistory() != null) return;
 
         empruntService.calculerEtRedistribuerInteretsPenalites();
-//        empruntService.appliquerPenalitesEmprunteurs(session);
 
         AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
         Long sessionId = session.getId();

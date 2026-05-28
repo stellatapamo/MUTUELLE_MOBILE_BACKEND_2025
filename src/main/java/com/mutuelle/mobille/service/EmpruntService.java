@@ -177,7 +177,7 @@ public class EmpruntService {
                     ? membreAcc.getSavingAmount() : BigDecimal.ZERO;
             BigDecimal plafondActuel = borrowingCeilingService.calculerPlafond(epargneActuelle);
 
-            if (montantEquivalent.compareTo(plafondActuel) > 0) {
+            if (montantEquivalent.compareTo(plafondActuel.add(penaliteFixe)) > 0) {
 
                 Optional<AuthUser> authOpt = memberService.getAuthMember(membreAcc.getMember());
                 if (authOpt.isEmpty()) continue;
