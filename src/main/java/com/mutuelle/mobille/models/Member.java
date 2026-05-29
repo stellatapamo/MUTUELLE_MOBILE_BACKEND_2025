@@ -3,10 +3,12 @@ package com.mutuelle.mobille.models;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mutuelle.mobille.models.account.AccountMember;
+import com.mutuelle.mobille.enums.MemberStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "members")
@@ -42,6 +44,10 @@ public class Member {
             optional = false)
     @JsonBackReference
     private AccountMember accountMember;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private MemberStatus status = MemberStatus.ACTIF;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

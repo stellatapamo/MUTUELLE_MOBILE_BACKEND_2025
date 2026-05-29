@@ -41,6 +41,7 @@ public class ExerciceService {
     private final TransactionRepository transactionRepository;
     private final RenfoulementRepository renfoulementRepository;
     private final BilanService bilanService;
+    private final MemberService memberService;
 
 
     private LocalDateTime now() {
@@ -344,6 +345,8 @@ public class ExerciceService {
     @Transactional
     public void onExerciceEnded(Exercice exercice) {
         if (exerciceHistoryRepository.existsByExerciceId(exercice.getId())) return;
+
+        memberService.recalculateAllMemberStatuses();
 
         AccountMutuelle mutuelleacc = accountService.getMutuelleGlobalAccount();
         List<Session> sessions = sessionRepository.findByExerciceId(exercice.getId());

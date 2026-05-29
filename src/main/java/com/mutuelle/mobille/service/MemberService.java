@@ -22,6 +22,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.mutuelle.mobille.enums.MemberStatus;
+import org.springframework.context.annotation.Lazy;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,7 +35,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MemberService {
 
-    private final MutuelleConfigService mutuelleConfigService;
+    private final @Lazy MutuelleConfigService mutuelleConfigService;
     private final MemberRepository memberRepository;
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -74,6 +76,7 @@ public class MemberService {
 
         accountMember.setMember(member); // bidirectionnel
         member = memberRepository.save(member); // cascade → compte sauvé aussi
+        updateMemberStatus(accountMember);
 
         // 3. Création de l'AuthUser (EXACTEMENT comme ton superadmin)
         AuthUser authUser = new AuthUser();
@@ -149,6 +152,7 @@ public class MemberService {
                 accountMember.getSavingAmount(),
                 accountMember.getId(),
                 member.getPin(),
+                member.getStatus(),
                 member.getCreatedAt(),
                 member.getUpdatedAt()
         );
@@ -389,6 +393,50 @@ public class MemberService {
         // - créer une entrée d'audit
 
         return toResponseDTO(member);
+    }
+
+    public void updateMemberStatus(AccountMember account) {
+        Member member = account.getMember();
+        MemberStatus newStatus = calculateMemberStatus(account);
+        if (!member.getStatus().equals(newStatus)) {
+            member.setStatus(newStatus);
+            memberRepository.save(member);
+        }
+    }
+
+    public MemberStatus calculateMemberStatus(AccountMember account) {
+        if (account == null) {
+            throw new IllegalArgumentException("Impossible");
+        }
+
+        BigDecimal unpaidSolidarity = account.getUnpaidSolidarityAmount() != null
+                ? account.getUnpaidSolidarityAmount() : BigDecimal.ZERO;
+        BigDecimal unpaidRenfoulement = account.getUnpaidRenfoulement() != null
+                ? account.getUnpaidRenfoulement() : BigDecimal.ZERO;
+
+        BigDecimal totalDebt = unpaidSolidarity.add(unpaidRenfoulement);
+
+        MutuelleConfig config = mutuelleConfigService.getCurrentConfig();
+        BigDecimal threshold = config.getInsolvencyThreshold();
+
+        if (totalDebt.compareTo(BigDecimal.ZERO) == 0) {
+            return MemberStatus.ACTIF;
+        } else if (totalDebt.compareTo(threshold) < 0) {
+            return MemberStatus.INSOLVABLE;
+        } else {
+            return MemberStatus.INACTIF;
+        }
+    }
+
+    @Transactional
+    public void recalculateAllMemberStatuses() {
+        List<Member> allMembers = memberRepository.findAll(); // ou seulement les actifs
+        for (Member member : allMembers) {
+            AccountMember account = member.getAccountMember();
+            if (account != null) {
+                updateMemberStatus(account);
+            }
+        }
     }
 
 }

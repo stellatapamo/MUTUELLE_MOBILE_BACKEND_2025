@@ -19,6 +19,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.mutuelle.mobille.enums.Role;
+import com.mutuelle.mobille.enums.MemberStatus;
+import com.mutuelle.mobille.exception.AccountDisabledException;
+import com.mutuelle.mobille.exception.AccountInactiveException;
+import com.mutuelle.mobille.service.MutuelleConfigService;
+import java.math.BigDecimal;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,6 +43,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final MemberMapper memberMapper;
     private final AdminMapper adminMapper;
+    private final MutuelleConfigService mutuelleConfigService;
 
     public LoginResponseDto login(String email, String password) {
         AuthUser authUser = authUserRepo.findByEmail(email)
@@ -44,6 +51,23 @@ public class AuthService {
 
         if (authUser == null || !passwordEncoder.matches(password, authUser.getPasswordHash())) {
             throw new BadCredentialsException("Identifiants invalides");
+        }
+
+        // --- Vérification du statut pour les membres ---
+        if (authUser.getRole() == Role.MEMBER) {
+            Member member = memberRepo.findById(authUser.getUserRefId())
+                    .orElseThrow(() -> new RuntimeException("Membre introuvable"));
+
+            //  Désactivation administrative
+            if (!member.isActive()) {
+                throw new AccountDisabledException("Compte désactivé par l'administration.");
+            }
+            // Blocage pour dette excessive
+            if (member.getStatus() == MemberStatus.INACTIF) {
+                BigDecimal seuil = mutuelleConfigService.getCurrentConfig().getInsolvencyThreshold();
+                throw new AccountInactiveException("Compte inactif : dette ≥ " + seuil + " FCFA");
+            }
+            // Les membres INSOLVABLE peuvent se connecter (afficher un avertissement plus tard)
         }
 
         String accessToken = jwtUtils.generateAccessToken(authUser);

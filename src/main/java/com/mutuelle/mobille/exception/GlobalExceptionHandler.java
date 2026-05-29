@@ -94,4 +94,30 @@ public class GlobalExceptionHandler {
     //     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
     //             .body(ApiResponseDto.error("Une erreur interne est survenue. Veuillez réessayer plus tard."));
     // }
+
+
+
+    // Compte désactivé administrativement
+    @ExceptionHandler(AccountDisabledException.class)
+    public ResponseEntity<ApiResponseDto<?>> handleAccountDisabled(AccountDisabledException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponseDto.builder()
+                        .success(false)
+                        .message(ex.getMessage())
+                        .code(403)
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+
+    // Compte inactif pour dette
+    @ExceptionHandler(AccountInactiveException.class)
+    public ResponseEntity<ApiResponseDto<?>> handleAccountInactive(AccountInactiveException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponseDto.builder()
+                        .success(false)
+                        .message(ex.getMessage())
+                        .code(403)
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
 }

@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.mutuelle.mobille.service.MemberService;
 
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ public class ConfigController {
 
     private final MutuelleConfigService configService;
     private final AuthService authService;
+    private final MemberService memberService;
 
 
     /**
@@ -83,6 +85,11 @@ public class ConfigController {
             hasChanges = true;
         }
 
+        if (request.getInsolvencyThreshold() != null) {
+            current.setInsolvencyThreshold(request.getInsolvencyThreshold());
+            hasChanges = true;
+        }
+
         if (!hasChanges) {
             return ResponseEntity.ok(ApiResponseDto.ok(
                     new ConfigMutuelleResponseDto(current),
@@ -102,4 +109,12 @@ public class ConfigController {
                 "Configuration mise à jour avec succès"
         ));
     }
+
+    @PostMapping("/admin/recalculate-statuses")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponseDto<String>> recalculateAllStatuses() {
+        memberService.recalculateAllMemberStatuses();
+        return ResponseEntity.ok(ApiResponseDto.ok(null, "Tous les statuts ont été recalculés"));
+    }
+
 }

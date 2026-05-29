@@ -29,7 +29,7 @@ public class SolidariteService {
         private final SessionRepository sessionRepo;
         private final SolidariteRepository solidariteRepo;
         private final AccountService accountService;
-
+        private final MemberService memberService;
 
         /**
          * Paiement d'une cotisation de solidarité par un membre
@@ -94,6 +94,7 @@ public class SolidariteService {
 
                 // Persistance des nouvelles valeurs
                 memberRepo.save(memberAccount);
+                memberService.updateMemberStatus(memberAccount);
                 globalRepo.save(globalAccount);
 
                 // ─────────────────────────────────────────────

@@ -13,6 +13,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import com.mutuelle.mobille.exception.AccountDisabledException;
+import com.mutuelle.mobille.exception.AccountInactiveException;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +38,9 @@ public class AuthController {
                     request.getPassword()
             );
             return ResponseEntity.ok(ApiResponseDto.ok(loginData, "Connexion réussie"));
-
+        } catch (AccountDisabledException | AccountInactiveException e) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponseDto.errorCustom(e.getMessage(), 403));
         } catch (BadCredentialsException | UsernameNotFoundException e) {
             return ResponseEntity.ok(ApiResponseDto.errorCustom("Email ou mot de passe incorrect", 400));
         } catch (Exception e) {

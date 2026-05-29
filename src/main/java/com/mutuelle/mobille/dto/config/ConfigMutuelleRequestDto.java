@@ -32,4 +32,8 @@ public class ConfigMutuelleRequestDto {
 
     @Min(value = 1, message = "Le seuil de sessions doit être d'au moins 1")
     private Integer loanPenaltySessionThreshold;
+
+    @DecimalMin(value = "0.0", inclusive = false, message = "Le seuil d'insolvabilité doit être positif")
+    @Digits(integer = 12, fraction = 2, message = "Format du seuil invalide")
+    private BigDecimal insolvencyThreshold;
 }

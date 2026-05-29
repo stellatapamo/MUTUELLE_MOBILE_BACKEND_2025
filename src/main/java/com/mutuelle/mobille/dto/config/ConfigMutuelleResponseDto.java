@@ -17,6 +17,7 @@ public class ConfigMutuelleResponseDto {
     private BigDecimal loanInterestRatePercent;
     private BigDecimal loanPenaltyFixedAmount;
     private Integer loanPenaltySessionThreshold;
+    private BigDecimal insolvencyThreshold;
     private LocalDateTime updatedAt;
     private String updatedBy;
 
@@ -27,6 +28,7 @@ public class ConfigMutuelleResponseDto {
         this.loanInterestRatePercent = config.getLoanInterestRatePercent();
         this.loanPenaltyFixedAmount = config.getLoanPenaltyFixedAmount();
         this.loanPenaltySessionThreshold = config.getLoanPenaltySessionThreshold();
+        this.insolvencyThreshold = config.getInsolvencyThreshold();
         this.updatedAt = config.getUpdatedAt();
         this.updatedBy = config.getUpdatedBy();
     }

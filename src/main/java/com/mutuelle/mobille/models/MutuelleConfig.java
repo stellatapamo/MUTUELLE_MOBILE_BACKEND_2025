@@ -42,6 +42,9 @@ public class MutuelleConfig {
     @Column(name = "loan_penalty_session_threshold", nullable = false)
     private Integer loanPenaltySessionThreshold = 3;
 
+    @Column(name = "seuil_insolvabilite", nullable = false, precision = 14, scale = 2)
+    private BigDecimal insolvencyThreshold = new BigDecimal("250000.00");
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

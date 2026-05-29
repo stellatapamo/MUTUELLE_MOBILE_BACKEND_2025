@@ -22,6 +22,7 @@ public class ContributionService {
     private final AccountService accountService;
     private final SessionService sessionService;
     private final TransactionRepository transactionRepository;
+    private final MemberService memberService;
 
     @Transactional
     public ContributionPaymentResponseDto processContributionPayment(ContributionPaymentRequestDto request) {
@@ -59,6 +60,9 @@ public class ContributionService {
             case RENFOULEMENT -> split = accountService.payRenfoulementAmount(memberId, amount);
             default -> throw new IllegalArgumentException("Type non supporté");
         }
+
+        // Mettre à jour le statut du membre après modification des dettes
+        memberService.updateMemberStatus(memberAccount);
 
         BigDecimal remaining = unpaidBefore.subtract(amount);
 
