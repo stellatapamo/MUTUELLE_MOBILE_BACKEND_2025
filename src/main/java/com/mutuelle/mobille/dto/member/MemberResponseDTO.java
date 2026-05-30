@@ -2,6 +2,7 @@
 // Retourné après inscription, login, ou consultation de profil
 package com.mutuelle.mobille.dto.member;
 
+import com.mutuelle.mobille.enums.MemberStatus;
 import com.mutuelle.mobille.enums.Role;
 
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ public record MemberResponseDTO(
         BigDecimal savingAmount,
         Long idAccount,
         String pin,
-
+        MemberStatus status,
 
         LocalDateTime createdAt,
         LocalDateTime updatedAt
