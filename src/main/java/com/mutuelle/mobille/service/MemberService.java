@@ -429,6 +429,18 @@ public class MemberService {
     }
 
     @Transactional
+    public MemberResponseDTO changeStatusManually(Long memberId, MemberStatus newStatus) {
+        Member member = memberRepository.findByIdWithAccount(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Membre non trouvé avec l'ID : " + memberId));
+
+        member.setStatus(newStatus);
+        member.setUpdatedAt(LocalDateTime.now());
+        memberRepository.save(member);
+
+        return toResponseDTO(member);
+    }
+
+    @Transactional
     public void recalculateAllMemberStatuses() {
         List<Member> allMembers = memberRepository.findAll(); // ou seulement les actifs
         for (Member member : allMembers) {

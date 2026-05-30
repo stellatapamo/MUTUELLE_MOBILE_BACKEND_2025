@@ -2,6 +2,7 @@ package com.mutuelle.mobille.controller;
 
 import com.mutuelle.mobille.dto.ApiResponseDto;
 import com.mutuelle.mobille.dto.auth.*;
+import com.mutuelle.mobille.dto.member.MemberMutuelleStatusUpdateDTO;
 import com.mutuelle.mobille.dto.member.MemberRegisterDTO;
 import com.mutuelle.mobille.dto.member.MemberResponseDTO;
 import com.mutuelle.mobille.dto.member.MemberStatusUpdateDTO;
@@ -141,6 +142,23 @@ public class MembersController {
     public ResponseEntity<ApiResponseDto<MemberResponseDTO>> getMemberById(@PathVariable Long id) {
         MemberResponseDTO member = memberService.getMemberById(id);
         return ResponseEntity.ok(ApiResponseDto.ok(member, "Membre trouvé"));
+    }
+
+    @PatchMapping("/{id}/mutuelle-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Changer le statut mutuelle d'un membre (ACTIF, INSOLVABLE, INACTIF)",
+            description = "Permet à l'admin de forcer manuellement le statut mutuelle d'un membre."
+    )
+    public ResponseEntity<ApiResponseDto<MemberResponseDTO>> changeMemberMutuelleStatus(
+            @PathVariable Long id,
+            @RequestBody @Valid MemberMutuelleStatusUpdateDTO dto) {
+
+        MemberResponseDTO updatedMember = memberService.changeStatusManually(id, dto.getStatus());
+
+        String message = "Statut du membre changé en " + dto.getStatus().name();
+
+        return ResponseEntity.ok(ApiResponseDto.ok(updatedMember, message));
     }
 
     @PatchMapping("/{id}/status")
