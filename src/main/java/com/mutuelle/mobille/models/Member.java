@@ -47,6 +47,7 @@ public class Member {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", columnDefinition = "VARCHAR(20) DEFAULT 'ACTIF' NOT NULL")
+    @Builder.Default
     private MemberStatus status = MemberStatus.ACTIF;
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -70,6 +70,7 @@ public class MemberService {
                 .firstname(dto.getFirstname().trim())
                 .lastname(dto.getLastname().trim())
                 .phone(dto.getPhone().trim())
+                .status(MemberStatus.ACTIF)
                 .isActive(true)
                 .accountMember(accountMember)
                 .build();
