@@ -93,7 +93,10 @@ public class EmpruntService {
                         .description("Emprunt de : "+emprunteur.getMember().getLastname())
                         .build()
         );
-        currentSession.setTotalInteretAmount(currentSession.getTotalInteretAmount().add(interet));
+        BigDecimal currentInteret = currentSession.getTotalInteretAmount() != null
+                ? currentSession.getTotalInteretAmount()
+                : BigDecimal.ZERO;
+        currentSession.setTotalInteretAmount(currentInteret.add(interet));
         sessionRepository.save(currentSession);
 
         //interetService.redistribuerInteret(emprunteur.getId(), interet,trans,currentSession);

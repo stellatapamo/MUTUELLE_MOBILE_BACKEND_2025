@@ -55,6 +55,7 @@ public class Session {
 
     @DecimalMin(value = "0.00", inclusive = true, message = "Le montant ne peut pas être négatif")
     @Column(name = "total_interet_amount", precision = 12, scale = 2)
+    @Builder.Default
     private BigDecimal totalInteretAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false, updatable = false)
