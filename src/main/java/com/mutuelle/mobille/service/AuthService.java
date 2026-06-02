@@ -151,8 +151,8 @@ public class AuthService {
     }
 
     public Optional<AuthUser> getCurrentUser() {
-        Long currentMemberId = SecurityUtil.getCurrentUserRefId();
-        return authUserRepo.findByUserRefId(currentMemberId);
+        Long authUserId = SecurityUtil.getCurrentAuthUserId();
+        return authUserRepo.findById(authUserId);
     }
 
 }

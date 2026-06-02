@@ -13,6 +13,7 @@ import com.mutuelle.mobille.models.account.AccountMember;
 import com.mutuelle.mobille.models.account.AccountMutuelle;
 import com.mutuelle.mobille.repository.*;
 import com.mutuelle.mobille.service.notifications.SessionNotificationHelper;
+import com.mutuelle.mobille.repository.MemberSessionBilanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ public class SessionService {
     private final ExerciceRepository exerciceRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
     private final TransactionRepository transactionRepository;
+    private final MemberSessionBilanRepository memberSessionBilanRepository;
     private final AccountService accountService;
     private final AssistanceService assistanceService;
     private final SessionNotificationHelper notificationHelper;
@@ -611,6 +613,80 @@ public class SessionService {
         // Création des bilans membres pour cette session
         List<AccountMember> activeAccounts = accountService.getAllMemberAccountsWithActive(true);
         bilanService.createMemberSessionBilans(session, activeAccounts);
+    }
+
+    // ───────────────────────────────────────────────
+    //         Rollback réouverture de session
+    // ───────────────────────────────────────────────
+
+    @Transactional
+    public void rollbackOnSessionReopened(Session session) {
+        Long sessionId = session.getId();
+
+        // 1. Reverse INTERET DEBIT per borrower → subtract from borrowAmount
+        List<Transaction> interetDebits = transactionRepository
+                .findBySessionIdAndTypeAndDirectionWithMember(sessionId, TransactionType.INTERET, TransactionDirection.DEBIT);
+        for (Transaction tx : interetDebits) {
+            accountService.subtractBorrowAmount(tx.getAccountMember(), tx.getAmount());
+        }
+
+        // 2. Reverse PENALITE DEBIT per borrower → subtract from borrowAmount
+        List<Transaction> penaliteDebits = transactionRepository
+                .findBySessionIdAndTypeAndDirectionWithMember(sessionId, TransactionType.PENALITE, TransactionDirection.DEBIT);
+        for (Transaction tx : penaliteDebits) {
+            accountService.subtractBorrowAmount(tx.getAccountMember(), tx.getAmount());
+        }
+
+        // 3. Reverse interest redistribution to member savings
+        //    Find global INTERET CREDIT (parent, no accountMember)
+        List<Transaction> globalInteretCredits = transactionRepository
+                .findBySessionIdAndTypeAndDirectionWithoutMemberNoParent(sessionId, TransactionType.INTERET, TransactionDirection.CREDIT);
+        for (Transaction parent : globalInteretCredits) {
+            List<Transaction> children = transactionRepository.findByParentTransactionId(parent.getId());
+            for (Transaction child : children) {
+                if (child.getAccountMember() != null) {
+                    // Was added to member saving + global saving
+                    accountService.subtractMemberSavingAmount(child.getAccountMember(), child.getAmount());
+                } else {
+                    // Reliquat → was added only to global saving (caisse)
+                    accountService.subtractFromGlobalSaving(child.getAmount());
+                }
+            }
+            // Delete children first to avoid FK constraint
+            transactionRepository.deleteAll(children);
+        }
+        // Delete parent INTERET CREDIT transactions
+        transactionRepository.deleteAll(globalInteretCredits);
+
+        // 4. Delete INTERET and PENALITE DEBIT transactions per member
+        transactionRepository.deleteAll(interetDebits);
+        transactionRepository.deleteAll(penaliteDebits);
+
+        // 5. Reverse AGAPE DEBIT → credit back AccountMutuelle.registrationAmount
+        List<Transaction> agapeDebits = transactionRepository
+                .findBySessionIdAndTypeAndDirectionWithoutMemberNoParent(sessionId, TransactionType.AGAPE, TransactionDirection.DEBIT);
+        for (Transaction tx : agapeDebits) {
+            accountService.addToRegistrationMutuelleCaisse(tx.getAmount());
+        }
+        transactionRepository.deleteAll(agapeDebits);
+
+        // 6. Delete MemberSessionBilans for this session
+        memberSessionBilanRepository.deleteAll(
+                memberSessionBilanRepository.findBySessionId(sessionId)
+        );
+
+        // 7. Delete SessionHistory (disassociate first to trigger orphanRemoval)
+        if (session.getHistory() != null) {
+            session.setHistory(null);
+            sessionRepository.save(session);
+        }
+
+        // 8. Reopen session
+        session.setStatus(StatusSession.IN_PROGRESS);
+        session.setEndDate(null);
+        sessionRepository.save(session);
+
+        log.info("Session '{}' réouverte avec succès (rollback effectué)", session.getName());
     }
 
     public SessionResponseDTO toResponseDTO(Session s) {

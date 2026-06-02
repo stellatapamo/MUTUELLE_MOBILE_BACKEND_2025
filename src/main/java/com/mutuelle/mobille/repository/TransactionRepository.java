@@ -142,4 +142,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.transactionType = :type")
     BigDecimal sumAmountByType(@Param("type") TransactionType type);
+
+    // ── Requêtes pour rollback de réouverture de session ─────────────────────
+
+    @Query("SELECT t FROM Transaction t WHERE t.session.id = :sessionId " +
+           "AND t.transactionType = :type AND t.transactionDirection = :direction " +
+           "AND t.accountMember IS NOT NULL")
+    List<Transaction> findBySessionIdAndTypeAndDirectionWithMember(
+            @Param("sessionId") Long sessionId,
+            @Param("type") TransactionType type,
+            @Param("direction") TransactionDirection direction);
+
+    @Query("SELECT t FROM Transaction t WHERE t.session.id = :sessionId " +
+           "AND t.transactionType = :type AND t.transactionDirection = :direction " +
+           "AND t.accountMember IS NULL AND t.parentTransaction IS NULL")
+    List<Transaction> findBySessionIdAndTypeAndDirectionWithoutMemberNoParent(
+            @Param("sessionId") Long sessionId,
+            @Param("type") TransactionType type,
+            @Param("direction") TransactionDirection direction);
+
+    @Query("SELECT t FROM Transaction t WHERE t.parentTransaction.id = :parentId")
+    List<Transaction> findByParentTransactionId(@Param("parentId") Long parentId);
 }

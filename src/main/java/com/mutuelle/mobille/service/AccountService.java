@@ -254,6 +254,51 @@
             globalRepo.save(global);
         }
 
+        // ──────────────────────────────────────────────────────────────
+        // ─────────────── OPÉRATIONS DE ROLLBACK (réouverture session)
+        // ──────────────────────────────────────────────────────────────
+
+        @Transactional
+        public void addToRegistrationMutuelleCaisse(BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
+            AccountMutuelle global = getMutuelleGlobalAccount();
+            global.setRegistrationAmount(global.getRegistrationAmount().add(amount));
+            globalRepo.save(global);
+        }
+
+        @Transactional
+        public void subtractBorrowAmount(AccountMember accountMember, BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
+            AccountMutuelle global = getMutuelleGlobalAccount();
+            BigDecimal newMemberBorrow = accountMember.getBorrowAmount().subtract(amount);
+            accountMember.setBorrowAmount(newMemberBorrow.max(BigDecimal.ZERO));
+            BigDecimal newGlobalBorrow = global.getBorrowAmount().subtract(amount);
+            global.setBorrowAmount(newGlobalBorrow.max(BigDecimal.ZERO));
+            memberRepo.save(accountMember);
+            globalRepo.save(global);
+        }
+
+        @Transactional
+        public void subtractMemberSavingAmount(AccountMember accountMember, BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
+            AccountMutuelle global = getMutuelleGlobalAccount();
+            BigDecimal newMemberSaving = accountMember.getSavingAmount().subtract(amount);
+            accountMember.setSavingAmount(newMemberSaving.max(BigDecimal.ZERO));
+            BigDecimal newGlobalSaving = global.getSavingAmount().subtract(amount);
+            global.setSavingAmount(newGlobalSaving.max(BigDecimal.ZERO));
+            memberRepo.save(accountMember);
+            globalRepo.save(global);
+        }
+
+        @Transactional
+        public void subtractFromGlobalSaving(BigDecimal amount) {
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
+            AccountMutuelle global = getMutuelleGlobalAccount();
+            BigDecimal newSaving = global.getSavingAmount().subtract(amount);
+            global.setSavingAmount(newSaving.max(BigDecimal.ZERO));
+            globalRepo.save(global);
+        }
+
         /**
          * Un membre emprunte de l'argent à la mutuelle
          */

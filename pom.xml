@@ -106,6 +106,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- WebSocket / STOMP -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
 		<!-- Actuator (très utile sur Railway pour health-check) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
