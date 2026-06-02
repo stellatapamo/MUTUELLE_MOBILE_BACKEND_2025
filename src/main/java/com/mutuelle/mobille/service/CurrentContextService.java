@@ -42,6 +42,7 @@ public class CurrentContextService {
     private final AdminRepository adminRepository;
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
+    private final MemberRepository memberRepository;
 
     public CurrentContextResponseDTO buildCurrentContext() {
 
@@ -120,6 +121,7 @@ public class CurrentContextService {
         MutuelleConfig config = mutuelleConfigService.getCurrentConfig();
         List<TypeAssistanceResponseDto> typeAssistance = assistanceService.getAllTypeAssistances();
         List<BorrowingCeilingInterval> borrowingCeilingIntervals = borrowingCeilingService.getAllIntervalsOrdered();
+        Long totalMembers = memberRepository.count();
 
         // Finalisation
         return builder
@@ -128,6 +130,7 @@ public class CurrentContextService {
                 .config(config)
                 .typeAssistance(typeAssistance)
                 .borrowingCeilingIntervals(borrowingCeilingIntervals)
+                .totalMembers(totalMembers)
                 .build();
     }
 

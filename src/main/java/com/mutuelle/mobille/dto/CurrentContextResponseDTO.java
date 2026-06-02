@@ -66,6 +66,7 @@ public class CurrentContextResponseDTO {
     // Statistiques MEMBRE (seulement si isMember = true)
     private Long memberTotalAssistances;       // nombre d'assistances reçues
     private Long memberTotalTransactions;      // toutes transactions du membre
+    private Long totalMembers;
 
     // Statistiques GLOBALES ADMIN (seulement si isAdmin = true)
     private Long globalTotalAssistances;       // nombre total d'assistances (toutes sessions)
