@@ -64,15 +64,17 @@ public class MutuelleConfigService {
             config.setSolidarityFeeAmount(updatedConfig.getSolidarityFeeAmount());
         if (updatedConfig.getLoanInterestRatePercent() != null)
             config.setLoanInterestRatePercent(updatedConfig.getLoanInterestRatePercent());
+        if (updatedConfig.getLoanPenaltyFixedAmount() != null)
+            config.setLoanPenaltyFixedAmount(updatedConfig.getLoanPenaltyFixedAmount());
+        if (updatedConfig.getLoanPenaltySessionThreshold() != null)
+            config.setLoanPenaltySessionThreshold(updatedConfig.getLoanPenaltySessionThreshold());
         if (updatedConfig.getInsolvencyThreshold() != null) {
             config.setInsolvencyThreshold(updatedConfig.getInsolvencyThreshold());
-            thresholdChanged = !oldThreshold.equals(config.getInsolvencyThreshold());
+            thresholdChanged = oldThreshold.compareTo(config.getInsolvencyThreshold()) != 0;
         }
         config.setUpdatedBy(updatedBy);
-        // updatedAt est géré automatiquement par @PreUpdate
         MutuelleConfig saved = configRepository.save(config);
-        // Si le seuil a changé, on recalcule les statuts de tous les membres
-        if (thresholdChanged ) {
+        if (thresholdChanged) {
             memberService.recalculateAllMemberStatuses();
         }
 

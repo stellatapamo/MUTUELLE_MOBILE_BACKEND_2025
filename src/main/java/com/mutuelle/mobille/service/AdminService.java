@@ -16,7 +16,8 @@ public class AdminService {
         this.authUserRepository=authUserRepository;
     }
 
-    public  AuthUser  getAuthAdmin(){
-        return authUserRepository.findByRole(Role.ADMIN);
+    public AuthUser getAuthAdmin() {
+        return authUserRepository.findFirstByRole(Role.ADMIN)
+                .orElseThrow(() -> new RuntimeException("Aucun administrateur trouvé"));
     }
 }
