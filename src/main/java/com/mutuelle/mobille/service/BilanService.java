@@ -254,7 +254,7 @@ public class BilanService {
 
         BigDecimal totalRecu = b.getTotalEpargneWithdrawn()
                 .add(b.getTotalEmpruntAmount())
-                .add(b.getTotalInteretAmount());
+                .add(b.getRenfoulementDistributed());
 
         return MemberExerciceBilanDTO.builder()
                 .id(b.getId())

@@ -65,6 +65,14 @@ public class BilanController {
         return ResponseEntity.ok(ApiResponseDto.ok(dtos, msg));
     }
 
+    @GetMapping("/session/{sessionId}/membres/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PRESIDENT', 'TRESORIER')")
+    @Operation(summary = "Télécharger la synthèse de tous les membres pour une session (PDF)")
+    public ResponseEntity<byte[]> getAllMembersSessionPdf(@PathVariable Long sessionId) {
+        byte[] pdf = bilanPdfService.generateAllMembersSessionPdf(sessionId);
+        return pdfResponse(pdf, "synthese-membres-session-" + sessionId + ".pdf");
+    }
+
     @GetMapping("/membre/{memberId}/sessions")
     @PreAuthorize("hasAnyRole('ADMIN', 'PRESIDENT', 'TRESORIER', 'MEMBER')")
     @Operation(summary = "Tous les bilans session d'un membre (JSON)")

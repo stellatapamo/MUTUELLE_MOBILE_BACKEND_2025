@@ -135,10 +135,9 @@ public class BilanPdfService {
 
             addSectionTitle(doc, "DÉCAISSEMENTS / DETTES CUMULÉS");
             PdfPTable decaissements = buildTwoColumnTable();
-            addRow(decaissements, "Épargne retirée (total)",       dto.getTotalEpargneWithdrawn(),   false, true);
-            addRow(decaissements, "Emprunts contractés (total)",   dto.getTotalEmpruntAmount(),       false, true);
-            addRow(decaissements, "Intérêts calculés (total)",     dto.getTotalInteretAmount(),       false, true);
-            addRow(decaissements, "Renfoulement distribué",        dto.getRenfoulementDistributed(),  false, true);
+            addRow(decaissements, "Épargne retirée (total)",     dto.getTotalEpargneWithdrawn(),  false, true);
+            addRow(decaissements, "Emprunts contractés (total)", dto.getTotalEmpruntAmount(),      false, true);
+            addRow(decaissements, "Renfoulement distribué",      dto.getRenfoulementDistributed(), false, true);
             addTotalRow(decaissements, "TOTAL REÇU / DÛ", dto.getTotalRecu());
             doc.add(decaissements);
             doc.add(Chunk.NEWLINE);
@@ -220,12 +219,16 @@ public class BilanPdfService {
             doc.add(Chunk.NEWLINE);
 
             addSectionTitle(doc, "TRÉSORERIE MUTUELLE À LA CLÔTURE");
-            PdfPTable tresorerie = buildTwoColumnTable();
-            addRow(tresorerie, "Épargne globale",            dto.getMutuellesSavingAmount(),     false, false);
-            addRow(tresorerie, "Fonds solidarité",           dto.getMutuelleSolidarityAmount(),  false, false);
-            addRow(tresorerie, "Caisse inscription",         dto.getMutuelleRegistrationAmount(), false, false);
-            addRow(tresorerie, "Emprunts en cours (total)",  dto.getMutuelleBorrowAmount(),       false, true);
-            addTotalRow(tresorerie, "TRÉSORERIE TOTALE", dto.getMutuelleCash());
+            BigDecimal entreeSession = dto.getMutuellesSavingAmount()
+                    .add(dto.getMutuelleSolidarityAmount())
+                    .add(dto.getMutuelleRegistrationAmount());
+            BigDecimal sortieSession = dto.getMutuelleBorrowAmount();
+            PdfPTable tresorerie = buildThreeColumnTable();
+            addTresorerieEntreeRow(tresorerie, "Épargne globale",            dto.getMutuellesSavingAmount());
+            addTresorerieEntreeRow(tresorerie, "Fonds solidarité",           dto.getMutuelleSolidarityAmount());
+            addTresorerieEntreeRow(tresorerie, "Caisse inscription",         dto.getMutuelleRegistrationAmount());
+            addTresoreerieSortieRow(tresorerie, "Emprunts en cours (total)", dto.getMutuelleBorrowAmount());
+            addTotalRowThreeCol(tresorerie, "TRÉSORERIE TOTALE", entreeSession, sortieSession);
             doc.add(tresorerie);
 
             addFooter(doc);
@@ -296,12 +299,16 @@ public class BilanPdfService {
             doc.add(Chunk.NEWLINE);
 
             addSectionTitle(doc, "TRÉSORERIE MUTUELLE À LA CLÔTURE");
-            PdfPTable tresorerie = buildTwoColumnTable();
-            addRow(tresorerie, "Épargne globale",            dto.getMutuellesSavingAmount(),     false, false);
-            addRow(tresorerie, "Fonds solidarité",           dto.getMutuelleSolidarityAmount(),  false, false);
-            addRow(tresorerie, "Caisse inscription",         dto.getMutuelleRegistrationAmount(), false, false);
-            addRow(tresorerie, "Emprunts en cours (total)",  dto.getMutuelleBorrowAmount(),       false, true);
-            addTotalRow(tresorerie, "TRÉSORERIE TOTALE", dto.getMutuelleCash());
+            BigDecimal entreeExercice = dto.getMutuellesSavingAmount()
+                    .add(dto.getMutuelleSolidarityAmount())
+                    .add(dto.getMutuelleRegistrationAmount());
+            BigDecimal sortieExercice = dto.getMutuelleBorrowAmount();
+            PdfPTable tresorerie = buildThreeColumnTable();
+            addTresorerieEntreeRow(tresorerie, "Épargne globale",            dto.getMutuellesSavingAmount());
+            addTresorerieEntreeRow(tresorerie, "Fonds solidarité",           dto.getMutuelleSolidarityAmount());
+            addTresorerieEntreeRow(tresorerie, "Caisse inscription",         dto.getMutuelleRegistrationAmount());
+            addTresoreerieSortieRow(tresorerie, "Emprunts en cours (total)", dto.getMutuelleBorrowAmount());
+            addTotalRowThreeCol(tresorerie, "TRÉSORERIE TOTALE", entreeExercice, sortieExercice);
             doc.add(tresorerie);
 
             addFooter(doc);
@@ -335,12 +342,78 @@ public class BilanPdfService {
             Font cellFont   = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.BLACK);
             Font totalFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, Color.BLACK);
 
-            PdfPTable table = new PdfPTable(new float[]{2.5f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1.2f});
+            PdfPTable table = new PdfPTable(new float[]{2.5f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f});
             table.setWidthPercentage(100);
 
             String[] headers = {"Membre", "Solidarité", "Solid. impayée", "Épargne (net)",
                     "Inscription", "Inscr. impayée", "Renfoul. payé", "Renfoul. impayé",
-                    "Remboursement", "Emprunt", "Intérêts", "Assistance", "Solde Net"};
+                    "Remboursement", "Emprunt", "Intérêts", "Assistance"};
+            for (String h : headers) {
+                PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
+                cell.setBackgroundColor(COLOR_HEADER);
+                cell.setPadding(5);
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(cell);
+            }
+
+            Font debtFont = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_NEGATIVE);
+            boolean alt = false;
+            for (MemberExerciceBilanDTO b : bilans) {
+                Color rowColor = alt ? COLOR_ROW_ALT : Color.WHITE;
+                alt = !alt;
+                BigDecimal epargneNet = b.getTotalEpargneDeposited().subtract(b.getTotalEpargneWithdrawn());
+
+                addSummaryCell(table, b.getMemberLastname() + " " + b.getMemberFirstname(), cellFont,  rowColor, Element.ALIGN_LEFT);
+                addSummaryCell(table, fmt(b.getTotalSolidaritePaid()),         cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidSolidarity()),    debtFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(epargneNet),                         cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalRegistrationPaid()),       cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidRegistration()),  debtFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalRenfoulementPaid()),       cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidRenfoulement()),  debtFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalRemboursementAmount()),    cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalEmpruntAmount()),          cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalInteretAmount()),          cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getTotalAssistanceReceived()),     cellFont,  rowColor, Element.ALIGN_RIGHT);
+            }
+            doc.add(table);
+            addFooter(doc);
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur génération PDF synthèse membres", e);
+        } finally {
+            doc.close();
+        }
+        return baos.toByteArray();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  PDF SYNTHÈSE - TOUS LES MEMBRES D'UNE SESSION
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public byte[] generateAllMembersSessionPdf(Long sessionId) {
+        List<MemberSessionBilanDTO> bilans = bilanService.getAllMemberBilansBySession(sessionId);
+        if (bilans.isEmpty()) throw new RuntimeException("Aucun bilan disponible pour cette session");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document doc = new Document(PageSize.A4.rotate(), 30, 30, 50, 40);
+        try {
+            PdfWriter writer = PdfWriter.getInstance(doc, baos);
+            addPageDecorator(writer);
+            doc.open();
+
+            MemberSessionBilanDTO first = bilans.get(0);
+            addHeader(doc, "SYNTHÈSE MEMBRES - SESSION : " + first.getSessionName());
+
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+            Font cellFont   = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.BLACK);
+            Font debtFont   = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_NEGATIVE);
+
+            PdfPTable table = new PdfPTable(new float[]{2.5f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f});
+            table.setWidthPercentage(100);
+
+            String[] headers = {"Membre", "Solidarité", "Solid. impayée", "Épargne (net)",
+                    "Inscription", "Inscr. impayée", "Renfoul. payé", "Renfoul. impayé",
+                    "Remboursement", "Emprunt", "Intérêts", "Assistance"};
             for (String h : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
                 cell.setBackgroundColor(COLOR_HEADER);
@@ -350,32 +423,28 @@ public class BilanPdfService {
             }
 
             boolean alt = false;
-            for (MemberExerciceBilanDTO b : bilans) {
+            for (MemberSessionBilanDTO b : bilans) {
                 Color rowColor = alt ? COLOR_ROW_ALT : Color.WHITE;
                 alt = !alt;
-                BigDecimal epargneNet = b.getTotalEpargneDeposited().subtract(b.getTotalEpargneWithdrawn());
+                BigDecimal epargneNet = b.getEpargneDeposited().subtract(b.getEpargneWithdrawn());
 
-                addSummaryCell(table, b.getMemberLastname() + " " + b.getMemberFirstname(), cellFont, rowColor, Element.ALIGN_LEFT);
-                addSummaryCell(table, fmt(b.getTotalSolidaritePaid()),         cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getSnapshotUnpaidSolidarity()),    cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(epargneNet),                         cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalRegistrationPaid()),       cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getSnapshotUnpaidRegistration()),  cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalRenfoulementPaid()),       cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getSnapshotUnpaidRenfoulement()),  cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalRemboursementAmount()),    cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalEmpruntAmount()),          cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalInteretAmount()),          cellFont, rowColor, Element.ALIGN_RIGHT);
-                addSummaryCell(table, fmt(b.getTotalAssistanceReceived()),     cellFont, rowColor, Element.ALIGN_RIGHT);
-                BigDecimal net = b.getNetExercice();
-                Font netFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f,
-                        net.compareTo(BigDecimal.ZERO) >= 0 ? COLOR_POSITIVE : COLOR_NEGATIVE);
-                addSummaryCell(table, fmt(net), netFont, rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, b.getMemberLastname() + " " + b.getMemberFirstname(), cellFont,  rowColor, Element.ALIGN_LEFT);
+                addSummaryCell(table, fmt(b.getSolidaritePaid()),              cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidSolidarity()),    debtFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(epargneNet),                         cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getRegistrationPaid()),            cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidRegistration()),  debtFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getRenfoulementPaid()),            cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getSnapshotUnpaidRenfoulement()),  debtFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getRemboursementAmount()),         cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getEmpruntAmount()),               cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getInteretAmount()),               cellFont,  rowColor, Element.ALIGN_RIGHT);
+                addSummaryCell(table, fmt(b.getAssistanceReceived()),          cellFont,  rowColor, Element.ALIGN_RIGHT);
             }
             doc.add(table);
             addFooter(doc);
         } catch (DocumentException e) {
-            throw new RuntimeException("Erreur génération PDF synthèse membres", e);
+            throw new RuntimeException("Erreur génération PDF synthèse membres session", e);
         } finally {
             doc.close();
         }
@@ -490,6 +559,100 @@ public class BilanPdfService {
         PdfPTable table = new PdfPTable(new float[]{4f, 2f});
         table.setWidthPercentage(100);
         return table;
+    }
+
+    private PdfPTable buildThreeColumnTable() throws DocumentException {
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, Color.WHITE);
+
+        PdfPTable table = new PdfPTable(new float[]{4f, 2f, 2f});
+        table.setWidthPercentage(100);
+
+        String[] headers = {"Libellé", "Entrée", "Sortie"};
+        int[] aligns = {Element.ALIGN_LEFT, Element.ALIGN_RIGHT, Element.ALIGN_RIGHT};
+        for (int i = 0; i < headers.length; i++) {
+            PdfPCell cell = new PdfPCell(new Phrase(headers[i], headerFont));
+            cell.setBackgroundColor(COLOR_SECTION);
+            cell.setPadding(5);
+            cell.setHorizontalAlignment(aligns[i]);
+            cell.setBorder(Rectangle.NO_BORDER);
+            table.addCell(cell);
+        }
+        return table;
+    }
+
+    private void addTresorerieEntreeRow(PdfPTable table, String label, BigDecimal entree) {
+        Font labelFont  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
+        Font entreeFont = FontFactory.getFont(FontFactory.HELVETICA, 9, COLOR_POSITIVE);
+        Font emptyFont  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
+
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setBorder(Rectangle.BOTTOM);
+        labelCell.setBorderColor(new Color(220, 230, 245));
+        labelCell.setPadding(5);
+        table.addCell(labelCell);
+
+        PdfPCell entreeCell = new PdfPCell(new Phrase(fmt(entree) + " Fcfa", entreeFont));
+        entreeCell.setBorder(Rectangle.BOTTOM);
+        entreeCell.setBorderColor(new Color(220, 230, 245));
+        entreeCell.setPadding(5);
+        entreeCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(entreeCell);
+
+        PdfPCell emptyCell = new PdfPCell(new Phrase("—", emptyFont));
+        emptyCell.setBorder(Rectangle.BOTTOM);
+        emptyCell.setBorderColor(new Color(220, 230, 245));
+        emptyCell.setPadding(5);
+        emptyCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(emptyCell);
+    }
+
+    private void addTresoreerieSortieRow(PdfPTable table, String label, BigDecimal sortie) {
+        Font labelFont  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
+        Font emptyFont  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.BLACK);
+        Font sortieFont = FontFactory.getFont(FontFactory.HELVETICA, 9, COLOR_NEGATIVE);
+
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setBorder(Rectangle.BOTTOM);
+        labelCell.setBorderColor(new Color(220, 230, 245));
+        labelCell.setPadding(5);
+        table.addCell(labelCell);
+
+        PdfPCell emptyCell = new PdfPCell(new Phrase("—", emptyFont));
+        emptyCell.setBorder(Rectangle.BOTTOM);
+        emptyCell.setBorderColor(new Color(220, 230, 245));
+        emptyCell.setPadding(5);
+        emptyCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(emptyCell);
+
+        PdfPCell sortieCell = new PdfPCell(new Phrase(fmt(sortie) + " Fcfa", sortieFont));
+        sortieCell.setBorder(Rectangle.BOTTOM);
+        sortieCell.setBorderColor(new Color(220, 230, 245));
+        sortieCell.setPadding(5);
+        sortieCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(sortieCell);
+    }
+
+    private void addTotalRowThreeCol(PdfPTable table, String label, BigDecimal entreeTotal, BigDecimal sortieTotal) {
+        Font f       = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9.5f, Color.BLACK);
+        Font fEntree = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9.5f, COLOR_POSITIVE);
+        Font fSortie = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9.5f, COLOR_NEGATIVE);
+
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, f));
+        labelCell.setBackgroundColor(COLOR_TOTAL_BG);
+        labelCell.setPadding(6);
+        table.addCell(labelCell);
+
+        PdfPCell entreeCell = new PdfPCell(new Phrase(fmt(entreeTotal) + " Fcfa", fEntree));
+        entreeCell.setBackgroundColor(COLOR_TOTAL_BG);
+        entreeCell.setPadding(6);
+        entreeCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(entreeCell);
+
+        PdfPCell sortieCell = new PdfPCell(new Phrase(fmt(sortieTotal) + " Fcfa", fSortie));
+        sortieCell.setBackgroundColor(COLOR_TOTAL_BG);
+        sortieCell.setPadding(6);
+        sortieCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(sortieCell);
     }
 
     private void addRow(PdfPTable table, String label, BigDecimal value, boolean isHeader, boolean debit) {
