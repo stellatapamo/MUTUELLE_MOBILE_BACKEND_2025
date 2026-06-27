@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class TransactionService {
      */
     public Page<TransactionResponseDTO> getTransactionsFiltered(
             TransactionType type,
+            List<TransactionType> types,
             TransactionDirection direction,
             Long sessionId,
             Long exerciceId,
@@ -36,7 +38,7 @@ public class TransactionService {
             Pageable pageable) {
 
         Page<Transaction> page = transactionRepository.findFiltered(
-                type, direction, sessionId, exerciceId, accountMemberId, fromDate, toDate, pageable
+                type, types, direction, sessionId, exerciceId, accountMemberId, fromDate, toDate, pageable
         );
 
         return page.map(TransactionMapper::toResponseDTO);

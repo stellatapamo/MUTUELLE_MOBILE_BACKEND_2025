@@ -34,6 +34,7 @@ public class TransactionsController {
     @Operation(summary = "Lister toutes les transactions avec filtres optionnels")
     public ResponseEntity<ApiResponseDto<List<TransactionResponseDTO>>> getAllTransactions(
             @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) List<TransactionType> types,
             @RequestParam(required = false) TransactionDirection direction,
             @RequestParam(required = false) Long sessionId,
             @RequestParam(required = false) Long exerciceId,
@@ -51,7 +52,7 @@ public class TransactionsController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(directionSort, sortParams[0]));
 
         Page<TransactionResponseDTO> result = transactionService.getTransactionsFiltered(
-                type, direction, sessionId, exerciceId, accountMemberId, fromDate, toDate, pageable);
+                type, types, direction, sessionId, exerciceId, accountMemberId, fromDate, toDate, pageable);
 
         ApiResponseDto<List<TransactionResponseDTO>> response = ApiResponseDto.okPaged(
                 result.getContent(),

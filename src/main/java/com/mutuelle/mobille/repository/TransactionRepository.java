@@ -30,6 +30,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     default Page<Transaction> findFiltered(
             TransactionType type,
+            List<TransactionType> types,
             TransactionDirection direction,
             Long sessionId,
             Long exerciceId,
@@ -41,7 +42,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
         org.springframework.data.jpa.domain.Specification<Transaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.isNull(root.get("parentTransaction")));
-            if (type != null) predicates.add(cb.equal(root.get("transactionType"), type));
+            if (types != null && !types.isEmpty()) {
+                predicates.add(root.get("transactionType").in(types));
+            } else if (type != null) {
+                predicates.add(cb.equal(root.get("transactionType"), type));
+            }
             if (direction != null) predicates.add(cb.equal(root.get("transactionDirection"), direction));
             if (sessionId != null) predicates.add(cb.equal(root.get("session").get("id"), sessionId));
             if (exerciceId != null) predicates.add(cb.equal(root.get("session").get("exercice").get("id"), exerciceId));
