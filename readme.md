@@ -7,6 +7,10 @@ spring.mail.password=qhjc neen rwpc kzwq
 commande pour lancer en local avec Mysql :
 mvn spring-boot:run "-Dspring.profiles.active=dev"
 
+docker compose up --build -d
+
+
+
 
 
 #gandal
