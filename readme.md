@@ -47,3 +47,40 @@ echo "---"
 sudo -u postgres psql -c "\l" | grep mutuelle_mobile1
 
 
+
+
+
+
+
+
+
+
+
+
+
+#back gandal 
+# 1. Nettoyer l'ancien dépôt Docker mal ajouté
+rm -f /etc/apt/sources.list.d/docker.list
+rm -f /etc/apt/keyrings/docker.gpg
+
+# 2. Installer les prérequis
+apt-get install -y ca-certificates curl
+
+# 3. Ajouter la clé GPG Docker pour Debian
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+
+# 4. Ajouter le dépôt Docker Debian
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 5. Mettre à jour et installer Docker
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# 6. Vérifier
+docker --version
+docker compose version
+
+
+
